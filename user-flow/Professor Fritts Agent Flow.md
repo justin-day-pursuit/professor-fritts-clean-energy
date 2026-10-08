@@ -1,0 +1,1 @@
+One-slide user story for Professor Fritts: Dana's question passes a first check, Fritts evaluates the building in a loop, using four tool groups with a check before and after each tool use, and the priority roadmap reaches her only after a final check for labels, sources and required professional reviews.
