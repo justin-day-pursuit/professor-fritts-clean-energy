@@ -2,11 +2,11 @@
 
 *Product Requirements Document: Agent Build*
 
-**Agent name:** Professor Fritts (formerly Building Renewable Energy Planner), for New York Public Buildings, v1: Efficiency + Solar
+**Agent name:** Professor Fritts (Building Renewable Energy Planner AI Agent), for New York Public Buildings, v1: Efficiency + Solar
 
 **Tagline:** Your guide to renewable energy for schools and public buildings.
 
-**Why the name:** "Professor" is a character title that describes what the agent does (teach and guide), like a mascot with a made-up title. The name honors Charles Fritts (1850–1903), a New York inventor and engineer who built one of the first solar cells in 1883, using selenium coated with a thin layer of gold. A Smithsonian piece says he installed the first solar panels on a New York City rooftop in 1884. Fritts was not a professor, and no source we checked says he taught; copy must not say or imply it.
+**Why the name:** "Professor" is a character title that describes what the agent does, guide and teach. The name honors Charles Fritts (1850–1903), a New York inventor and engineer who built one of the first solar cells in 1883, using selenium coated with a thin layer of gold. A Smithsonian piece says he installed the first solar panels on a New York City rooftop in 1884.
 
 **Owner(s):** Justin Day, Mara Munoz
 

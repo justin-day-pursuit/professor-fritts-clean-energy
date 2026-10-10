@@ -6,9 +6,9 @@ Named in honor of Charles Fritts, the New York inventor who installed the city's
 
 ## About the name
 
-"Professor" is a character title that describes what the agent does: teach and guide. It works like a mascot's made-up title. Charles Fritts (1850-1903) was an inventor and engineer from New York, remembered for building one of the first solar cells in 1883, made of selenium coated with a thin layer of gold. A Smithsonian piece says he put the first solar panels on a New York City rooftop in 1884. He was not a professor, and none of the sources we checked say he taught, so our copy never says or implies it.
+"Professor" is a character title that describes what the agent does: teach and guide. Charles Fritts (1850-1903) was an inventor and engineer from New York, remembered for building one of the first solar cells in 1883, made of selenium coated with a thin layer of gold. A Smithsonian piece says he put the first solar panels on a New York City rooftop in 1884.
 
-Professor Fritts is an AI planning agent for managers of public buildings in New York State, such as school districts, libraries and parks. It evaluates an existing building and produces a costed, prioritized roadmap to an energy goal, with at least three scenarios compared side by side. Every number is labeled as a fact, estimate, assumption or recommendation, with its source, and the roadmap names the professional reviews needed before any money is committed.
+Professor Fritts is an AI planning agent for managers of public buildings in New York State, such as school districts, libraries and parks. It evaluates an existing building and produces a prioritized roadmap with cost estimates to an energy goal, with at least three scenarios compared side by side. Every number is labeled as a fact, estimate, assumption or recommendation, with its source, and the roadmap names the professional reviews needed before any money is committed.
 
 v1 scope: energy efficiency and solar PV (battery storage only for solar resilience), New York State and NYC only.
 
