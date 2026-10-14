@@ -55,6 +55,30 @@ The loop is Check 1 → think → (Check 2 → tool → Check 3 → notes)* → 
 
 `LLM_PROVIDER=scripted` replays `scripted_llm.json` from the case folder. Tests and local evals need no Anthropic key and make no network calls. `LLM_PROVIDER=anthropic` calls Claude with the same tools. Without `ANTHROPIC_API_KEY`, the error is one sentence asking you to paste the key into `.env`.
 
+## Run (local UI + API)
+
+From the repo root (reads `.env` for ports and `NEXT_PUBLIC_API_BASE_URL`):
+
+```bash
+./scripts/dev.sh
+```
+
+Or start each side yourself:
+
+```bash
+# Terminal 1 — backend
+cd backend && source .venv/bin/activate
+python manage.py migrate
+LLM_PROVIDER=scripted TOOL_MODE=mock uvicorn fritts.asgi:app --reload --port ${BACKEND_PORT:-8000}
+
+# Terminal 2 — frontend
+cd frontend && npm run dev
+```
+
+Open the Next.js URL (default `http://localhost:3000`). Django admin for debugging data lives at `http://localhost:8000/admin/` when `DJANGO_DEBUG=true`.
+
+For scripted eval without the browser, use `run_case` below.
+
 ### run_case
 
 From `backend/` with the virtual environment active (migrate once if the local SQLite database is new):
@@ -67,6 +91,19 @@ LLM_PROVIDER=scripted TOOL_MODE=mock python manage.py run_case --case case1_quee
 ```
 
 That prints the run log (checks, tool calls, mock results) and the roadmap Markdown. It exits non-zero on `failed`. Pass `--llm anthropic` when a key is in `.env`. Optional `--message "..."` overrides Dana's question.
+
+## What is faked in v0
+
+| Area | v0 stand-in | Later owner |
+| --- | --- | --- |
+| External tools (PVWatts, REopt, rates, incentives, FEMA, NY building records) | `TOOL_MODE=mock` JSON fixtures under `backend/mocks/fixtures/` | Live API integration block |
+| LLM planning loop | `LLM_PROVIDER=scripted` replays `scripted_llm.json`; optional Anthropic when keyed | Production LLM + eval harness |
+| Tool result cache | In-memory / JSON file cache in the backend | Supabase-backed reference cache |
+| Database | SQLite via Django (local `.data/`) | Supabase Postgres |
+| Roadmap sections | PRD sections 1,2,3,5,6,8,9,10,12,13 only; footer notes missing 4, 7, 11 | v2 / v5 product blocks |
+| Financial model, evidence search | Tools not registered in v0 | Future tool units |
+
+The web UI shows mock badges on tool results and downloads the same roadmap Markdown/JSON the CLI prints.
 
 ## Team
 
