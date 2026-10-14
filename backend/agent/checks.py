@@ -178,10 +178,24 @@ def run_check3(result: ToolResult, *, freshness_kind: str = "default") -> CheckR
     )
 
 
-def _claim_has_source(claim: Claim) -> bool:
-    if claim.label in ("FACT", "ESTIMATE"):
-        return bool(claim.source_url or claim.calc_id)
-    return bool(claim.source_url or claim.calc_id or claim.label == "ASSUMPTION")
+def _claim_traceability_ok(claim: Claim, assumptions_register: dict[str, str]) -> tuple[bool, str | None]:
+    """
+    Return whether the claim meets Check 4 traceability and a short issue string if not.
+
+    ASSUMPTION claims tie to the in-run assumptions register; other labels need source or calc.
+    """
+    if claim.label == "ASSUMPTION":
+        aid = (claim.assumption_id or "").strip()
+        if not aid:
+            return False, "ASSUMPTION missing assumption_id"
+        if aid not in assumptions_register:
+            return False, f"ASSUMPTION {aid!r} not in notes assumptions register"
+        return True, None
+    if claim.label in ("FACT", "ESTIMATE", "RECOMMENDATION"):
+        if claim.source_url or claim.calc_id:
+            return True, None
+        return False, "missing source_url or calc_id"
+    return False, "invalid label"
 
 
 def _collect_claims(payload: RoadmapPayload) -> list[Claim]:
@@ -229,18 +243,25 @@ def _has_promise_words(payload: RoadmapPayload) -> list[str]:
     return hits
 
 
-def run_check4(payload: RoadmapPayload) -> CheckResult:
+def run_check4(
+    payload: RoadmapPayload,
+    *,
+    assumptions_register: dict[str, str] | None = None,
+) -> CheckResult:
     """
-    Share gate: labels, sources, mandatory referrals, no promise words.
+    Share gate: labels, traceability, mandatory referrals, no promise words.
 
+    Pass assumptions_register from AgentNotes so ASSUMPTION claims can point at A1, A2, …
     One fix loop is handled in the harness; this function only evaluates once.
     """
+    register = assumptions_register or {}
     issues: list[str] = []
     for claim in _collect_claims(payload):
         if claim.label not in ("FACT", "ESTIMATE", "ASSUMPTION", "RECOMMENDATION"):
             issues.append(f"Unlabeled or invalid label on claim: {claim.text[:60]}")
-        if not _claim_has_source(claim):
-            issues.append(f"Claim missing source_url or calc_id: {claim.text[:60]}")
+        ok, trace_issue = _claim_traceability_ok(claim, register)
+        if not ok:
+            issues.append(f"Claim {trace_issue}: {claim.text[:60]}")
         if not claim.confidence:
             issues.append(f"Claim missing confidence: {claim.text[:60]}")
 

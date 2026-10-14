@@ -9,9 +9,23 @@ from __future__ import annotations
 from agent.claims import Claim, RoadmapPayload
 
 
-def _format_claim(claim: Claim) -> str:
-    """One bullet with label, confidence, and traceability."""
+def _format_claim(claim: Claim, *, section_id: str = "") -> str:
+    """
+    One bullet with label, confidence, and traceability for download and UI.
+
+    Section 3 lists assumptions by register id; section 8 keeps source/calc for actions.
+    """
+    if claim.label == "ASSUMPTION" and claim.assumption_id:
+        extra = ""
+        if claim.source_url or claim.calc_id:
+            opt = claim.calc_id or claim.source_url
+            extra = f" — optional source/calc: `{opt}`"
+        return (
+            f"- **{claim.label}** ({claim.confidence}) [{claim.assumption_id}]: {claim.text}"
+            f"{extra}"
+        )
     trace = claim.calc_id or claim.source_url or "n/a"
+    _ = section_id  # reserved for section-specific layout later (sections 3 and 8 in v0)
     return (
         f"- **{claim.label}** ({claim.confidence}): {claim.text} "
         f"— source/calc: `{trace}`"
@@ -31,7 +45,7 @@ def render_roadmap_markdown(payload: RoadmapPayload) -> str:
             lines.append(f"*{section.stand_in_note}*")
         lines.append("")
         for claim in section.claims:
-            lines.append(_format_claim(claim))
+            lines.append(_format_claim(claim, section_id=section.section_id))
         lines.append("")
 
     lines.append("---")

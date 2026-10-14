@@ -139,5 +139,11 @@ class AnthropicLLM(LLMClient):
         # Tool results are added later via submit_tool_result when the harness has real data.
 
         if name in ("write_roadmap", "write_answer"):
-            return LLMStep(kind="final", tool_name=name, tool_input=tool_input)
+            # Keep tool_use_id so the harness can answer this tool_use before a Check 4 retry.
+            return LLMStep(
+                kind="final",
+                tool_name=name,
+                tool_input=tool_input,
+                tool_use_id=block.id,
+            )
         return LLMStep(kind="tool", tool_name=name, tool_input=tool_input, tool_use_id=block.id)

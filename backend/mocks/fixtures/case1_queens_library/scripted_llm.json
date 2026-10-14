@@ -50,7 +50,9 @@
           "annual_solar_kwh": 60000,
           "avg_rate_usd_per_kwh": 0.22
         },
-        "assumption_ids": []
+        "assumption_ids": [
+          "A3"
+        ]
       }
     },
     {
@@ -107,16 +109,16 @@
               "title": "Assumptions register",
               "claims": [
                 {
-                  "text": "A2: Usable roof fraction 0.55 for setbacks and mechanical zones.",
+                  "text": "Usable roof fraction 0.55 for setbacks and mechanical zones.",
                   "label": "ASSUMPTION",
                   "confidence": "medium",
-                  "source_url": "session://profile"
+                  "assumption_id": "A2"
                 },
                 {
-                  "text": "A3: About 66 sq ft per kW for flat commercial array layout.",
+                  "text": "About 66 sq ft per kW for flat commercial array layout.",
                   "label": "ASSUMPTION",
                   "confidence": "medium",
-                  "source_url": "internal://calculate"
+                  "assumption_id": "A3"
                 }
               ]
             },

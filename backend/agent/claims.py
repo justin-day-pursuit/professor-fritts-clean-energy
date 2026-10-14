@@ -32,15 +32,21 @@ PROMISE_WORDS = ("guarantee", "will save", "guaranteed savings")
 
 
 class Claim(BaseModel):
-    """One labeled statement with traceability to a source or calculation id."""
+    """
+    One labeled statement with traceability rules enforced in Check 4.
+
+    FACT, ESTIMATE, and RECOMMENDATION need source_url or calc_id.
+    ASSUMPTION needs assumption_id (A1, A2, …) that exists in the run notes register.
+    """
 
     text: str
     label: Label
     confidence: Confidence
     source_url: str | None = None
     calc_id: str | None = None
+    assumption_id: str | None = None
 
-    @field_validator("source_url", "calc_id", mode="before")
+    @field_validator("source_url", "calc_id", "assumption_id", mode="before")
     @classmethod
     def empty_to_none(cls, v: Any) -> Any:
         if v == "":

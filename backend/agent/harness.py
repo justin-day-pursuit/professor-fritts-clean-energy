@@ -318,7 +318,7 @@ def run_harness(
                 )
                 return run
 
-            check4 = run_check4(roadmap_payload)
+            check4 = run_check4(roadmap_payload, assumptions_register=notes.assumptions)
             seq = _append_check_event(run, seq, "check4", check4)
 
             if not check4.get("passed") and not fix_attempted:
@@ -332,6 +332,13 @@ def run_harness(
                     "Check 4 rejected the roadmap. Fix every issue below and call write_roadmap again:\n"
                     + "\n".join(f"- {item}" for item in issues)
                 )
+                # Anthropic requires a tool_result for the pending write_* before the next request.
+                if step.tool_use_id:
+                    llm.submit_tool_result(
+                        step.tool_use_id,
+                        json.dumps({"ok": False, "check4_issues": issues}),
+                        notes.summarize_for_llm(),
+                    )
                 llm.prepare_check4_retry(issues, user_message)
                 services.append_event(
                     run,

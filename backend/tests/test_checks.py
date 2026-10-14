@@ -115,3 +115,80 @@ def test_check4_rejects_missing_referrals():
 def test_check4_passes_good_roadmap():
     result = run_check4(_good_roadmap())
     assert result["passed"]
+
+
+def test_check4_assumption_requires_register_id():
+    register = {"A1": "Registered assumption"}
+    missing_id = RoadmapPayload(
+        sections=[
+            RoadmapSection(
+                section_id="3",
+                title="Assumptions",
+                claims=[
+                    Claim(
+                        text="No id field",
+                        label="ASSUMPTION",
+                        confidence="medium",
+                    )
+                ],
+            ),
+            _good_roadmap().sections[1],
+        ]
+    )
+    assert not run_check4(missing_id, assumptions_register=register)["passed"]
+
+    unknown_id = RoadmapPayload(
+        sections=[
+            RoadmapSection(
+                section_id="3",
+                title="Assumptions",
+                claims=[
+                    Claim(
+                        text="Bad link",
+                        label="ASSUMPTION",
+                        confidence="medium",
+                        assumption_id="A9",
+                    )
+                ],
+            ),
+            _good_roadmap().sections[1],
+        ]
+    )
+    assert not run_check4(unknown_id, assumptions_register=register)["passed"]
+
+    valid = RoadmapPayload(
+        sections=[
+            RoadmapSection(
+                section_id="3",
+                title="Assumptions",
+                claims=[
+                    Claim(
+                        text="Registered without source or calc",
+                        label="ASSUMPTION",
+                        confidence="high",
+                        assumption_id="A1",
+                    )
+                ],
+            ),
+            _good_roadmap().sections[1],
+        ]
+    )
+    assert run_check4(valid, assumptions_register=register)["passed"]
+
+
+def test_check4_fact_and_estimate_still_need_source_or_calc():
+    register: dict[str, str] = {}
+    for label in ("FACT", "ESTIMATE"):
+        payload = RoadmapPayload(
+            sections=[
+                RoadmapSection(
+                    section_id="1",
+                    title="Summary",
+                    claims=[
+                        Claim(text=f"{label} without trace", label=label, confidence="high"),
+                    ],
+                ),
+                _good_roadmap().sections[1],
+            ]
+        )
+        assert not run_check4(payload, assumptions_register=register)["passed"]
