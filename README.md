@@ -77,6 +77,8 @@ cd frontend && npm run dev
 
 Open the Next.js URL (default `http://localhost:3000`). Django admin for debugging data lives at `http://localhost:8000/admin/` when `DJANGO_DEBUG=true`.
 
+The UI is a **single page**: intake and document upload on the left, chat in the center, and Run log / Roadmap tabs on the right. Click **Load Dana's example** to fill Dana's Queens library intake (the same `case1_queens_library` fixtures as `run_case`) and pre-fill her question, then send it in chat. `./scripts/dev.sh` reads `LLM_PROVIDER` from `.env` and does not override it; set `LLM_PROVIDER=scripted` there for the fixture walkthrough without an Anthropic key. The manual uvicorn command below already sets scripted mode.
+
 For scripted eval without the browser, use `run_case` below.
 
 ### run_case
