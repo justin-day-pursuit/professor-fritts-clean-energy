@@ -28,9 +28,12 @@ export interface ChatPanelProps {
   busy: boolean;
   draft?: string;
   onDraftChange?: (text: string) => void;
+  /** Intake fields still empty; while any remain, sending is blocked and they are listed under the box. */
+  missingFields?: string[];
 }
 
-export function ChatPanel({ messages, onSend, busy, draft, onDraftChange }: ChatPanelProps) {
+export function ChatPanel({ messages, onSend, busy, draft, onDraftChange, missingFields = [] }: ChatPanelProps) {
+  const blocked = missingFields.length > 0;
   const [localDraft, setLocalDraft] = useState("");
   const text = draft ?? localDraft;
   const setText = onDraftChange ?? setLocalDraft;
@@ -42,7 +45,7 @@ export function ChatPanel({ messages, onSend, busy, draft, onDraftChange }: Chat
    */
   const submit = async () => {
     const trimmed = text.trim();
-    if (!trimmed || busy) return;
+    if (!trimmed || busy || blocked) return;
     setText("");
     try {
       await onSend(trimmed);
@@ -106,7 +109,12 @@ export function ChatPanel({ messages, onSend, busy, draft, onDraftChange }: Chat
             }
           }}
         />
-        <Button type="button" disabled={busy || !text.trim()} onClick={() => void submit()}>
+        {blocked && (
+          <p className="w-full text-xs text-muted-foreground">
+            Fill in the intake first. Still needed: {missingFields.join(", ")}
+          </p>
+        )}
+        <Button type="button" disabled={busy || blocked || !text.trim()} onClick={() => void submit()}>
           Send
         </Button>
       </CardFooter>

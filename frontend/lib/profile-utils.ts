@@ -53,6 +53,24 @@ export function apiToProfile(data: Record<string, unknown>): IntakeProfile {
   return profile;
 }
 
+/**
+ * Fields the live tools cannot work without: the solar lookup needs the address and borough
+ * to find the building and the roof area to size the array. To require another field, add a
+ * row here and a "*" on its label in intake-form.tsx.
+ */
+const REQUIRED_FIELDS: { label: string; value: (p: IntakeProfile) => unknown }[] = [
+  { label: "Address", value: (p) => p.address },
+  { label: "Borough or county", value: (p) => p.borough ?? p.county },
+  { label: "Roof area", value: (p) => p.roof_area_sqft },
+];
+
+/** Labels of required intake fields that are still empty; an empty list means the form can be sent. */
+export function missingRequiredFields(profile: IntakeProfile): string[] {
+  return REQUIRED_FIELDS.filter(({ value }) => String(value(profile) ?? "").trim() === "").map(
+    ({ label }) => label,
+  );
+}
+
 export function emptyProfile(): IntakeProfile {
   return { state: "NY", budget_type: "capital" };
 }

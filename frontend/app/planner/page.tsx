@@ -22,7 +22,7 @@ import {
   uploadDocument,
 } from "@/lib/api";
 import { DANA_DEFAULT_QUESTION, DANA_INTAKE } from "@/lib/dana-intake";
-import { apiToProfile, emptyProfile, profileToApi } from "@/lib/profile-utils";
+import { apiToProfile, emptyProfile, missingRequiredFields, profileToApi } from "@/lib/profile-utils";
 import type { Claim, DocumentResponse, IntakeProfile, RunResponse } from "@/lib/types";
 import { useCallback, useState } from "react";
 
@@ -253,6 +253,7 @@ export default function Home() {
           messages={messages}
           onSend={handleSend}
           busy={busy}
+          missingFields={missingRequiredFields(profile)}
           draft={chatDraft}
           onDraftChange={setChatDraft}
         />
