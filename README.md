@@ -19,7 +19,9 @@ v1 scope: energy efficiency and solar PV (battery storage only for solar resilie
 
 ## Setup
 
-Copy `.env.example` to `.env` and fill in your API keys. Never commit `.env`.
+1. Copy `.env.example` to `.env` at the project root and paste your Anthropic API key into `ANTHROPIC_API_KEY`. Never commit `.env`.
+2. Install the web app: `cd frontend && npm install`
+3. Install the Python backend tools: `cd backend && python3.12 -m venv .venv`, activate the virtual environment, then `pip install -r requirements.txt`
 
 ## Team
 
