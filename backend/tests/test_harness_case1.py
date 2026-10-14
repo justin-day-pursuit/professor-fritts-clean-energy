@@ -41,6 +41,9 @@ def test_harness_case1_scripted():
     run = services.get_run_with_events(run.pk)
 
     assert run.status in (Run.Status.DONE, Run.Status.PARTIAL)
+    last = list(run.events.all())[-1]
+    assert last.kind == "final"
+    assert last.payload.get("ended") is True
     tool_calls = [e for e in run.events.all() if e.kind == "tool_call"]
     tool_results = [e for e in run.events.all() if e.kind == "tool_result"]
     assert len(tool_calls) >= 3

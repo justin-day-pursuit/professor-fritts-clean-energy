@@ -56,6 +56,40 @@ def _append_check_event(run: Run, seq: int, check_name: str, result: dict) -> in
     return seq + 1
 
 
+def _close_run(
+    run: Run,
+    *,
+    seq: int,
+    status: str,
+    output: dict,
+    t0: float,
+    tool_call_count: int = 0,
+    flags: dict | None = None,
+) -> Run:
+    """
+    End a run that stopped short of a roadmap and record that thinking finished.
+
+    Pass the next free event number. If you just wrote an error at `seq`, pass `seq + 1`
+    so the final line does not reuse that number. The dev trace page looks for this
+    `final` event even when the status is failed or needs_input.
+    """
+    services.append_event(
+        run,
+        seq=seq,
+        kind="final",
+        payload={"status": status, "ended": True},
+    )
+    services.finish_run(
+        run,
+        status=status,
+        output=output,
+        flags=flags,
+        tool_call_count=tool_call_count,
+        elapsed_seconds=time.monotonic() - t0,
+    )
+    return run
+
+
 def _finish_with_roadmap(
     run: Run,
     session: Session,
@@ -89,7 +123,7 @@ def _finish_with_roadmap(
         notes.flags.append("check4_partial")
         flags["issues"] = check4.get("details", {}).get("issues", [])
 
-    services.append_event(run, seq=seq, kind="final", payload={"status": status})
+    services.append_event(run, seq=seq, kind="final", payload={"status": status, "ended": True})
     if final_tool_name == "write_answer" and answer_summary:
         assistant_text = render_follow_up_markdown(answer_summary, roadmap_payload)
     else:
@@ -161,7 +195,9 @@ def _finish_think_cap_stop(
             skip_check4_partial_flag=True,
         )
 
-    services.append_event(run, seq=seq, kind="final", payload={"status": Run.Status.PARTIAL})
+    services.append_event(
+        run, seq=seq, kind="final", payload={"status": Run.Status.PARTIAL, "ended": True}
+    )
     services.finish_run(
         run,
         status=Run.Status.PARTIAL,
@@ -206,32 +242,32 @@ def run_harness(
         if reason == "needs_input":
             question = c1_details.get("question") or check1.get("message", "")
             services.add_message(session, role="assistant", content=question, run=run)
-            services.finish_run(
+            return _close_run(
                 run,
+                seq=seq,
                 status=Run.Status.NEEDS_INPUT,
                 output={"question": question},
-                elapsed_seconds=time.monotonic() - t0,
+                t0=t0,
             )
-            return run
-        services.finish_run(
+        return _close_run(
             run,
+            seq=seq,
             status=Run.Status.FAILED,
             output={"error": check1.get("message")},
-            elapsed_seconds=time.monotonic() - t0,
+            t0=t0,
         )
-        return run
 
     try:
         llm = get_llm_client(provider, fixture_case=session.fixture_case)
     except LLMConfigurationError as exc:
         services.append_event(run, seq=seq, kind="error", payload={"message": exc.user_message()})
-        services.finish_run(
+        return _close_run(
             run,
+            seq=seq + 1,
             status=Run.Status.FAILED,
             output={"error": exc.user_message()},
-            elapsed_seconds=time.monotonic() - t0,
+            t0=t0,
         )
-        return run
 
     llm.reset()
     notes = AgentNotes()
@@ -249,14 +285,14 @@ def run_harness(
     while True:
         if limits.timeout_exceeded():
             services.append_event(run, seq=seq, kind="error", payload={"message": "timeout"})
-            services.finish_run(
+            return _close_run(
                 run,
+                seq=seq + 1,
                 status=Run.Status.FAILED,
                 output={"error": "Run timed out"},
+                t0=t0,
                 tool_call_count=limits.tool_call_count,
-                elapsed_seconds=time.monotonic() - t0,
             )
-            return run
 
         try:
             step: LLMStep = llm.next_step(
@@ -268,13 +304,14 @@ def run_harness(
             )
         except LLMConfigurationError as exc:
             services.append_event(run, seq=seq, kind="error", payload={"message": exc.user_message()})
-            services.finish_run(
+            return _close_run(
                 run,
+                seq=seq + 1,
                 status=Run.Status.FAILED,
                 output={"error": exc.user_message()},
-                elapsed_seconds=time.monotonic() - t0,
+                t0=t0,
+                tool_call_count=limits.tool_call_count,
             )
-            return run
         except RuntimeError as exc:
             services.append_event(run, seq=seq, kind="error", payload={"message": str(exc)})
             if roadmap_payload is not None:
@@ -291,13 +328,14 @@ def run_harness(
                     limits=limits,
                     t0=t0,
                 )
-            services.finish_run(
+            return _close_run(
                 run,
+                seq=seq + 1,
                 status=Run.Status.FAILED,
                 output={"error": str(exc)},
-                elapsed_seconds=time.monotonic() - t0,
+                t0=t0,
+                tool_call_count=limits.tool_call_count,
             )
-            return run
 
         fix_context = None
 
@@ -322,13 +360,14 @@ def run_harness(
                 kind="error",
                 payload={"message": step.message or "LLM sequence exhausted."},
             )
-            services.finish_run(
+            return _close_run(
                 run,
+                seq=seq + 1,
                 status=Run.Status.FAILED,
                 output={"error": step.message or "LLM sequence exhausted."},
-                elapsed_seconds=time.monotonic() - t0,
+                t0=t0,
+                tool_call_count=limits.tool_call_count,
             )
-            return run
 
         if step.kind == "think":
             consecutive_thinks += 1
@@ -358,14 +397,14 @@ def run_harness(
             check2 = run_check2(final_tool_name, step.tool_input or {}, limits, is_final_tool=True)
             seq = _append_check_event(run, seq, "check2", check2)
             if not check2.get("passed"):
-                services.finish_run(
+                return _close_run(
                     run,
+                    seq=seq,
                     status=Run.Status.FAILED,
                     output={"error": check2.get("message")},
+                    t0=t0,
                     tool_call_count=limits.tool_call_count,
-                    elapsed_seconds=time.monotonic() - t0,
                 )
-                return run
 
             try:
                 if final_tool_name == "write_answer":
@@ -391,14 +430,14 @@ def run_harness(
                     kind="error",
                     payload={"validation_error": exc.errors(include_url=False)},
                 )
-                services.finish_run(
+                return _close_run(
                     run,
+                    seq=seq + 1,
                     status=Run.Status.FAILED,
                     output={"error": "Final roadmap payload failed validation."},
+                    t0=t0,
                     tool_call_count=limits.tool_call_count,
-                    elapsed_seconds=time.monotonic() - t0,
                 )
-                return run
 
             check4 = run_check4(roadmap_payload, assumptions_register=notes.assumptions)
             last_check4 = check4
@@ -455,14 +494,14 @@ def run_harness(
         if not check2.get("passed"):
             if check2.get("code") == "invalid_input":
                 limits.record_failed_tool_attempt(tool_name)
-            services.finish_run(
+            return _close_run(
                 run,
+                seq=seq,
                 status=Run.Status.FAILED,
                 output={"error": check2.get("message")},
+                t0=t0,
                 tool_call_count=limits.tool_call_count,
-                elapsed_seconds=time.monotonic() - t0,
             )
-            return run
 
         limits.record_successful_tool_call(tool_name)
         services.append_event(
@@ -483,14 +522,14 @@ def run_harness(
         except Exception as exc:
             limits.record_failed_tool_attempt(tool_name)
             services.append_event(run, seq=seq, kind="error", payload={"message": str(exc)})
-            services.finish_run(
+            return _close_run(
                 run,
+                seq=seq + 1,
                 status=Run.Status.FAILED,
                 output={"error": str(exc)},
+                t0=t0,
                 tool_call_count=limits.tool_call_count,
-                elapsed_seconds=time.monotonic() - t0,
             )
-            return run
 
         spec = get_tool_spec(tool_name)
         kind = spec.freshness_kind if spec else "default"
@@ -501,14 +540,14 @@ def run_harness(
         seq = _append_check_event(run, seq, "check3", check3)
         if not check3.get("passed"):
             limits.record_failed_tool_attempt(tool_name)
-            services.finish_run(
+            return _close_run(
                 run,
+                seq=seq,
                 status=Run.Status.FAILED,
                 output={"error": check3.get("message"), "flags": check3.get("flags", [])},
+                t0=t0,
                 tool_call_count=limits.tool_call_count,
-                elapsed_seconds=time.monotonic() - t0,
             )
-            return run
 
         for flag in check3.get("flags") or check3.get("details", {}).get("flags") or []:
             if flag not in notes.flags:

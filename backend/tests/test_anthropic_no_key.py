@@ -17,7 +17,11 @@ def test_anthropic_missing_key_message(monkeypatch):
     profile = {"state": "NY", "budget_amount": 1, "goal": "cut"}
     session = services.create_session(profile=profile)
     run = run_harness(session, "hi", llm_provider="anthropic")
+    run = services.get_run_with_events(run.pk)
     assert run.status == Run.Status.FAILED
+    last = list(run.events.all())[-1]
+    assert last.kind == "final"
+    assert last.payload.get("ended") is True
     err = (run.output or {}).get("error", "")
     assert "ANTHROPIC_API_KEY" in err
     assert "Paste" in err or "paste" in err.lower()
