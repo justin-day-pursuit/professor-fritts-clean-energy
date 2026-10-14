@@ -34,6 +34,13 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    @app.get("/")
+    def root() -> dict[str, str]:
+        """Root endpoint confirming service is alive for health checks and browsers."""
+        return {"status": "ok", "service": "professor-fritts-backend", "version": "0.1.0"}
+
+    # Expose health at both /health (Render default) and /api/health.
+    app.include_router(health.router)
     app.include_router(health.router, prefix="/api")
     app.include_router(sessions.router, prefix="/api")
     app.include_router(documents.router, prefix="/api")

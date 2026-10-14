@@ -3,6 +3,7 @@ services:
     name: professor-fritts-backend
     runtime: python
     rootDir: backend
+    healthCheckPath: "/health"
     buildFilter:
       paths:
         - backend/**
