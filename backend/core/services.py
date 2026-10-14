@@ -20,9 +20,14 @@ from core.models import Document, Message, Run, RunEvent, Session
 def create_session(
     profile: dict | None = None,
     status: str = "active",
+    fixture_case: str = "case1_queens_library",
 ) -> Session:
     """Start a new planning session with an optional intake profile dict."""
-    return Session.objects.create(profile=profile or {}, status=status)
+    return Session.objects.create(
+        profile=profile or {},
+        status=status,
+        fixture_case=fixture_case,
+    )
 
 
 def add_document(
@@ -133,6 +138,20 @@ def get_run_with_events(run_id: int) -> Run:
     return Run.objects.prefetch_related("events").get(pk=run_id)
 
 
+def get_session(session_id: UUID) -> Session:
+    """Fetch one session by UUID for API routes."""
+    return Session.objects.get(pk=session_id)
+
+
+def update_session_profile(session: Session | UUID, profile: dict) -> Session:
+    """Replace the intake profile JSON (PUT /profile); does not start a run."""
+    if isinstance(session, UUID):
+        session = Session.objects.get(pk=session)
+    session.profile = profile
+    session.save(update_fields=["profile"])
+    return session
+
+
 # Async-friendly aliases for FastAPI route handlers and async tests.
 create_session_async = sync_to_async(create_session)
 add_document_async = sync_to_async(add_document)
@@ -141,3 +160,5 @@ create_run_async = sync_to_async(create_run)
 append_event_async = sync_to_async(append_event)
 finish_run_async = sync_to_async(finish_run)
 get_run_with_events_async = sync_to_async(get_run_with_events)
+get_session_async = sync_to_async(get_session)
+update_session_profile_async = sync_to_async(update_session_profile)

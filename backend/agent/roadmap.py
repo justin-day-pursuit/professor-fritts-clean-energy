@@ -1,0 +1,47 @@
+"""
+Render the structured roadmap payload to Markdown and JSON for download and UI.
+
+Section numbers follow the product PRD so v2 can fill in 4, 7, and 11 later.
+"""
+
+from __future__ import annotations
+
+from agent.claims import Claim, RoadmapPayload
+
+
+def _format_claim(claim: Claim) -> str:
+    """One bullet with label, confidence, and traceability."""
+    trace = claim.calc_id or claim.source_url or "n/a"
+    return (
+        f"- **{claim.label}** ({claim.confidence}): {claim.text} "
+        f"— source/calc: `{trace}`"
+    )
+
+
+def render_roadmap_markdown(payload: RoadmapPayload) -> str:
+    """
+    Build human-readable Markdown with section headers and labeled claims.
+
+    Edit heading text here when the product PRD section titles change.
+    """
+    lines = ["# Professor Fritts — Priority roadmap (v0 stand-in)", ""]
+    for section in payload.sections:
+        lines.append(f"## {section.section_id}. {section.title}")
+        if section.stand_in_note:
+            lines.append(f"*{section.stand_in_note}*")
+        lines.append("")
+        for claim in section.claims:
+            lines.append(_format_claim(claim))
+        lines.append("")
+
+    lines.append("---")
+    lines.append(f"*{payload.footer_note}*")
+    return "\n".join(lines)
+
+
+def render_roadmap_json(payload: RoadmapPayload) -> dict:
+    """JSON-serializable dict mirroring the structured payload plus rendered markdown."""
+    return {
+        "roadmap": payload.model_dump(),
+        "markdown": render_roadmap_markdown(payload),
+    }

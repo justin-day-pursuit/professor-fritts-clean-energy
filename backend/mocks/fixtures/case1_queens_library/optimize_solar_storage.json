@@ -1,0 +1,15 @@
+{
+  "source_url": "https://example.test/fictional/pvwatts-v0",
+  "retrieved_at": "2025-10-01T12:00:00Z",
+  "dataset_version": "case1-v0-mock-1",
+  "mock": true,
+  "tool": "optimize_solar_storage",
+  "data": {
+    "battery_kw": 120,
+    "battery_kwh": 960,
+    "critical_load_hours": 8,
+    "notes": "Fictional REopt stand-in sized for 8 hours cooling-center backup."
+  },
+  "stale": false,
+  "flags": []
+}
