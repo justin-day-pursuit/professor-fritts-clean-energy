@@ -59,3 +59,18 @@ def render_roadmap_json(payload: RoadmapPayload) -> dict:
         "roadmap": payload.model_dump(),
         "markdown": render_roadmap_markdown(payload),
     }
+
+
+def render_follow_up_markdown(summary: str, payload: RoadmapPayload) -> str:
+    """
+    Build chat Markdown for write_answer: lead with the summary, then labeled claims.
+
+    If the product changes how follow-ups look, edit the summary line and reuse render_roadmap_markdown
+    for the claim sections below it.
+    """
+    body = render_roadmap_markdown(payload)
+    # Follow-ups use a shorter header block; strip the default roadmap title for readability.
+    if body.startswith("# Professor Fritts"):
+        _, _, rest = body.partition("\n\n")
+        body = rest if rest else body
+    return f"{summary.strip()}\n\n{body}".strip()

@@ -118,6 +118,11 @@ def test_check4_passes_good_roadmap():
 
 
 def test_check4_assumption_requires_register_id():
+    """
+    Check 4 ASSUMPTION rules: need a register id, and it must exist in notes.
+
+    If Justin changes Amendment 2, update the failing and passing Claim examples here first.
+    """
     register = {"A1": "Registered assumption"}
     missing_id = RoadmapPayload(
         sections=[
@@ -177,6 +182,11 @@ def test_check4_assumption_requires_register_id():
 
 
 def test_check4_fact_and_estimate_still_need_source_or_calc():
+    """
+    FACT and ESTIMATE still require source_url or calc_id even when ASSUMPTION is relaxed.
+
+    Add another label to the loop only if Check 4 traceability rules change for that label.
+    """
     register: dict[str, str] = {}
     for label in ("FACT", "ESTIMATE"):
         payload = RoadmapPayload(

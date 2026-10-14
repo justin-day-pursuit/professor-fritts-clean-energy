@@ -49,6 +49,12 @@ class Claim(BaseModel):
     @field_validator("source_url", "calc_id", "assumption_id", mode="before")
     @classmethod
     def empty_to_none(cls, v: Any) -> Any:
+        """
+        Treat blank strings from the LLM as missing optional fields.
+
+        Check 4 and the database expect None when a claim omits source, calc, or assumption id;
+        if you add another optional string field on Claim, include its name in this validator list.
+        """
         if v == "":
             return None
         return v

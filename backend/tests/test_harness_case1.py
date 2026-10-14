@@ -168,6 +168,11 @@ class _Check4RetryRecordingLLM(LLMClient):
 
 
 def test_harness_submits_tool_result_before_check4_retry(monkeypatch):
+    """
+    After a failed Check 4, the harness must close the Anthropic tool_use before retry.
+
+    If the retry wiring moves, keep asserting one submit_tool_result with check4_issues in the payload.
+    """
     fake = _Check4RetryRecordingLLM()
     monkeypatch.setattr("agent.harness.get_llm_client", lambda _provider, fixture_case=None: fake)
 
@@ -179,3 +184,174 @@ def test_harness_submits_tool_result_before_check4_retry(monkeypatch):
     assert fake.submit_calls[0][0] == "toolu_check4_retry_test"
     assert "check4_issues" in fake.submit_calls[0][1]
     assert run.status == Run.Status.DONE
+
+
+def _referral_claims_for_check4() -> list[Claim]:
+    return [
+        Claim(
+            text="PE/RA structural analysis required.",
+            label="RECOMMENDATION",
+            confidence="high",
+            source_url="session://profile",
+        ),
+        Claim(
+            text="Roof condition survey required.",
+            label="RECOMMENDATION",
+            confidence="high",
+            source_url="session://profile",
+        ),
+        Claim(
+            text="Licensed electrician for interconnection.",
+            label="RECOMMENDATION",
+            confidence="high",
+            source_url="session://profile",
+        ),
+        Claim(
+            text="FDNY rooftop access review.",
+            label="RECOMMENDATION",
+            confidence="high",
+            source_url="session://profile",
+        ),
+        Claim(
+            text="Con Edison utility interconnection review.",
+            label="RECOMMENDATION",
+            confidence="high",
+            source_url="session://profile",
+        ),
+    ]
+
+
+class _WriteAnswerSummaryLLM(LLMClient):
+    """Returns one write_answer final so we can assert the summary is stored."""
+
+    def reset(self) -> None:
+        pass
+
+    def next_step(
+        self,
+        *,
+        system_prompt: str,
+        user_message: str,
+        notes_summary: str,
+        tool_schemas: list[dict[str, Any]],
+        fix_context: str | None = None,
+    ) -> LLMStep:
+        _ = (system_prompt, user_message, notes_summary, tool_schemas, fix_context)
+        summary = "Combine efficiency upgrades with solar; solar alone will not reach 30%."
+        claims = [
+            Claim(
+                text="Budget remains USD 400,000 from intake.",
+                label="FACT",
+                confidence="high",
+                source_url="session://profile",
+            ),
+            *_referral_claims_for_check4(),
+        ]
+        return LLMStep(
+            kind="final",
+            tool_name="write_answer",
+            tool_input={"summary": summary, "claims": [c.model_dump() for c in claims]},
+        )
+
+
+def test_write_answer_summary_in_run_output(monkeypatch):
+    monkeypatch.setattr(
+        "agent.harness.get_llm_client",
+        lambda _provider, fixture_case=None: _WriteAnswerSummaryLLM(),
+    )
+    profile = {"state": "NY", "budget_amount": 100, "goal": "cut 30%"}
+    session = services.create_session(profile=profile)
+    run = run_harness(session, "follow up", llm_provider="anthropic")
+
+    expected = "Combine efficiency upgrades with solar; solar alone will not reach 30%."
+    assert (run.output or {}).get("summary") == expected
+    assert expected in (run.output or {}).get("markdown", "")
+    assert run.status == Run.Status.DONE
+
+
+class _ThinkCapAfterPayloadLLM(LLMClient):
+    """
+    First turn submits a failing final (payload exists), then think-only until the cap.
+
+    Mirrors Check 4 fix loop followed by stuck thinking.
+    """
+
+    def __init__(self) -> None:
+        self._step = 0
+
+    def reset(self) -> None:
+        self._step = 0
+
+    def prepare_check4_retry(self, issues: list[str], user_message: str) -> None:
+        _ = (issues, user_message)
+
+    def next_step(
+        self,
+        *,
+        system_prompt: str,
+        user_message: str,
+        notes_summary: str,
+        tool_schemas: list[dict[str, Any]],
+        fix_context: str | None = None,
+    ) -> LLMStep:
+        _ = (system_prompt, user_message, notes_summary, tool_schemas, fix_context)
+        self._step += 1
+        if self._step == 1:
+            bad = RoadmapPayload(
+                sections=[
+                    RoadmapSection(
+                        section_id="1",
+                        title="Summary",
+                        claims=[
+                            Claim(
+                                text="Missing provenance",
+                                label="FACT",
+                                confidence="high",
+                            )
+                        ],
+                    )
+                ]
+            )
+            return LLMStep(
+                kind="final",
+                tool_name="write_roadmap",
+                tool_input={"roadmap": bad.model_dump()},
+            )
+        return LLMStep(kind="think", message=f"Stuck thinking step {self._step}")
+
+
+def test_think_cap_after_payload_finishes_partial(monkeypatch):
+    monkeypatch.setattr(
+        "agent.harness.get_llm_client",
+        lambda _provider, fixture_case=None: _ThinkCapAfterPayloadLLM(),
+    )
+    profile = {"state": "NY", "budget_amount": 100, "goal": "cut 30%"}
+    session = services.create_session(profile=profile)
+    run = run_harness(session, "think cap test", llm_provider="anthropic")
+
+    assert run.status == Run.Status.PARTIAL
+    assert (run.flags or {}).get("think_cap_exceeded") is True
+    assert "roadmap" in (run.output or {})
+    assert "think_cap_exceeded" in (run.output or {}).get("notes", {}).get("flags", [])
+
+
+def test_think_cap_without_payload_finishes_partial_no_roadmap(monkeypatch):
+    class _ThinkOnlyLLM(LLMClient):
+        def reset(self) -> None:
+            pass
+
+        def next_step(self, **kwargs: Any) -> LLMStep:
+            _ = kwargs
+            return LLMStep(kind="think", message="still thinking")
+
+    monkeypatch.setattr(
+        "agent.harness.get_llm_client",
+        lambda _provider, fixture_case=None: _ThinkOnlyLLM(),
+    )
+    profile = {"state": "NY", "budget_amount": 100, "goal": "cut 30%"}
+    session = services.create_session(profile=profile)
+    run = run_harness(session, "think only", llm_provider="anthropic")
+
+    assert run.status == Run.Status.PARTIAL
+    assert (run.flags or {}).get("think_cap_exceeded") is True
+    assert "roadmap" not in (run.output or {})

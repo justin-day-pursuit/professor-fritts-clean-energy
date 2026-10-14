@@ -20,7 +20,7 @@ from agent.limits import MAX_CONSECUTIVE_THINK_STEPS, RunLimits
 from agent.llm.base import LLMConfigurationError, LLMStep
 from agent.llm.factory import get_llm_client
 from agent.notes import AgentNotes
-from agent.roadmap import render_roadmap_json, render_roadmap_markdown
+from agent.roadmap import render_follow_up_markdown, render_roadmap_json, render_roadmap_markdown
 from core.models import Run, Session
 from core import services
 from tools.cache import is_stale
@@ -68,31 +68,105 @@ def _finish_with_roadmap(
     check4: dict,
     limits: RunLimits,
     t0: float,
+    answer_summary: str | None = None,
+    extra_run_flags: dict[str, Any] | None = None,
+    skip_check4_partial_flag: bool = False,
 ) -> Run:
     """
     Shared exit path after Check 4 — store markdown/json, assistant message, and run status.
 
     Call this for done, partial, or exhausted scripted fix with an existing roadmap object.
+    Pass answer_summary when the final tool was write_answer so the main text is not dropped.
     """
     rendered = render_roadmap_json(roadmap_payload)
+    markdown_out = rendered["markdown"]
+    if final_tool_name == "write_answer" and answer_summary:
+        markdown_out = render_follow_up_markdown(answer_summary, roadmap_payload)
     flags: dict[str, Any] = {"check4": check4}
-    if status != Run.Status.DONE:
+    if extra_run_flags:
+        flags.update(extra_run_flags)
+    if status != Run.Status.DONE and not skip_check4_partial_flag:
         notes.flags.append("check4_partial")
         flags["issues"] = check4.get("details", {}).get("issues", [])
 
     services.append_event(run, seq=seq, kind="final", payload={"status": status})
-    assistant_text = render_roadmap_markdown(roadmap_payload)
+    if final_tool_name == "write_answer" and answer_summary:
+        assistant_text = render_follow_up_markdown(answer_summary, roadmap_payload)
+    else:
+        assistant_text = render_roadmap_markdown(roadmap_payload)
+
+    output: dict[str, Any] = {
+        "roadmap": roadmap_payload.model_dump(),
+        "markdown": markdown_out,
+        "final_tool": final_tool_name,
+        "notes": notes.model_dump(),
+    }
+    if answer_summary is not None:
+        output["summary"] = answer_summary
+
     services.add_message(session, role="assistant", content=assistant_text, run=run)
     services.finish_run(
         run,
         status=status,
-        output={
-            "roadmap": roadmap_payload.model_dump(),
-            "markdown": rendered["markdown"],
-            "final_tool": final_tool_name,
-            "notes": notes.model_dump(),
-        },
+        output=output,
         flags=flags,
+        tool_call_count=limits.tool_call_count,
+        elapsed_seconds=time.monotonic() - t0,
+    )
+    return run
+
+
+def _finish_think_cap_stop(
+    run: Run,
+    session: Session,
+    *,
+    seq: int,
+    msg: str,
+    notes: AgentNotes,
+    limits: RunLimits,
+    t0: float,
+    roadmap_payload: RoadmapPayload | None,
+    final_tool_name: str,
+    answer_summary: str | None,
+    check4: dict | None,
+) -> Run:
+    """
+    Stop the run after too many think-only steps — always partial, never a hard failed cap.
+
+    When a roadmap or answer already exists, attach it like other partial exits; otherwise
+    store only flags and a short message (no invented roadmap). Update MAX_CONSECUTIVE_THINK_STEPS
+    in limits.py if the cap changes.
+    """
+    notes.flags.append("think_cap_exceeded")
+    services.append_event(run, seq=seq, kind="error", payload={"message": msg, "think_cap": True})
+    seq += 1
+
+    cap_check4 = check4 or {"passed": False, "message": msg, "code": "think_cap"}
+    extra = {"think_cap_exceeded": True, "stop_reason": "think_cap"}
+
+    if roadmap_payload is not None:
+        return _finish_with_roadmap(
+            run,
+            session,
+            seq=seq,
+            status=Run.Status.PARTIAL,
+            roadmap_payload=roadmap_payload,
+            final_tool_name=final_tool_name,
+            notes=notes,
+            check4=cap_check4,
+            limits=limits,
+            t0=t0,
+            answer_summary=answer_summary,
+            extra_run_flags=extra,
+            skip_check4_partial_flag=True,
+        )
+
+    services.append_event(run, seq=seq, kind="final", payload={"status": Run.Status.PARTIAL})
+    services.finish_run(
+        run,
+        status=Run.Status.PARTIAL,
+        output={"message": msg, "notes": notes.model_dump()},
+        flags=extra,
         tool_call_count=limits.tool_call_count,
         elapsed_seconds=time.monotonic() - t0,
     )
@@ -167,6 +241,8 @@ def run_harness(
     fix_attempted = False
     fix_context: str | None = None
     roadmap_payload: RoadmapPayload | None = None
+    answer_summary: str | None = None
+    last_check4: dict[str, Any] | None = None
     final_tool_name = "write_roadmap"
     consecutive_thinks = 0
 
@@ -260,15 +336,19 @@ def run_harness(
             seq += 1
             if consecutive_thinks >= MAX_CONSECUTIVE_THINK_STEPS:
                 msg = "Too many think steps in a row; stopping this run."
-                services.append_event(run, seq=seq, kind="error", payload={"message": msg})
-                services.finish_run(
+                return _finish_think_cap_stop(
                     run,
-                    status=Run.Status.FAILED,
-                    output={"error": msg},
-                    tool_call_count=limits.tool_call_count,
-                    elapsed_seconds=time.monotonic() - t0,
+                    session,
+                    seq=seq,
+                    msg=msg,
+                    notes=notes,
+                    limits=limits,
+                    t0=t0,
+                    roadmap_payload=roadmap_payload,
+                    final_tool_name=final_tool_name,
+                    answer_summary=answer_summary,
+                    check4=last_check4,
                 )
-                return run
             continue
 
         consecutive_thinks = 0
@@ -290,6 +370,7 @@ def run_harness(
             try:
                 if final_tool_name == "write_answer":
                     ans = WriteAnswerInput.model_validate(step.tool_input or {})
+                    answer_summary = ans.summary
                     roadmap_payload = RoadmapPayload(
                         sections=[
                             RoadmapSection(
@@ -302,6 +383,7 @@ def run_harness(
                 else:
                     wr = WriteRoadmapInput.model_validate(step.tool_input or {})
                     roadmap_payload = wr.roadmap
+                    answer_summary = None
             except ValidationError as exc:
                 services.append_event(
                     run,
@@ -319,6 +401,7 @@ def run_harness(
                 return run
 
             check4 = run_check4(roadmap_payload, assumptions_register=notes.assumptions)
+            last_check4 = check4
             seq = _append_check_event(run, seq, "check4", check4)
 
             if not check4.get("passed") and not fix_attempted:
@@ -361,6 +444,7 @@ def run_harness(
                 check4=check4,
                 limits=limits,
                 t0=t0,
+                answer_summary=answer_summary,
             )
 
         # Regular tool call
