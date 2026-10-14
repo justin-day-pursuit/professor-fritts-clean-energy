@@ -28,6 +28,7 @@ class Session(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self) -> str:
+        # Human label "Session <uuid>" for admin dropdowns and list links; change the f-string to show status or address instead.
         return f"Session {self.id}"
 
 
@@ -48,6 +49,7 @@ class Document(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self) -> str:
+        # Shows the uploaded filename in admin lists; edit return value if you want "filename (session)" instead.
         return self.filename
 
 
@@ -80,6 +82,7 @@ class Run(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self) -> str:
+        # Admin lists use "Run <id> (status)"; tweak the format here if operators need tool_mode in the label.
         return f"Run {self.pk} ({self.status})"
 
 
@@ -107,6 +110,7 @@ class Message(models.Model):
         ordering = ["created_at"]
 
     def __str__(self) -> str:
+        # Short preview "role: first 40 chars" in admin; lengthen the slice or drop role if clutter is a problem.
         return f"{self.role}: {self.content[:40]}"
 
 
@@ -130,4 +134,5 @@ class RunEvent(models.Model):
         ]
 
     def __str__(self) -> str:
+        # Labels each log line as "Event seq (kind) on run …" in admin; reorder words here if seq should come last.
         return f"Event {self.seq} ({self.kind}) on run {self.run_id}"
