@@ -5,6 +5,8 @@
 
 import type {
   DocumentResponse,
+  FixtureListResponse,
+  FixtureRunResponse,
   HealthResponse,
   MessageCreateRequest,
   MessageRunResponse,
@@ -75,6 +77,25 @@ export function getApiBaseUrl(): string {
 
 export async function getHealth(): Promise<HealthResponse> {
   return requestJson<HealthResponse>("/api/health");
+}
+
+/**
+ * Lists mock situations for the landing page. A new folder under
+ * backend/mocks/fixtures appears here without a frontend change.
+ */
+export async function listFixtures(): Promise<FixtureListResponse> {
+  return requestJson<FixtureListResponse>("/api/dev/fixtures");
+}
+
+/**
+ * Runs one fixture through the harness. The server chooses Claude vs the
+ * scripted transcript; this call does not send an LLM provider.
+ */
+export async function runFixture(caseId: string): Promise<FixtureRunResponse> {
+  return requestJson<FixtureRunResponse>(`/api/dev/fixtures/${encodeURIComponent(caseId)}/run`, {
+    method: "POST",
+    body: "{}",
+  });
 }
 
 export async function createSession(body: SessionCreateRequest): Promise<SessionResponse> {

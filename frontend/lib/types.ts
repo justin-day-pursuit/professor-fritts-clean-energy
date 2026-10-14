@@ -82,6 +82,23 @@ export interface MessageRunResponse {
   run: RunResponse;
 }
 
+/** One mock situation from GET /api/dev/fixtures. */
+export interface FixtureSummary {
+  id: string;
+  building_name: string;
+  goal: string;
+  question: string;
+}
+
+export interface FixtureListResponse {
+  fixtures: FixtureSummary[];
+}
+
+/** POST /api/dev/fixtures/{id}/run — the trace, including failed runs. */
+export interface FixtureRunResponse {
+  run: RunResponse;
+}
+
 /** Intake profile fields the left-hand form reads and writes. */
 export interface IntakeProfile {
   address?: string;

@@ -1,277 +1,199 @@
 /**
- * Single-page Professor Fritts planner — intake, chat, and run/roadmap panels.
- * Wires child components to the harness API via frontend/lib/api.ts.
+ * Landing page at /.
+ * Lists mock situations, runs the one you pick, and shows the agent trace.
+ * The full intake form lives at /planner. This page does not choose Claude;
+ * GET /api/health reports whether the server will call Claude or replay the script.
  */
 "use client";
 
-import Image from "next/image";
+import { useEffect, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChatPanel, type ChatMessage } from "@/components/chat-panel";
-import { DocumentUpload } from "@/components/document-upload";
-import { IntakeForm } from "@/components/intake-form";
-import { RoadmapPanel } from "@/components/roadmap-panel";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RunLogPanel } from "@/components/run-log-panel";
-import {
-  ApiError,
-  createSession,
-  getSession,
-  postMessage,
-  updateProfile,
-  uploadDocument,
-} from "@/lib/api";
-import { DANA_DEFAULT_QUESTION, DANA_INTAKE } from "@/lib/dana-intake";
-import { apiToProfile, emptyProfile, profileToApi } from "@/lib/profile-utils";
-import type { Claim, DocumentResponse, IntakeProfile, RunResponse } from "@/lib/types";
-import { useCallback, useState } from "react";
+import { ApiError, getHealth, listFixtures, runFixture } from "@/lib/api";
+import type { FixtureSummary, HealthResponse, RunResponse } from "@/lib/types";
 
 /**
- * Prefix for bubbles that exist only in the browser (optimistic user lines and
- * needs_input questions). Database Message.id is a positive integer, so a
- * "local:" string can never equal it. ChatPanel keys rows on msg.id — if this
- * counter ever went 1, 2, 3 it would collide with server ids on the next turn.
- * If the backend starts using string ids, keep a prefix that cannot match them.
+ * Turns an API or network failure into one sentence for the red alert.
  */
-const CLIENT_MESSAGE_PREFIX = "local:";
-let localMessageSeq = 1;
-
-function nextClientMessageId(): string {
-  return `${CLIENT_MESSAGE_PREFIX}${localMessageSeq++}`;
+function errorText(err: unknown): string {
+  if (err instanceof ApiError) return err.message;
+  if (err instanceof Error) return err.message;
+  return String(err);
 }
 
 /**
- * Pulls FACT/ESTIMATE/ASSUMPTION/RECOMMENDATION chips out of a finished run's
- * roadmap JSON so the assistant chat bubble can show them under the reply.
- * Same nested shape RoadmapPanel reads. If the backend moves claims off
- * output.roadmap.sections, update this flatten (and the roadmap panel).
+ * Downloads the run JSON in the browser. The filename includes the case and
+ * run id so two saves do not overwrite each other.
  */
-function claimsFromRun(run: RunResponse): Claim[] {
-  const roadmap = run.output?.roadmap as { sections?: { claims?: Claim[] }[] } | undefined;
-  if (!roadmap?.sections) return [];
-  return roadmap.sections.flatMap((s) => s.claims ?? []);
+function saveTrace(caseId: string, run: RunResponse) {
+  const body = {
+    case: caseId,
+    status: run.status,
+    events: run.events,
+    output: run.output,
+  };
+  const blob = new Blob([JSON.stringify(body, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `trace-${caseId}-run-${run.id}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Short label for the health badge. anthropic means a live Claude call;
+ * scripted means the saved transcript. Anything else is shown as-is.
+ */
+function providerLabel(provider: string): string {
+  if (provider === "anthropic") return "Live Claude";
+  if (provider === "scripted") return "Scripted transcript (not Claude)";
+  return provider;
 }
 
 export default function Home() {
-  const [profile, setProfile] = useState<IntakeProfile>(emptyProfile());
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [documents, setDocuments] = useState<DocumentResponse[]>([]);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [runs, setRuns] = useState<RunResponse[]>([]);
-  const [selectedRunId, setSelectedRunId] = useState<number | null>(null);
+  const [health, setHealth] = useState<HealthResponse | null>(null);
+  const [fixtures, setFixtures] = useState<FixtureSummary[]>([]);
+  const [caseId, setCaseId] = useState<string | null>(null);
+  const [run, setRun] = useState<RunResponse | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [chatDraft, setChatDraft] = useState(DANA_DEFAULT_QUESTION);
 
-  const showError = useCallback((err: unknown) => {
-    const msg = err instanceof ApiError ? err.message : err instanceof Error ? err.message : String(err);
-    setError(msg);
+  useEffect(() => {
+    let cancelled = false;
+    /**
+     * Loads the server mode and the fixture cards together. A health failure
+     * still leaves the page usable if the fixture list comes back.
+     */
+    async function load() {
+      try {
+        const [healthBody, fixtureBody] = await Promise.all([getHealth(), listFixtures()]);
+        if (cancelled) return;
+        setHealth(healthBody);
+        setFixtures(fixtureBody.fixtures);
+      } catch (err) {
+        if (!cancelled) setError(errorText(err));
+      }
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   /**
-   * Creates a planning session on first use so upload and send have a UUID, then
-   * reuses that id from React state. If the default mock fixture changes, update
-   * the fixture_case argument here (Load Dana uses the same case name).
+   * Starts the selected situation and swaps the card list for the trace.
+   * The run can take a while when the server is calling Claude.
    */
-  const ensureSession = useCallback(async (): Promise<string> => {
-    if (sessionId) return sessionId;
-    const created = await createSession({ fixture_case: "case1_queens_library" });
-    setSessionId(created.id);
-    return created.id;
-  }, [sessionId]);
-
-  /**
-   * Replaces the current session with Dana's Queens library example so a reviewer
-   * can skip typing intake. Resets documents, chat, and runs because they belong
-   * to the old session. If Dana's fields change, edit DANA_INTAKE — not this handler.
-   */
-  const loadDana = async () => {
+  async function startCase(fixture: FixtureSummary) {
     setBusy(true);
     setError(null);
+    setCaseId(fixture.id);
     try {
-      const created = await createSession({ fixture_case: "case1_queens_library" });
-      await updateProfile(created.id, { profile: profileToApi(DANA_INTAKE) });
-      const fresh = await getSession(created.id);
-      setSessionId(fresh.id);
-      setProfile(apiToProfile(fresh.profile as Record<string, unknown>));
-      setDocuments([]);
-      setMessages([]);
-      setRuns([]);
-      setSelectedRunId(null);
-      setChatDraft(DANA_DEFAULT_QUESTION);
+      const result = await runFixture(fixture.id);
+      setRun(result.run);
     } catch (err) {
-      showError(err);
+      setError(errorText(err));
+      setCaseId(null);
     } finally {
       setBusy(false);
     }
-  };
+  }
 
-  /**
-   * Saves the current intake, then posts the chosen file to this session's
-   * documents endpoint and appends the returned record to the upload list.
-   * If uploads should skip saving the form first, remove the updateProfile call.
-   */
-  const handleUpload = async (file: File) => {
-    setBusy(true);
-    setError(null);
-    try {
-      const sid = await ensureSession();
-      await updateProfile(sid, { profile: profileToApi(profile) });
-      const doc = await uploadDocument(sid, file);
-      setDocuments((prev) => [...prev, doc]);
-    } catch (err) {
-      showError(err);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  /**
-   * Puts a run into the right-hand log, replacing an older copy of the same id,
-   * and selects it so the roadmap tab follows. If runs should stack as duplicates
-   * instead of replacing, drop the filter on r.id.
-   */
-  const appendRun = (run: RunResponse) => {
-    setRuns((prev) => {
-      const without = prev.filter((r) => r.id !== run.id);
-      return [...without, run];
-    });
-    setSelectedRunId(run.id);
-  };
-
-  /**
-   * Saves intake, shows an optimistic user bubble, then posts the chat line.
-   * On failure, drops that bubble so ChatPanel can restore the draft (it rethrows).
-   * Client-only ids use nextClientMessageId so they never match database Message.id.
-   * If the API starts returning the user message in result.message, stop appending
-   * a local user bubble and only render the server copy.
-   */
-  const handleSend = async (text: string) => {
-    setBusy(true);
-    setError(null);
-    let optimisticId: string | null = null;
-    try {
-      const sid = await ensureSession();
-      await updateProfile(sid, { profile: profileToApi(profile) });
-      const userLocal: ChatMessage = {
-        id: nextClientMessageId(),
-        session_id: sid,
-        role: "user",
-        content: text,
-        created_at: new Date().toISOString(),
-        run_id: null,
-      };
-      optimisticId = String(userLocal.id);
-      setMessages((prev) => [...prev, userLocal]);
-
-      const result = await postMessage(sid, { content: text });
-      appendRun(result.run);
-
-      if (result.message) {
-        const claims = claimsFromRun(result.run);
-        setMessages((prev) => [
-          ...prev,
-          {
-            ...result.message!,
-            claims: claims.length ? claims : undefined,
-          },
-        ]);
-      } else if (result.run.status === "needs_input") {
-        const question = String(result.run.output?.question ?? "More intake details needed.");
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: nextClientMessageId(),
-            session_id: sid,
-            role: "assistant",
-            content: question,
-            created_at: new Date().toISOString(),
-            run_id: result.run.id,
-          },
-        ]);
-      }
-    } catch (err) {
-      if (optimisticId != null) {
-        const idToDrop = optimisticId;
-        setMessages((prev) => prev.filter((m) => String(m.id) !== idToDrop));
-      }
-      showError(err);
-      throw err;
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  /**
-   * After the user edits intake, sends a canned "please update the roadmap" line
-   * through handleSend so a new run is stored. Errors are already shown there.
-   * If the prompt text should change, edit the string here — not ChatPanel.
-   */
-  const handleReplan = async () => {
-    try {
-      await handleSend("Please update the roadmap with my revised intake.");
-    } catch {
-      /* handleSend already showed the alert and dropped the optimistic bubble */
-    }
-  };
-
-  const activeRun =
-    runs.find((r) => r.id === selectedRunId) ?? runs[runs.length - 1] ?? null;
+  const ended = run != null && run.status !== "running";
+  const finalEvent = run?.events.find((event) => event.kind === "final");
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="border-b px-4 py-3 flex items-center gap-3 shrink-0">
-        <Image src="/fritts-logo.png" alt="Professor Fritts" width={40} height={40} className="rounded" />
-        <div>
+        {/* Plain img and anchor avoid a Next image/link hydration mismatch on this dev page. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/fritts-logo.png" alt="Professor Fritts" width={40} height={40} className="rounded" />
+        <div className="flex-1">
           <h1 className="text-lg font-semibold leading-tight">Professor Fritts</h1>
           <p className="text-sm text-muted-foreground">building renewable energy planner</p>
         </div>
+        <a href="/planner" className="text-sm underline text-muted-foreground">
+          Full planner
+        </a>
       </header>
 
-      {error && (
-        <div className="px-4 pt-3">
+      <main className="flex-1 p-4 max-w-4xl w-full mx-auto flex flex-col gap-4">
+        {health ? (
+          <div className="flex flex-wrap gap-2 text-sm">
+            <Badge variant="outline">{providerLabel(health.llm_provider)}</Badge>
+            <Badge variant="secondary">Tools: {health.tool_mode}</Badge>
+          </div>
+        ) : null}
+
+        {health?.llm_provider === "scripted" ? (
+          <p className="text-sm text-muted-foreground">
+            This run replays the saved script. Set LLM_PROVIDER=anthropic and ANTHROPIC_API_KEY in
+            the root .env, then restart the backend, for a live Claude call. Tools stay on mock data.
+          </p>
+        ) : null}
+
+        {error ? (
           <Alert variant="destructive">
             <AlertTitle>Something went wrong</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
-        </div>
-      )}
+        ) : null}
 
-      <main className="flex-1 grid grid-cols-1 lg:grid-cols-[minmax(280px,1fr)_minmax(320px,1.2fr)_minmax(300px,1fr)] gap-3 p-3 min-h-0">
-        <div className="flex flex-col gap-3 min-h-0">
-          <IntakeForm
-            profile={profile}
-            onChange={setProfile}
-            onLoadDana={() => void loadDana()}
-            onUpdateAndReplan={() => void handleReplan()}
-            busy={busy}
-          />
-          <DocumentUpload documents={documents} onUpload={handleUpload} busy={busy} />
-        </div>
+        {run && caseId ? (
+          <div className="flex flex-col gap-3 min-h-[70vh]">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setRun(null);
+                  setCaseId(null);
+                }}
+              >
+                Back to situations
+              </Button>
+              <Button onClick={() => saveTrace(caseId, run)}>Save trace</Button>
+            </div>
+            <RunLogPanel runs={[run]} selectedRunId={run.id} onSelectRun={() => undefined} />
+            {ended ? (
+              <div className="rounded-md border p-3 text-sm">
+                <p className="font-medium">Thought ended</p>
+                <p className="text-muted-foreground">
+                  Status: {run.status}
+                  {finalEvent ? " · the model finished its thought" : ""}
+                  {run.tool_call_count != null ? ` · ${run.tool_call_count} tool calls` : ""}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {fixtures.length === 0 && !error ? (
+              <p className="text-sm text-muted-foreground">Loading situations…</p>
+            ) : null}
+            {fixtures.map((fixture) => (
+              <Card key={fixture.id}>
+                <CardHeader>
+                  <CardTitle>{fixture.building_name}</CardTitle>
+                  <CardDescription>{fixture.goal}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-3">
+                  <p className="text-sm">{fixture.question}</p>
+                  <Button disabled={busy} onClick={() => void startCase(fixture)}>
+                    {busy && caseId === fixture.id ? "Running…" : "Run this situation"}
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
-        <ChatPanel
-          messages={messages}
-          onSend={handleSend}
-          busy={busy}
-          draft={chatDraft}
-          onDraftChange={setChatDraft}
-        />
-
-        <Tabs defaultValue="run-log" className="h-full flex flex-col min-h-0">
-          <TabsList className="shrink-0 w-full">
-            <TabsTrigger value="run-log" className="flex-1">
-              Run log
-            </TabsTrigger>
-            <TabsTrigger value="roadmap" className="flex-1">
-              Roadmap
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="run-log" className="flex-1 min-h-0 mt-2">
-            <RunLogPanel runs={runs} selectedRunId={selectedRunId} onSelectRun={setSelectedRunId} />
-          </TabsContent>
-          <TabsContent value="roadmap" className="flex-1 min-h-0 mt-2">
-            <RoadmapPanel run={activeRun} />
-          </TabsContent>
-        </Tabs>
+        {busy && !run ? (
+          <p className="text-sm text-muted-foreground">Running the situation. This can take a minute.</p>
+        ) : null}
       </main>
     </div>
   );
