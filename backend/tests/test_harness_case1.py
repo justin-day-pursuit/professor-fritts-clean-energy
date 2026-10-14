@@ -187,6 +187,11 @@ def test_harness_submits_tool_result_before_check4_retry(monkeypatch):
 
 
 def _referral_claims_for_check4() -> list[Claim]:
+    """
+    Minimal referral claims so fake write_answer payloads pass Check 4 in this file.
+
+    If mandatory referral keywords change in agent/checks.py, update the claim text here to match.
+    """
     return [
         Claim(
             text="PE/RA structural analysis required.",
@@ -255,6 +260,11 @@ class _WriteAnswerSummaryLLM(LLMClient):
 
 
 def test_write_answer_summary_in_run_output(monkeypatch):
+    """
+    Follow-up runs must keep the write_answer summary in run output and markdown.
+
+    If the harness stores summary under a different key or renderer, update the assertions here.
+    """
     monkeypatch.setattr(
         "agent.harness.get_llm_client",
         lambda _provider, fixture_case=None: _WriteAnswerSummaryLLM(),
@@ -321,6 +331,11 @@ class _ThinkCapAfterPayloadLLM(LLMClient):
 
 
 def test_think_cap_after_payload_finishes_partial(monkeypatch):
+    """
+    After a roadmap exists, hitting the think cap should finish partial with flags, not failed.
+
+    If partial think-cap flags or output shape change in the harness, adjust the status and flag checks here.
+    """
     monkeypatch.setattr(
         "agent.harness.get_llm_client",
         lambda _provider, fixture_case=None: _ThinkCapAfterPayloadLLM(),
@@ -336,7 +351,19 @@ def test_think_cap_after_payload_finishes_partial(monkeypatch):
 
 
 def test_think_cap_without_payload_finishes_partial_no_roadmap(monkeypatch):
+    """
+    With no roadmap yet, the think cap should still finish partial and must not invent a roadmap.
+
+    If the harness adds a different empty-payload shape, update the roadmap absence check here.
+    """
+
     class _ThinkOnlyLLM(LLMClient):
+        """
+        Fake model that never calls a final tool — only think steps until the cap.
+
+        Keep this in sync with MAX_CONSECUTIVE_THINK_STEPS in agent/limits.py if the cap changes.
+        """
+
         def reset(self) -> None:
             pass
 
