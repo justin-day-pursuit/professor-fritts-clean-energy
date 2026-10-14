@@ -11,12 +11,11 @@ import os
 from datetime import datetime, timezone
 from typing import Any
 
-import httpx
-
 from tools.base import ToolResult
 from tools.calculate import CalculateInput, run_calculate
+from tools.geocode import geocode_nyc_address, is_approximate
+from tools.web import get_with_retry
 
-GEOCODE_URL = "https://geosearch.planninglabs.nyc/v2/search"
 PVWATTS_URL = "https://developer.nlr.gov/api/pvwatts/v8.json"
 PVWATTS_DOCS_URL = "https://developer.nlr.gov/docs/solar/pvwatts/v8/"
 
@@ -31,33 +30,14 @@ PVWATTS_DEFAULTS: dict[str, Any] = {
     "azimuth": 180,
 }
 
+# The kWh range reruns PVWatts at lower and higher system losses (soiling, wiring, inverter, shading).
+# These two values are our assumption, not PVWatts output; the result says so in range_assumption.
+LOSSES_LOW_OUTPUT = 18
+LOSSES_HIGH_OUTPUT = 10
+
 
 class LiveSolarError(RuntimeError):
     """A live solar lookup failed in a way the agent should not paper over."""
-
-
-def geocode_nyc_address(address: str, borough: str | None) -> dict[str, Any]:
-    """Turn a street address into coordinates with the free NYC Planning Labs geocoder."""
-    text = ", ".join(part for part in (address, borough, "NY") if part)
-    response = httpx.get(GEOCODE_URL, params={"text": text, "size": 1}, timeout=TIMEOUT_SECONDS)
-    response.raise_for_status()
-    features = response.json().get("features", [])
-    if not features:
-        raise LiveSolarError(f"The NYC geocoder found no match for {text!r}.")
-    props = features[0]["properties"]
-    lon, lat = features[0]["geometry"]["coordinates"]
-    street_number = address.split()[0]
-    if not str(props.get("label", "")).startswith(street_number):
-        raise LiveSolarError(f"Geocoder matched {props.get('label')!r}, which does not fit {address!r}.")
-    return {
-        "label": props.get("label"),
-        "borough": props.get("borough"),
-        "postalcode": props.get("postalcode"),
-        "match_type": props.get("match_type"),
-        "confidence": props.get("confidence"),
-        "lat": lat,
-        "lon": lon,
-    }
 
 
 def default_system_kw(profile: dict[str, Any]) -> float:
@@ -67,15 +47,20 @@ def default_system_kw(profile: dict[str, Any]) -> float:
     return float(run_calculate(CalculateInput(formula="C2", inputs={"usable_roof_sqft": usable})).data["value"])
 
 
-def run_pvwatts(lat: float, lon: float, system_kw: float, api_key: str) -> dict[str, Any]:
-    """Call PVWatts v8 and return its parsed JSON; raises LiveSolarError on API-reported errors."""
-    params = {"api_key": api_key, "lat": lat, "lon": lon, "system_capacity": system_kw, **PVWATTS_DEFAULTS}
-    response = httpx.get(PVWATTS_URL, params=params, timeout=TIMEOUT_SECONDS)
+def rerun_pvwatts(inputs: dict[str, Any], api_key: str) -> dict[str, Any]:
+    """Call PVWatts v8 with a full set of inputs (as logged in a result's pvwatts_inputs); raises LiveSolarError on API errors."""
+    response = get_with_retry(PVWATTS_URL, params={"api_key": api_key, **inputs}, timeout=TIMEOUT_SECONDS)
     payload = response.json()
     if response.status_code != 200 or payload.get("errors"):
         # Never echo the request URL: it carries the API key.
         raise LiveSolarError(f"PVWatts error (HTTP {response.status_code}): {payload.get('errors')}")
     return payload
+
+
+def run_pvwatts(lat: float, lon: float, system_kw: float, api_key: str) -> dict[str, Any]:
+    """Call PVWatts v8 for one site with the flat-roof defaults."""
+    inputs = {"lat": lat, "lon": lon, "system_capacity": system_kw, **PVWATTS_DEFAULTS}
+    return rerun_pvwatts(inputs, api_key)
 
 
 def fetch_live_solar_production(profile: dict[str, Any], system_kw: float | None = None) -> ToolResult:
@@ -85,14 +70,20 @@ def fetch_live_solar_production(profile: dict[str, Any], system_kw: float | None
         raise LiveSolarError("NLR_API_KEY is not set; add it to .env to use live solar data.")
     if not profile.get("address"):
         raise LiveSolarError("The intake profile has no address to look up.")
+    if not profile.get("borough"):
+        # Without it the geocoder can match a same-named street in another borough.
+        raise LiveSolarError("The intake profile has no borough; ask which borough the building is in.")
 
     place = geocode_nyc_address(profile["address"], profile.get("borough"))
     kw = float(system_kw) if system_kw else default_system_kw(profile)
     payload = run_pvwatts(place["lat"], place["lon"], kw, api_key)
+    base_inputs = {"lat": place["lat"], "lon": place["lon"], "system_capacity": kw, **PVWATTS_DEFAULTS}
+    low = rerun_pvwatts({**base_inputs, "losses": LOSSES_LOW_OUTPUT}, api_key)["outputs"]["ac_annual"]
+    high = rerun_pvwatts({**base_inputs, "losses": LOSSES_HIGH_OUTPUT}, api_key)["outputs"]["ac_annual"]
 
     outputs = payload["outputs"]
     flags: list[str] = []
-    if place["match_type"] != "exact":
+    if is_approximate(place):
         flags.append("address_match_approximate")
 
     return ToolResult(
@@ -100,10 +91,16 @@ def fetch_live_solar_production(profile: dict[str, Any], system_kw: float | None
         data={
             "system_kw_dc": kw,
             "annual_ac_kwh": outputs["ac_annual"],
+            "annual_ac_kwh_low": low,
+            "annual_ac_kwh_high": high,
+            "range_assumption": (
+                f"ASSUMPTION: system losses of {LOSSES_LOW_OUTPUT}% (low) to {LOSSES_HIGH_OUTPUT}% (high) "
+                f"around PVWatts' {PVWATTS_DEFAULTS['losses']}% default; weather is typical-year data."
+            ),
             "capacity_factor": outputs["capacity_factor"] / 100,
             "solar_radiation_kwh_m2_day": outputs["solrad_annual"],
             "monthly_ac_kwh": outputs["ac_monthly"],
-            "pvwatts_inputs": {"lat": place["lat"], "lon": place["lon"], "system_capacity": kw, **PVWATTS_DEFAULTS},
+            "pvwatts_inputs": base_inputs,
             "location": place,
             "weather_data_source": payload.get("station_info", {}).get("weather_data_source"),
         },

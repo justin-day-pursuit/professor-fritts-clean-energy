@@ -11,6 +11,7 @@ import pytest
 from django.conf import settings
 
 from mocks.mock_mode import FIXTURES_ROOT, load_fixture
+from tools.base import ToolResult
 from tools.calculate import CalculateInput, run_calculate
 from tools.registry import execute_tool, list_tool_names
 
@@ -74,12 +75,13 @@ def _fake_httpx_get(url, params=None, timeout=None):
                 ]
             }
         )
+    losses = params["losses"]
     return _FakeResponse(
         {
             "errors": [],
             "version": "8.5.0",
             "outputs": {
-                "ac_annual": 61893.6,
+                "ac_annual": 61893.6 * (100 - losses) / 86,  # 61,893.6 at the 14% default
                 "capacity_factor": 14.13,
                 "solrad_annual": 4.41,
                 "ac_monthly": [1.0] * 12,
@@ -91,14 +93,14 @@ def _fake_httpx_get(url, params=None, timeout=None):
 
 def test_live_mode_keeps_fixtures_for_tools_without_a_live_version(monkeypatch):
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
-    result = execute_tool("get_utility_rates", {}, session_profile={}, fixture_case=CASE)
+    result = execute_tool("get_hazard_context", {}, session_profile={}, fixture_case=CASE)
     assert result.mock is True
 
 
 def test_live_solar_returns_real_shaped_result(monkeypatch):
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
     monkeypatch.setenv("NLR_API_KEY", "test-key")
-    monkeypatch.setattr("tools.live_solar.httpx.get", _fake_httpx_get)
+    monkeypatch.setattr("httpx.get", _fake_httpx_get)
 
     result = execute_tool("get_solar_production", {}, session_profile=_queens_profile(), fixture_case=CASE)
 
@@ -110,14 +112,17 @@ def test_live_solar_returns_real_shaped_result(monkeypatch):
     assert result.source_url.startswith("https://developer.nlr.gov/")
     assert result.dataset_version == "pvwatts-v8.5.0"
     assert result.retrieved_at.endswith("Z")
-    assert "address_match_approximate" in result.flags
+    assert result.data["annual_ac_kwh_low"] == pytest.approx(61893.6 * 82 / 86)
+    assert result.data["annual_ac_kwh_high"] == pytest.approx(61893.6 * 90 / 86)
+    assert result.data["range_assumption"].startswith("ASSUMPTION")
+    assert "address_match_approximate" not in result.flags
     assert "test-key" not in result.model_dump_json()
 
 
 def test_live_solar_accepts_an_explicit_system_size(monkeypatch):
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
     monkeypatch.setenv("NLR_API_KEY", "test-key")
-    monkeypatch.setattr("tools.live_solar.httpx.get", _fake_httpx_get)
+    monkeypatch.setattr("httpx.get", _fake_httpx_get)
 
     result = execute_tool("get_solar_production", {"system_kw": 30}, session_profile=_queens_profile(), fixture_case=CASE)
 
@@ -133,8 +138,249 @@ def test_live_solar_needs_an_api_key(monkeypatch):
         execute_tool("get_solar_production", {}, session_profile=_queens_profile(), fixture_case=CASE)
 
 
+def test_live_solar_needs_a_borough(monkeypatch):
+    from tools.live_solar import LiveSolarError
+
+    monkeypatch.setattr(settings, "TOOL_MODE", "live")
+    monkeypatch.setenv("NLR_API_KEY", "test-key")
+    monkeypatch.setattr("httpx.get", _fake_httpx_get)
+    profile = {**_queens_profile(), "borough": ""}
+    with pytest.raises(LiveSolarError, match="borough"):
+        execute_tool("get_solar_production", {}, session_profile=profile, fixture_case=CASE)
+
+
+def _fake_eia_get(url, params=None, timeout=None):
+    months = [f"2026-{m:02d}" for m in range(7, 0, -1)] + [f"2025-{m:02d}" for m in range(12, 7, -1)]
+    prices = ["24.00"] * 6 + ["20.00"] * 6
+    rows = [
+        {"period": period, "price": price, "price-units": "cents per kilowatt-hour"}
+        for period, price in zip(months, prices)
+    ]
+    return _FakeResponse({"response": {"data": rows}})
+
+
+def test_live_rates_average_the_last_twelve_months(monkeypatch):
+    monkeypatch.setattr(settings, "TOOL_MODE", "live")
+    monkeypatch.setenv("EIA_API_KEY", "test-key")
+    monkeypatch.setattr("httpx.get", _fake_eia_get)
+
+    result = execute_tool("get_utility_rates", {}, session_profile=_queens_profile(), fixture_case=CASE)
+
+    assert result.mock is False
+    assert result.data["avg_energy_charge_usd_per_kwh"] == pytest.approx(0.22)  # (6 x 24 + 6 x 20) / 12 cents
+    assert result.data["latest_month_usd_per_kwh"] == pytest.approx(0.24)
+    assert result.data["price_low_usd_per_kwh"] == pytest.approx(0.20)
+    assert result.data["price_high_usd_per_kwh"] == pytest.approx(0.24)
+    assert result.data["latest_month"] == "2026-07"
+    assert result.data["period_start"] == "2025-08"
+    assert result.dataset_version == "eia-retail-sales-2026-07"
+    assert "statewide_average_rate" in result.flags
+    assert "test-key" not in result.model_dump_json()
+
+
+def test_live_rates_need_an_api_key(monkeypatch):
+    from tools.live_rates import LiveRatesError
+
+    monkeypatch.setattr(settings, "TOOL_MODE", "live")
+    monkeypatch.delenv("EIA_API_KEY", raising=False)
+    with pytest.raises(LiveRatesError, match="EIA_API_KEY"):
+        execute_tool("get_utility_rates", {}, session_profile={}, fixture_case=CASE)
+
+
+def _fake_records_get(url, params=None, timeout=None, headers=None):
+    if "geosearch" in url:
+        response = _fake_httpx_get(url, params=params, timeout=timeout).json()
+        response["features"][0]["properties"]["addendum"] = {"pad": {"bbl": "4050430011"}}
+        return _FakeResponse(response)
+    assert params["$where"] == "bbl='4050430011.00000000'"
+    return _FakeResponse(
+        [
+            {
+                "address": "41-24 KISSENA BOULEVARD",
+                "zipcode": "11355",
+                "bldgarea": "75000",
+                "lotarea": "18000",
+                "numfloors": "3.0000000",
+                "yearbuilt": "1996",
+                "bldgclass": "P8",
+                "landuse": "8",
+                "landmark": None,
+                "version": "25v3",
+            }
+        ]
+    )
+
+
+def test_live_records_report_the_city_record_and_flag_disagreements(monkeypatch):
+    monkeypatch.setattr(settings, "TOOL_MODE", "live")
+    monkeypatch.setattr("httpx.get", _fake_records_get)
+
+    result = execute_tool("lookup_ny_building_records", {}, session_profile=_queens_profile(), fixture_case=CASE)
+
+    assert result.mock is False
+    assert result.data["gross_floor_area_sqft"] == 75000
+    assert result.data["year_built"] == 1996
+    assert result.data["landmark_flag"] is False
+    assert result.dataset_version == "pluto-25v3"
+    assert {d["field"] for d in result.data["differs_from_intake"]} == {"floor_area_sqft", "year_built"}
+    assert "intake_mismatch:floor_area_sqft" in result.flags
+    assert "intake_mismatch:year_built" in result.flags
+
+
+def test_live_records_do_not_flag_a_matching_intake(monkeypatch):
+    monkeypatch.setattr(settings, "TOOL_MODE", "live")
+    monkeypatch.setattr("httpx.get", _fake_records_get)
+    profile = {**_queens_profile(), "floor_area_sqft": 75000, "year_built": 1996}
+
+    result = execute_tool("lookup_ny_building_records", {}, session_profile=profile, fixture_case=CASE)
+
+    assert result.data["differs_from_intake"] == []
+    assert not [f for f in result.flags if f.startswith("intake_mismatch")]
+
+
+def test_live_records_need_a_borough(monkeypatch):
+    from tools.live_records import LiveRecordsError
+
+    monkeypatch.setattr(settings, "TOOL_MODE", "live")
+    monkeypatch.setattr("httpx.get", _fake_records_get)
+    profile = {**_queens_profile(), "borough": ""}
+    with pytest.raises(LiveRecordsError, match="borough"):
+        execute_tool("lookup_ny_building_records", {}, session_profile=profile, fixture_case=CASE)
+
+
+LIVE_FIXTURE_DIR = FIXTURES_ROOT / CASE / "live"
+
+
+@pytest.mark.parametrize("tool_name", ["get_solar_production", "get_utility_rates", "lookup_ny_building_records"])
+def test_saved_live_fixtures_have_provenance_and_no_secrets(tool_name):
+    path = LIVE_FIXTURE_DIR / f"{tool_name}.json"
+    result = ToolResult.model_validate_json(path.read_text(encoding="utf-8"))
+    assert result.mock is False
+    assert result.source_url.startswith("https://")
+    assert result.retrieved_at.endswith("Z")
+    assert result.dataset_version
+    assert "api_key" not in path.read_text(encoding="utf-8").lower()
+
+
+def test_low_confidence_geocode_is_flagged_as_approximate(monkeypatch):
+    monkeypatch.setattr(settings, "TOOL_MODE", "live")
+    monkeypatch.setenv("NLR_API_KEY", "test-key")
+
+    def low_confidence_get(url, params=None, timeout=None):
+        response = _fake_httpx_get(url, params=params, timeout=timeout)
+        if "geosearch" in url:
+            response.json()["features"][0]["properties"]["confidence"] = 0.4
+        return response
+
+    monkeypatch.setattr("httpx.get", low_confidence_get)
+    result = execute_tool("get_solar_production", {}, session_profile=_queens_profile(), fixture_case=CASE)
+    assert "address_match_approximate" in result.flags
+
+
+def test_web_requests_retry_after_a_network_error(monkeypatch):
+    import httpx
+
+    from tools import web
+
+    calls = []
+
+    def flaky_get(url, **kwargs):
+        calls.append(url)
+        if len(calls) < 3:
+            raise httpx.ConnectError("blip")
+        return _FakeResponse({"ok": True})
+
+    monkeypatch.setattr("httpx.get", flaky_get)
+    monkeypatch.setattr(web.time, "sleep", lambda _s: None)
+    assert web.get_with_retry("https://example.test").json() == {"ok": True}
+    assert len(calls) == 3
+
+
+def test_web_requests_give_up_after_the_retries(monkeypatch):
+    import httpx
+
+    from tools import web
+
+    def always_down(url, **kwargs):
+        raise httpx.ConnectError("down")
+
+    monkeypatch.setattr("httpx.get", always_down)
+    monkeypatch.setattr(web.time, "sleep", lambda _s: None)
+    with pytest.raises(httpx.ConnectError):
+        web.get_with_retry("https://example.test")
+
+
+def _case1_ranges(profile: dict) -> dict:
+    """What a v1 answer needs: kWh and dollar ranges, each figure with a source or a calculation ID."""
+    solar = execute_tool("get_solar_production", {}, session_profile=profile, fixture_case=CASE)
+    rates = execute_tool("get_utility_rates", {}, session_profile=profile, fixture_case=CASE)
+    low = run_calculate(
+        CalculateInput(
+            formula="C4",
+            inputs={"annual_solar_kwh": solar.data["annual_ac_kwh_low"], "avg_rate_usd_per_kwh": rates.data["price_low_usd_per_kwh"]},
+        )
+    )
+    high = run_calculate(
+        CalculateInput(
+            formula="C4",
+            inputs={"annual_solar_kwh": solar.data["annual_ac_kwh_high"], "avg_rate_usd_per_kwh": rates.data["price_high_usd_per_kwh"]},
+        )
+    )
+    return {"solar": solar, "rates": rates, "dollars_low": low, "dollars_high": high}
+
+
+def test_case1_live_gives_kwh_and_dollar_ranges_with_sources(monkeypatch):
+    monkeypatch.setattr(settings, "TOOL_MODE", "live")
+    monkeypatch.setenv("NLR_API_KEY", "test-key")
+    monkeypatch.setenv("EIA_API_KEY", "test-key")
+
+    def route(url, **kwargs):
+        if "eia.gov" in url:
+            return _fake_eia_get(url, **kwargs)
+        return _fake_httpx_get(url, params=kwargs.get("params"), timeout=kwargs.get("timeout"))
+
+    monkeypatch.setattr("httpx.get", route)
+    got = _case1_ranges(_queens_profile())
+
+    assert got["solar"].data["annual_ac_kwh_low"] < got["solar"].data["annual_ac_kwh"] < got["solar"].data["annual_ac_kwh_high"]
+    assert got["dollars_low"].data["value"] < got["dollars_high"].data["value"]
+    assert got["dollars_low"].data["calc_id"] == "C4" and got["dollars_high"].data["calc_id"] == "C4"
+    assert got["solar"].source_url and got["rates"].source_url
+
+
+@pytest.mark.skipif(os.environ.get("RUN_LIVE_TESTS") != "1", reason="set RUN_LIVE_TESTS=1 to call the real APIs")
+def test_pvwatts_rerun_from_logged_inputs_matches_within_one_percent():
+    from tools.live_solar import rerun_pvwatts
+
+    saved = ToolResult.model_validate_json((LIVE_FIXTURE_DIR / "get_solar_production.json").read_text(encoding="utf-8"))
+    again = rerun_pvwatts(saved.data["pvwatts_inputs"], os.environ["NLR_API_KEY"])
+    assert again["outputs"]["ac_annual"] == pytest.approx(saved.data["annual_ac_kwh"], rel=0.01)
+
+
+@pytest.mark.skipif(os.environ.get("RUN_LIVE_TESTS") != "1", reason="set RUN_LIVE_TESTS=1 to call the real APIs")
+def test_live_records_against_real_nyc_open_data(monkeypatch):
+    monkeypatch.setattr(settings, "TOOL_MODE", "live")
+    result = execute_tool("lookup_ny_building_records", {}, session_profile=_queens_profile(), fixture_case=CASE)
+    assert result.data["bbl"]
+    assert result.data["gross_floor_area_sqft"] > 0
+
+
+@pytest.mark.skipif(os.environ.get("RUN_LIVE_TESTS") != "1", reason="set RUN_LIVE_TESTS=1 to call the real APIs")
+def test_live_rates_against_real_eia(monkeypatch):
+    monkeypatch.setattr(settings, "TOOL_MODE", "live")
+    result = execute_tool("get_utility_rates", {}, session_profile=_queens_profile(), fixture_case=CASE)
+    assert 0.10 < result.data["avg_energy_charge_usd_per_kwh"] < 0.50
+
+
 @pytest.mark.skipif(os.environ.get("RUN_LIVE_TESTS") != "1", reason="set RUN_LIVE_TESTS=1 to call the real APIs")
 def test_live_solar_against_real_apis(monkeypatch):
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
     result = execute_tool("get_solar_production", {}, session_profile=_queens_profile(), fixture_case=CASE)
     assert 50000 < result.data["annual_ac_kwh"] < 75000
+
+
+@pytest.mark.skipif(os.environ.get("RUN_LIVE_TESTS") != "1", reason="set RUN_LIVE_TESTS=1 to call the real APIs")
+def test_case1_live_ranges_against_real_apis(monkeypatch):
+    monkeypatch.setattr(settings, "TOOL_MODE", "live")
+    got = _case1_ranges(_queens_profile())
+    assert 5_000 < got["dollars_low"].data["value"] < got["dollars_high"].data["value"] < 30_000
