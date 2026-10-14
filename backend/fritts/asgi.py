@@ -21,3 +21,5 @@ fastapi_app = create_app()
 fastapi_app.mount("/admin", django_asgi_app)
 
 app = fastapi_app
+# Django's ASGI_APPLICATION setting looks for this name.
+application = app
