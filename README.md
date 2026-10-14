@@ -23,6 +23,51 @@ v1 scope: energy efficiency and solar PV (battery storage only for solar resilie
 2. Install the web app: `cd frontend && npm install`
 3. Install the Python backend tools: `cd backend && python3.12 -m venv .venv`, activate the virtual environment, then `pip install -r requirements.txt`
 
+## Agent harness
+
+The backend runs a planning session from the command line. In v0, `TOOL_MODE=mock` (the default) loads saved fixtures. Live energy APIs are not available.
+
+### Mock case 1
+
+`backend/mocks/fixtures/case1_queens_library/` is Dana's fictional Queens public library: 18,000 sq ft, a $400k capital budget, a goal to cut grid electricity 30% by 2030, and 8 hours of cooling-center load. That folder holds intake JSON, a bills CSV, one JSON file per mock tool, a scripted LLM transcript, and `expected_v0.md`. Solar alone is expected to cover about 19% of use, short of 30%.
+
+### Tools
+
+Check 2 only allows these registered tools:
+
+- Group 1: `get_building_profile` (session intake) and `lookup_ny_building_records` (mock)
+- Group 2: `get_solar_production` (mock PVWatts), `optimize_solar_storage` (mock REopt), and `calculate` (named formulas C1–C4 in code)
+- Group 3: `get_utility_rates` (mock) and `search_ny_incentives_and_rules` (mock)
+- Group 4: `get_hazard_context` (mock FEMA)
+
+Not registered in v0: `run_financial_model`, `search_evidence`, `upsert_reference_cache`. Mock results include `source_url`, `retrieved_at`, `dataset_version`, and `mock: true`.
+
+### Four checks
+
+The loop is Check 1 → think → (Check 2 → tool → Check 3 → notes)* → `write_roadmap` or `write_answer` → Check 4:
+
+1. **Check 1 (start):** New York only. Budget and energy goal are required, or the run asks once (`needs_input`). Out-of-state buildings stop as `out_of_scope`.
+2. **Check 2 (tool):** registered tool, valid input, under 40 calls, under 2 retries per tool, under 600 seconds.
+3. **Check 3 (answer):** provenance fields present; hidden-instruction patterns flagged; results treated as data.
+4. **Check 4 (share):** every claim has a label (FACT, ESTIMATE, ASSUMPTION, RECOMMENDATION) and a confidence. FACT, ESTIMATE, and RECOMMENDATION need a `source_url` or `calc_id`. An ASSUMPTION needs an `assumption_id` that exists in that run's notes register. Mandatory professional referrals must appear; promise wording is rejected. One fix loop, then the run may finish `partial`.
+
+### Scripted LLM
+
+`LLM_PROVIDER=scripted` replays `scripted_llm.json` from the case folder. Tests and local evals need no Anthropic key and make no network calls. `LLM_PROVIDER=anthropic` calls Claude with the same tools. Without `ANTHROPIC_API_KEY`, the error is one sentence asking you to paste the key into `.env`.
+
+### run_case
+
+From `backend/` with the virtual environment active (migrate once if the local SQLite database is new):
+
+```bash
+cd backend
+source .venv/bin/activate
+python manage.py migrate
+LLM_PROVIDER=scripted TOOL_MODE=mock python manage.py run_case --case case1_queens_library --llm scripted
+```
+
+That prints the run log (checks, tool calls, mock results) and the roadmap Markdown. It exits non-zero on `failed`. Pass `--llm anthropic` when a key is in `.env`. Optional `--message "..."` overrides Dana's question.
+
 ## Team
 
 Justin Day, Mara Munoz
