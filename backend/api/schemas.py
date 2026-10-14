@@ -98,6 +98,27 @@ class MessageRunResponse(BaseModel):
     run: "RunResponse"
 
 
+class FixtureSummary(BaseModel):
+    """One mock situation the dev landing page can start."""
+
+    id: str
+    building_name: str
+    goal: str
+    question: str
+
+
+class FixtureListResponse(BaseModel):
+    """Body of GET /api/dev/fixtures."""
+
+    fixtures: list[FixtureSummary]
+
+
+class FixtureRunResponse(BaseModel):
+    """Body of POST /api/dev/fixtures/{case}/run — the finished trace, even on failure."""
+
+    run: "RunResponse"
+
+
 class RunResponse(BaseModel):
     """Agent run with optional ordered events."""
 
