@@ -3,6 +3,10 @@ services:
     name: professor-fritts-backend
     runtime: python
     rootDir: backend
+    buildFilter:
+      paths:
+        - backend/**
+        - render.yaml
     buildCommand: "./build.sh"
     startCommand: "uvicorn fritts.asgi:app --host 0.0.0.0 --port $PORT"
     envVars:
