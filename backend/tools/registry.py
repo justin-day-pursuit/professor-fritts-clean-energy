@@ -37,6 +37,12 @@ class CalculateToolInput(BaseModel):
     assumption_ids: list[str] = Field(default_factory=list)
 
 
+class SolarProductionInput(BaseModel):
+    """Optional array size in kW DC; left out, the tool sizes it from the roof area."""
+
+    system_kw: float | None = Field(default=None, gt=0)
+
+
 class ToolSpec(BaseModel):
     """Metadata the LLM and Check 2 use to validate a call."""
 
@@ -64,8 +70,8 @@ TOOL_SPECS: dict[str, ToolSpec] = {
     ),
     "get_solar_production": ToolSpec(
         name="get_solar_production",
-        description="Estimate rooftop solar production (mock PVWatts in v0).",
-        input_model=EmptyInput,
+        description="Estimate rooftop solar production (live PVWatts in live mode, saved PVWatts in mock mode).",
+        input_model=SolarProductionInput,
         freshness_kind="solar_production",
         group=2,
     ),
@@ -143,7 +149,7 @@ def execute_tool(
         addr = getattr(validated, "address", None)
         return lookup_ny_building_records(fixture_case, address=addr)
     if name == "get_solar_production":
-        return get_solar_production(fixture_case)
+        return get_solar_production(fixture_case, session_profile, getattr(validated, "system_kw", None))
     if name == "optimize_solar_storage":
         return optimize_solar_storage(fixture_case)
     if name == "calculate":
