@@ -1,3 +1,8 @@
+/**
+ * Panel wrapper for intake, chat, upload, and the side columns. Subparts are
+ * Header, Title, Description, Content, Footer, and Action. Spacing uses the
+ * --card-spacing token; change that token rather than padding on each screen.
+ */
 import * as React from "react"
 import { cn } from "cn"
 

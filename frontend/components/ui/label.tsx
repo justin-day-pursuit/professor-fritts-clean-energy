@@ -1,3 +1,8 @@
+/**
+ * Visible name next to a form field. htmlFor must match the input id so clicking
+ * the label focuses the control. If type size or weight changes, edit the
+ * text-sm / font-medium classes here, not on each intake row.
+ */
 "use client"
 
 import * as React from "react"

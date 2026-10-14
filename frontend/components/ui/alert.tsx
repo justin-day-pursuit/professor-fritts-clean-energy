@@ -1,3 +1,9 @@
+/**
+ * Error and status banner. The planner shows a destructive Alert at the top
+ * when an API call fails (title + description). Other screens import the same
+ * pieces so banners look consistent. If variants or spacing change, edit
+ * alertVariants — not each call site.
+ */
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"

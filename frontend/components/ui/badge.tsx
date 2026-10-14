@@ -1,3 +1,8 @@
+/**
+ * Small label chip from shadcn. LabelBadge (FACT/ESTIMATE/etc.) builds on this.
+ * Keep claim colors in label-badge.tsx; change badgeVariants here only for the
+ * shared size, radius, and focus ring.
+ */
 import { mergeProps } from "@base-ui/react/merge-props"
 import { useRender } from "@base-ui/react/use-render"
 import { cva, type VariantProps } from "class-variance-authority"

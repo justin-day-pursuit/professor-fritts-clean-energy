@@ -12,7 +12,13 @@ import { LabelBadge } from "@/components/label-badge";
 import type { Claim, MessageResponse } from "@/lib/types";
 import { useState } from "react";
 
-export interface ChatMessage extends MessageResponse {
+/**
+ * Chat row. Server messages keep numeric Message.id. Client-only bubbles use a
+ * "local:" string from page.tsx so React keys (msg.id) never collide with the
+ * database. If ids become UUIDs on the server, keep a prefix that cannot match.
+ */
+export interface ChatMessage extends Omit<MessageResponse, "id"> {
+  id: number | string;
   claims?: Claim[];
 }
 
@@ -29,11 +35,20 @@ export function ChatPanel({ messages, onSend, busy, draft, onDraftChange }: Chat
   const text = draft ?? localDraft;
   const setText = onDraftChange ?? setLocalDraft;
 
+  /**
+   * Clears the box, then asks the parent to post the line. If send fails, the
+   * parent drops the optimistic bubble and rethrows; this catch puts the draft
+   * back. If you stop throwing from handleSend, restore the draft there instead.
+   */
   const submit = async () => {
     const trimmed = text.trim();
     if (!trimmed || busy) return;
     setText("");
-    await onSend(trimmed);
+    try {
+      await onSend(trimmed);
+    } catch {
+      setText(trimmed);
+    }
   };
 
   return (

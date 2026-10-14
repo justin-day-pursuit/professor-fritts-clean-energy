@@ -1,3 +1,8 @@
+/**
+ * Thin divider line, horizontal by default. Use inside a card when a panel
+ * needs a split that is not a CardHeader border. If thickness or color
+ * changes, edit the data-horizontal / bg-border classes here.
+ */
 "use client"
 
 import { Separator as SeparatorPrimitive } from "@base-ui/react/separator"

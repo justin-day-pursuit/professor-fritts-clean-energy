@@ -1,3 +1,8 @@
+/**
+ * Single-line text field for intake numbers and addresses. Disabled and invalid
+ * styles live here so every form field matches. Keep layout and labels in
+ * IntakeForm; change height or border here if the design system shifts.
+ */
 import * as React from "react"
 import { Input as InputPrimitive } from "@base-ui/react/input"
 import { cn } from "cn"

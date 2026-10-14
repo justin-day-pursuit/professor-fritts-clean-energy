@@ -1,3 +1,8 @@
+/**
+ * Dropdown for intake enums (state, budget type). Built on Base UI Select.
+ * IntakeForm imports Trigger, Content, and Item. If a field should be free
+ * text instead, switch that field to Input rather than restyling this file.
+ */
 "use client"
 
 import * as React from "react"

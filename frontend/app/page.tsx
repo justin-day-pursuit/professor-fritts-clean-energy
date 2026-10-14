@@ -25,8 +25,26 @@ import { apiToProfile, emptyProfile, profileToApi } from "@/lib/profile-utils";
 import type { Claim, DocumentResponse, IntakeProfile, RunResponse } from "@/lib/types";
 import { useCallback, useState } from "react";
 
-let localMessageId = 1;
+/**
+ * Prefix for bubbles that exist only in the browser (optimistic user lines and
+ * needs_input questions). Database Message.id is a positive integer, so a
+ * "local:" string can never equal it. ChatPanel keys rows on msg.id — if this
+ * counter ever went 1, 2, 3 it would collide with server ids on the next turn.
+ * If the backend starts using string ids, keep a prefix that cannot match them.
+ */
+const CLIENT_MESSAGE_PREFIX = "local:";
+let localMessageSeq = 1;
 
+function nextClientMessageId(): string {
+  return `${CLIENT_MESSAGE_PREFIX}${localMessageSeq++}`;
+}
+
+/**
+ * Pulls FACT/ESTIMATE/ASSUMPTION/RECOMMENDATION chips out of a finished run's
+ * roadmap JSON so the assistant chat bubble can show them under the reply.
+ * Same nested shape RoadmapPanel reads. If the backend moves claims off
+ * output.roadmap.sections, update this flatten (and the roadmap panel).
+ */
 function claimsFromRun(run: RunResponse): Claim[] {
   const roadmap = run.output?.roadmap as { sections?: { claims?: Claim[] }[] } | undefined;
   if (!roadmap?.sections) return [];
@@ -49,6 +67,11 @@ export default function Home() {
     setError(msg);
   }, []);
 
+  /**
+   * Creates a planning session on first use so upload and send have a UUID, then
+   * reuses that id from React state. If the default mock fixture changes, update
+   * the fixture_case argument here (Load Dana uses the same case name).
+   */
   const ensureSession = useCallback(async (): Promise<string> => {
     if (sessionId) return sessionId;
     const created = await createSession({ fixture_case: "case1_queens_library" });
@@ -56,6 +79,11 @@ export default function Home() {
     return created.id;
   }, [sessionId]);
 
+  /**
+   * Replaces the current session with Dana's Queens library example so a reviewer
+   * can skip typing intake. Resets documents, chat, and runs because they belong
+   * to the old session. If Dana's fields change, edit DANA_INTAKE — not this handler.
+   */
   const loadDana = async () => {
     setBusy(true);
     setError(null);
@@ -77,6 +105,11 @@ export default function Home() {
     }
   };
 
+  /**
+   * Saves the current intake, then posts the chosen file to this session's
+   * documents endpoint and appends the returned record to the upload list.
+   * If uploads should skip saving the form first, remove the updateProfile call.
+   */
   const handleUpload = async (file: File) => {
     setBusy(true);
     setError(null);
@@ -92,6 +125,11 @@ export default function Home() {
     }
   };
 
+  /**
+   * Puts a run into the right-hand log, replacing an older copy of the same id,
+   * and selects it so the roadmap tab follows. If runs should stack as duplicates
+   * instead of replacing, drop the filter on r.id.
+   */
   const appendRun = (run: RunResponse) => {
     setRuns((prev) => {
       const without = prev.filter((r) => r.id !== run.id);
@@ -100,20 +138,29 @@ export default function Home() {
     setSelectedRunId(run.id);
   };
 
+  /**
+   * Saves intake, shows an optimistic user bubble, then posts the chat line.
+   * On failure, drops that bubble so ChatPanel can restore the draft (it rethrows).
+   * Client-only ids use nextClientMessageId so they never match database Message.id.
+   * If the API starts returning the user message in result.message, stop appending
+   * a local user bubble and only render the server copy.
+   */
   const handleSend = async (text: string) => {
     setBusy(true);
     setError(null);
+    let optimisticId: string | null = null;
     try {
       const sid = await ensureSession();
       await updateProfile(sid, { profile: profileToApi(profile) });
       const userLocal: ChatMessage = {
-        id: localMessageId++,
+        id: nextClientMessageId(),
         session_id: sid,
         role: "user",
         content: text,
         created_at: new Date().toISOString(),
         run_id: null,
       };
+      optimisticId = String(userLocal.id);
       setMessages((prev) => [...prev, userLocal]);
 
       const result = await postMessage(sid, { content: text });
@@ -133,7 +180,7 @@ export default function Home() {
         setMessages((prev) => [
           ...prev,
           {
-            id: localMessageId++,
+            id: nextClientMessageId(),
             session_id: sid,
             role: "assistant",
             content: question,
@@ -143,14 +190,28 @@ export default function Home() {
         ]);
       }
     } catch (err) {
+      if (optimisticId != null) {
+        const idToDrop = optimisticId;
+        setMessages((prev) => prev.filter((m) => String(m.id) !== idToDrop));
+      }
       showError(err);
+      throw err;
     } finally {
       setBusy(false);
     }
   };
 
+  /**
+   * After the user edits intake, sends a canned "please update the roadmap" line
+   * through handleSend so a new run is stored. Errors are already shown there.
+   * If the prompt text should change, edit the string here — not ChatPanel.
+   */
   const handleReplan = async () => {
-    await handleSend("Please update the roadmap with my revised intake.");
+    try {
+      await handleSend("Please update the roadmap with my revised intake.");
+    } catch {
+      /* handleSend already showed the alert and dropped the optimistic bubble */
+    }
   };
 
   const activeRun =

@@ -1,3 +1,8 @@
+/**
+ * Multi-line box for the chat draft and longer intake notes. ChatPanel owns
+ * rows and placeholder; this file owns border, focus ring, and disabled look.
+ * If the chat box should grow with text, that is already field-sizing-content.
+ */
 import * as React from "react"
 import { cn } from "cn"
 

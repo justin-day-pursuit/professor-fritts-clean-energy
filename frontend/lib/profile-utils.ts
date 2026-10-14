@@ -15,6 +15,12 @@ const NUMERIC_KEYS: (keyof IntakeProfile)[] = [
   "critical_load_hours",
 ];
 
+/**
+ * Turns a form field (typed text, including commas) into a number for the
+ * profile JSON the backend expects. Empty or non-numeric becomes undefined so
+ * profileToApi omits that key. If a field should stay a string, remove it from
+ * NUMERIC_KEYS above instead of changing this helper.
+ */
 function coerceNumber(value: string | number | undefined): number | undefined {
   if (value === undefined || value === "") return undefined;
   if (typeof value === "number") return value;

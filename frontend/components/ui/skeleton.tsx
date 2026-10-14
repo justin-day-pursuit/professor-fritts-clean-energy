@@ -1,3 +1,8 @@
+/**
+ * Pulsing placeholder while content loads. Not used on the main planner yet;
+ * keep this file so a later loading state can import Skeleton without adding
+ * a new primitive. Change the pulse color via bg-muted.
+ */
 import { cn } from "cn"
 
 function Skeleton({ className, ...props }: React.ComponentProps<"div">) {

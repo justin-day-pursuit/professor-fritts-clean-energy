@@ -1,3 +1,8 @@
+/**
+ * Run log vs Roadmap toggle in the right column. page.tsx sets defaultValue
+ * and adds a TabsTrigger plus TabsContent per tab. If you add a third tab,
+ * do it there; change selected-state colors in tabsListVariants / TabsTrigger.
+ */
 "use client"
 
 import { Tabs as TabsPrimitive } from "@base-ui/react/tabs"

@@ -28,6 +28,12 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Turns a failed HTTP body into one sentence for the red alert on the planner.
+ * FastAPI often sends { detail: string } or { detail: [{ msg }] }; Django may
+ * send plain text. If the backend error JSON shape changes, update the detail
+ * parsing here so every caller of requestJson stays correct.
+ */
 async function parseErrorMessage(res: Response): Promise<string> {
   const text = await res.text();
   try {
@@ -42,6 +48,12 @@ async function parseErrorMessage(res: Response): Promise<string> {
   return text || res.statusText || `Request failed (${res.status})`;
 }
 
+/**
+ * Shared fetch wrapper for JSON API calls: sets Accept/Content-Type, throws
+ * ApiError on non-OK, and parses the body. createSession, postMessage, and the
+ * other helpers all go through this. If the app later needs auth headers or a
+ * different base URL per request, add them here rather than in each helper.
+ */
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,

@@ -1,3 +1,8 @@
+/**
+ * Scrollable region for chat history and long run logs so the page chrome stays
+ * put. Callers set the height via className (ChatPanel uses a min-height). If
+ * scrollbar thickness changes, edit ScrollBar — not each panel.
+ */
 "use client"
 
 import * as React from "react"
