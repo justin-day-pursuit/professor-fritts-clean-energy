@@ -2,7 +2,8 @@
 Django settings for Professor Fritts.
 
 Loads the root .env (one level above backend/), uses local SQLite when DATABASE_URL
-is empty, and ensures backend/.data exists for the database and future uploads.
+is empty, and uses Supabase Postgres when DATABASE_URL is a postgres URL.
+Ensures backend/.data exists for the SQLite file and future uploads.
 """
 
 from __future__ import annotations
@@ -11,6 +12,7 @@ import os
 import sys
 from pathlib import Path
 
+import dj_database_url
 from dotenv import load_dotenv
 
 # backend/ is the Django BASE_DIR; the repo root (parent) holds .env.
@@ -32,41 +34,60 @@ def _env_bool(name: str, default: bool = False) -> bool:
     return raw in ("1", "true", "yes", "on")
 
 
+def _sqlite_config(name: str) -> dict:
+    """Django database dict for a SQLite file. Tests and local dev both use this shape."""
+    return {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": name,
+    }
+
+
 def _database_config() -> dict:
     """
-    Choose the database: Postgres URL when set, otherwise SQLite under .data/.
-    During pytest, use an in-memory SQLite so tests do not touch dev.sqlite3.
+    Choose the database.
+
+    Pytest always uses SQLite so the suite never opens Supabase. An empty
+    DATABASE_URL also stays on SQLite under .data/. A postgres URL uses the
+    session pooler (port 5432) with SSL required. This does not open a second
+    psycopg pool; Django reuses one connection for up to 10 minutes.
     """
     test_db = os.environ.get("FRITTS_TEST_DB", "").strip()
     if test_db:
-        return {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": test_db,
-        }
+        return _sqlite_config(test_db)
 
     if "pytest" in sys.modules:
-        return {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": str(DATA_DIR / "pytest.sqlite3"),
-        }
+        return _sqlite_config(str(DATA_DIR / "pytest.sqlite3"))
 
     database_url = os.environ.get("DATABASE_URL", "").strip()
-    if database_url:
-        # Minimal sqlite URL support for future local overrides; Postgres URLs need dj-database-url later.
-        if database_url.startswith("sqlite:///"):
-            db_path = database_url.replace("sqlite:///", "", 1)
-            return {
-                "ENGINE": "django.db.backends.sqlite3",
-                "NAME": db_path,
-            }
+    if not database_url:
+        return _sqlite_config(str(DATA_DIR / "dev.sqlite3"))
+
+    if database_url.startswith("sqlite:///"):
+        db_path = database_url.replace("sqlite:///", "", 1)
+        return _sqlite_config(db_path)
+
+    if database_url.startswith(("http://", "https://")):
         raise ValueError(
-            "Non-empty DATABASE_URL must be sqlite:/// for v0, or configure Postgres in a later block."
+            "DATABASE_URL is a Supabase project URL. Django needs the session pooler "
+            "Postgres URI from the dashboard Connect panel: port 5432, the database "
+            "password, and ?sslmode=require."
         )
 
-    return {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": str(DATA_DIR / "dev.sqlite3"),
-    }
+    if database_url.startswith(("postgres://", "postgresql://")):
+        # conn_max_age keeps the connection open between requests. Health checks
+        # drop it if Supabase already closed the idle session.
+        config = dj_database_url.parse(
+            database_url,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+        options = config.setdefault("OPTIONS", {})
+        options.setdefault("sslmode", "require")
+        return config
+
+    raise ValueError(
+        "DATABASE_URL must be empty, sqlite:///, or a postgres:// / postgresql:// URL."
+    )
 
 
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-only-change-me")
