@@ -1,0 +1,17 @@
+{
+  "source_url": "https://example.test/fictional/pvwatts-v0",
+  "retrieved_at": "2025-10-01T12:00:00Z",
+  "dataset_version": "case1-v0-mock-1",
+  "mock": true,
+  "tool": "lookup_ny_building_records",
+  "data": {
+    "address": "41-17 Main Street",
+    "borough": "Queens",
+    "gross_floor_area_sqft": 18000,
+    "year_built": 1968,
+    "landmark_flag": false,
+    "roof_area_sqft": 6000
+  },
+  "stale": false,
+  "flags": []
+}

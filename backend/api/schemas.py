@@ -22,6 +22,19 @@ class HealthResponse(BaseModel):
     django_version: str
 
 
+class SessionCreateRequest(BaseModel):
+    """Optional initial profile and mock fixture case name."""
+
+    profile: dict[str, Any] = Field(default_factory=dict)
+    fixture_case: str | None = None
+
+
+class ProfileUpdateRequest(BaseModel):
+    """Full intake profile replacement from the frontend form."""
+
+    profile: dict[str, Any] = Field(default_factory=dict)
+
+
 class SessionResponse(BaseModel):
     """One planning session as the API will return it."""
 
@@ -31,6 +44,7 @@ class SessionResponse(BaseModel):
     created_at: datetime
     profile: dict[str, Any] = Field(default_factory=dict)
     status: str
+    fixture_case: str = "case1_queens_library"
 
 
 class DocumentResponse(BaseModel):
@@ -73,6 +87,17 @@ class RunEventResponse(BaseModel):
     created_at: datetime
 
 
+class MessageCreateRequest(BaseModel):
+    """User chat line — LLM mode comes from server LLM_PROVIDER, not the request body."""
+
+    content: str
+
+
+class MessageRunResponse(BaseModel):
+    message: MessageResponse | None = None
+    run: "RunResponse"
+
+
 class RunResponse(BaseModel):
     """Agent run with optional ordered events."""
 
@@ -91,3 +116,32 @@ class RunResponse(BaseModel):
     flags: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime
     events: list[RunEventResponse] = Field(default_factory=list)
+
+
+def run_to_response(run) -> RunResponse:
+    """Build RunResponse from a Run with prefetched events."""
+    events = [
+        RunEventResponse(
+            id=e.id,
+            seq=e.seq,
+            kind=e.kind,
+            payload=e.payload,
+            created_at=e.created_at,
+        )
+        for e in run.events.all()
+    ]
+    return RunResponse(
+        id=run.id,
+        session_id=run.session_id,
+        status=run.status,
+        started_at=run.started_at,
+        finished_at=run.finished_at,
+        tool_mode=run.tool_mode,
+        llm_provider=run.llm_provider,
+        tool_call_count=run.tool_call_count,
+        elapsed_seconds=run.elapsed_seconds,
+        output=run.output,
+        flags=run.flags,
+        created_at=run.created_at,
+        events=events,
+    )

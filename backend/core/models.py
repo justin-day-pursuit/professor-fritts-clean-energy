@@ -23,6 +23,8 @@ class Session(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     profile = models.JSONField(default=dict, blank=True)
     status = models.CharField(max_length=64, default="active")
+    # Which mock fixture folder to use when TOOL_MODE=mock (for example case1_queens_library).
+    fixture_case = models.CharField(max_length=128, default="case1_queens_library")
 
     class Meta:
         ordering = ["-created_at"]
