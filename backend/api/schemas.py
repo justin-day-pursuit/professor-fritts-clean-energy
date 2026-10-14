@@ -88,8 +88,9 @@ class RunEventResponse(BaseModel):
 
 
 class MessageCreateRequest(BaseModel):
+    """User chat line — LLM mode comes from server LLM_PROVIDER, not the request body."""
+
     content: str
-    llm_provider: str | None = None
 
 
 class MessageRunResponse(BaseModel):

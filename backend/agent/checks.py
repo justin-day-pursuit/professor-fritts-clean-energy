@@ -123,8 +123,8 @@ def run_check2(
     if limits.tool_call_count >= tool_call_limit():
         return CheckResult.fail("tool_limit", f"Tool call limit ({tool_call_limit()}) reached.")
 
-    retries = limits.retries_by_tool.get(tool_name, 0)
-    if retries >= tool_retry_limit():
+    failed = limits.failed_attempts_by_tool.get(tool_name, 0)
+    if failed >= tool_retry_limit():
         return CheckResult.fail(
             "retry_limit",
             f"Retry limit ({tool_retry_limit()}) reached for tool {tool_name!r}.",

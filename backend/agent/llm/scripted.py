@@ -27,9 +27,29 @@ class ScriptedLLM(LLMClient):
         raw = json.loads(path.read_text(encoding="utf-8"))
         self._steps: list[dict[str, Any]] = raw.get("steps", raw)
         self._index = 0
+        self._replay_final_once = False
+        self._last_final_step: dict[str, Any] | None = None
+        for step in reversed(self._steps):
+            if step.get("type") == "final":
+                self._last_final_step = step
+                break
 
     def reset(self) -> None:
+        """Rewind to the first scripted step for a new run."""
         self._index = 0
+        self._replay_final_once = False
+
+    def prepare_check4_retry(self, issues: list[str], user_message: str) -> None:
+        """
+        After Check 4 fails, allow one more final step instead of raising out-of-steps.
+
+        If the main sequence is finished, the next next_step replays the last write_roadmap once.
+        """
+        _ = user_message
+        if issues:
+            pass  # Issues are already in harness notes flags; replay uses the same fixture final.
+        if self._index >= len(self._steps) and self._last_final_step:
+            self._replay_final_once = True
 
     def next_step(
         self,
@@ -38,9 +58,25 @@ class ScriptedLLM(LLMClient):
         user_message: str,
         notes_summary: str,
         tool_schemas: list[dict[str, Any]],
+        fix_context: str | None = None,
     ) -> LLMStep:
+        _ = (system_prompt, user_message, notes_summary, tool_schemas, fix_context)
+
+        if self._replay_final_once and self._last_final_step:
+            self._replay_final_once = False
+            step = self._last_final_step
+            return LLMStep(
+                kind="final",
+                tool_name=step.get("name", "write_roadmap"),
+                tool_input=step.get("input", {}),
+            )
+
         if self._index >= len(self._steps):
-            raise RuntimeError("Scripted LLM ran out of steps before write_roadmap.")
+            # Signal exhaustion so the harness can finish partial without an uncaught exception.
+            return LLMStep(
+                kind="exhausted",
+                message="Scripted sequence finished without a passing Check 4 fix.",
+            )
 
         step = self._steps[self._index]
         self._index += 1

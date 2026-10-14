@@ -47,7 +47,7 @@ def test_api_case1_flow(api_client):
 
     msg = api_client.post(
         f"/api/sessions/{session_id}/messages",
-        json={"content": "How can we cut grid power 30% by 2030 on $400k?", "llm_provider": "scripted"},
+        json={"content": "How can we cut grid power 30% by 2030 on $400k?"},
     )
     assert msg.status_code == 200
     run_id = msg.json()["run"]["id"]

@@ -7,14 +7,23 @@ from __future__ import annotations
 from uuid import UUID
 
 from asgiref.sync import sync_to_async
+from django.conf import settings
 from fastapi import APIRouter, HTTPException
 
 from agent.harness import run_harness
 from api import schemas
 from core import services
-from core.models import Run
 
 router = APIRouter(prefix="/sessions", tags=["messages"])
+
+
+def _server_llm_provider() -> str | None:
+    """
+    LLM for HTTP-triggered runs follows server config only (scripted in tests, anthropic when set).
+
+    The request body cannot override to anthropic unless the server is already in anthropic mode.
+    """
+    return getattr(settings, "LLM_PROVIDER", "anthropic")
 
 
 @router.post("/{session_id}/messages", response_model=schemas.MessageRunResponse)
@@ -27,7 +36,11 @@ async def post_message(session_id: UUID, body: schemas.MessageCreateRequest):
 
     await services.add_message_async(session_id, role="user", content=body.content)
 
-    run = await sync_to_async(run_harness)(session, body.content, llm_provider=body.llm_provider)
+    run = await sync_to_async(run_harness)(
+        session,
+        body.content,
+        llm_provider=_server_llm_provider(),
+    )
 
     def _assistant_for_run(run_id: int):
         from core.models import Message

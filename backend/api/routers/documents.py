@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import csv
 import io
+import os
 import uuid
 from pathlib import Path
 from uuid import UUID
@@ -17,6 +18,32 @@ from api import schemas
 from core import services
 
 router = APIRouter(prefix="/sessions", tags=["documents"])
+
+
+def _sanitize_upload_filename(raw: str | None) -> str:
+    """
+    Reduce upload names to a safe basename — no path segments or parent-directory tricks.
+
+    Returns upload.bin when the name is empty after sanitizing.
+    """
+    name = (raw or "").strip()
+    name = name.replace("\\", "/")
+    name = os.path.basename(name)
+    if ".." in name.split("/"):
+        name = name.replace("..", "")
+    name = name.strip().lstrip(".")
+    if not name:
+        return "upload.bin"
+    return name
+
+
+def _path_inside_upload_dir(resolved: Path, upload_dir: Path) -> bool:
+    """True when resolved file path stays under the session upload folder."""
+    try:
+        resolved.relative_to(upload_dir.resolve())
+        return True
+    except ValueError:
+        return False
 
 
 def _parse_bills_csv(content: bytes) -> dict:
@@ -43,6 +70,12 @@ def _parse_bills_csv(content: bytes) -> dict:
     return {"type": "bills", "months": monthly, "total_kwh": total}
 
 
+def _should_parse_as_bills(filename: str) -> bool:
+    """Only treat CSV uploads as utility bills when the name suggests bills or kWh."""
+    lower = filename.lower()
+    return lower.endswith(".csv") and ("bill" in lower or "kwh" in lower)
+
+
 @router.post("/{session_id}/documents", response_model=schemas.DocumentResponse)
 async def upload_document(session_id: UUID, file: UploadFile = File(...)):
     """Accept multipart upload; parse bills CSV, otherwise record as received only."""
@@ -56,13 +89,15 @@ async def upload_document(session_id: UUID, file: UploadFile = File(...)):
     upload_dir.mkdir(parents=True, exist_ok=True)
 
     raw = await file.read()
-    safe_name = file.filename or "upload.bin"
-    stored = upload_dir / f"{uuid.uuid4().hex}_{safe_name}"
+    safe_name = _sanitize_upload_filename(file.filename)
+    stored = (upload_dir / f"{uuid.uuid4().hex}_{safe_name}").resolve()
+    if not _path_inside_upload_dir(stored, upload_dir):
+        raise HTTPException(status_code=400, detail="Invalid upload path")
+
     stored.write_bytes(raw)
 
-    parsed: dict = {"status": "received", "parsed": False}
-    name_lower = safe_name.lower()
-    if name_lower.endswith(".csv") and ("bill" in name_lower or "kwh" in name_lower or True):
+    parsed: dict = {"status": "received", "parsed": False, "note": "received, not parsed"}
+    if _should_parse_as_bills(safe_name):
         try:
             bill_summary = _parse_bills_csv(raw)
             if bill_summary["months"]:

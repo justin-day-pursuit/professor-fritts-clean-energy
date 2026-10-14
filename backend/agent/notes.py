@@ -50,6 +50,9 @@ class AgentNotes(BaseModel):
         if tool_name == "calculate" and "calc_id" in result.data:
             cid = result.data["calc_id"]
             self.calculations[cid] = result.data
+            for aid in result.data.get("assumption_ids") or []:
+                key = str(aid)
+                self.assumptions.setdefault(key, f"Used in calculation {cid}")
 
     def summarize_for_llm(self) -> str:
         """
