@@ -17,3 +17,6 @@ node_modules/
 Thumbs.db
 .vscode/
 .idea/
+
+# orchestrate local files
+.cursor/
