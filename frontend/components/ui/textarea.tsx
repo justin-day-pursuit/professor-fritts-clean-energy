@@ -1,7 +1,11 @@
 /**
- * Multi-line box for the chat draft and longer intake notes. ChatPanel owns
- * rows and placeholder; this file owns border, focus ring, and disabled look.
- * If the chat box should grow with text, that is already field-sizing-content.
+ * Multi-line text box shared by the chat send field and the intake form.
+ * ChatPanel and IntakeForm already import { Textarea } from this file — the
+ * chat box, energy-goal, and critical-loads rows all render this component.
+ * Keep labels, layout, and send-on-Enter in those files. Change height,
+ * border, or disabled styles here if the design system shifts. Base UI has
+ * no textarea primitive, so this follows the official shadcn base-nova
+ * pattern (native textarea + cn), same as input.tsx besides that primitive.
  */
 import * as React from "react"
 import { cn } from "cn"
