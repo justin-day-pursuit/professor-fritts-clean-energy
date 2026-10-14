@@ -31,13 +31,16 @@ if settings.DEBUG:
         """
         In DEBUG only: serve Django app static files (admin CSS/JS under /static/admin/…) so the local admin UI loads.
 
-        Keeps /admin usable on one uvicorn port. In production, run collectstatic and serve assets from a proper
-        static host or CDN instead of this route.
+        Keeps /admin usable on one uvicorn port.
         """
         resolved = finders.find(full_path)
         if not resolved:
             raise HTTPException(status_code=404, detail="Static file not found")
         return FileResponse(resolved)
+elif settings.STATIC_ROOT.exists():
+    from fastapi.staticfiles import StaticFiles
+
+    fastapi_app.mount("/static", StaticFiles(directory=str(settings.STATIC_ROOT)), name="static")
 
 app = fastapi_app
 # Django's ASGI_APPLICATION setting looks for this name.

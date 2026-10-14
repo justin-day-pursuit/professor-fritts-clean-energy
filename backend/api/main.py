@@ -19,11 +19,16 @@ def create_app() -> FastAPI:
         version="0.1.0",
     )
 
-    # Allow the browser frontend to call the API during local development.
-    origin = getattr(settings, "FRONTEND_ORIGIN", "http://localhost:3000")
+    # Allow browser frontends (local and deployed) to call the API.
+    origin_setting = getattr(settings, "FRONTEND_ORIGIN", "http://localhost:3000")
+    if isinstance(origin_setting, str):
+        allowed_origins = [o.strip() for o in origin_setting.split(",") if o.strip()]
+    else:
+        allowed_origins = list(origin_setting)
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[origin],
+        allow_origins=allowed_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
