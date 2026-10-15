@@ -8,11 +8,11 @@ Named in honor of Charles Fritts, the New York inventor who installed the city's
 
 "Professor" is a character title that describes what the agent does: teach and guide. Charles Fritts (1850-1903) was an inventor and engineer from New York, remembered for building one of the first solar cells in 1883, made of selenium coated with a thin layer of gold. A Smithsonian piece says he put the first solar panels on a New York City rooftop in 1884.
 
-Professor Fritts is an AI planning agent for managers of public buildings in New York State, such as school districts, libraries and parks. It evaluates an existing building and produces a prioritized roadmap with cost estimates to an energy goal, with at least three scenarios compared side by side. Every number is labeled as a fact, estimate, assumption or recommendation, with its source, and the roadmap names the professional reviews needed before any money is committed.
+Professor Fritts is an AI planning agent for managers of public buildings in New York City, such as school districts, libraries and parks. It evaluates an existing building and produces a prioritized roadmap with cost estimates to an energy goal, with at least three scenarios compared side by side. Every number is labeled as a fact, estimate, assumption or recommendation, with its source, and the roadmap names the professional reviews needed before any money is committed.
 
-v1 scope: energy efficiency and solar PV (battery storage only for solar resilience), New York State and NYC only.
+v1 scope: energy efficiency and solar PV (battery storage only for solar resilience), NYC only (the five boroughs). State and federal programs still apply to NYC buildings.
 
-**Scope update:** the team decided on **NYC only** (five boroughs). Read [documentation/NYC-Version-Build-Plan-Changes.md](documentation/NYC-Version-Build-Plan-Changes.md); where it disagrees with the plan or PRD, it wins. The code still has the old scope until those changes are made.
+**Scope update:** the team decided on **NYC only** (five boroughs). Read [documentation/NYC-Version-Build-Plan-Changes.md](documentation/NYC-Version-Build-Plan-Changes.md); where it disagrees with the plan or PRD, it wins. The scope check, prompt, intake form, PRD, build plan and the case 2 Bronx school fixture all follow it. Run case 2 with `python manage.py run_case --case case2_bronx_school` from `backend/`.
 
 ## Docs
 

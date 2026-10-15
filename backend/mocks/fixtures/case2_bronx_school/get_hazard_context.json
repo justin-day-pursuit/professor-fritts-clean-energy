@@ -1,0 +1,14 @@
+{
+  "retrieved_at": "2026-10-01T12:00:00Z",
+  "dataset_version": "case2-v2-mock-1",
+  "mock": true,
+  "stale": false,
+  "source_url": "https://example.test/fictional/case2/hazard",
+  "tool": "get_hazard_context",
+  "data": {
+    "heat_rating": "moderate",
+    "flood_rating": "low",
+    "notes": "Fictional FEMA-style context for a Bronx site."
+  },
+  "flags": []
+}

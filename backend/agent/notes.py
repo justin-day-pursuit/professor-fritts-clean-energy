@@ -54,10 +54,19 @@ class AgentNotes(BaseModel):
                 "A7",
                 "Efficiency measures (LED and controls) save 10-20% of annual use, from published benchmarks, not a building model.",
             )
+            # A8 (case 2): no bills means the baseline is a benchmark, which must be labeled as a guess.
+            if "annual_kwh" in (result.data.get("missing_fields") or []):
+                floor_area = result.data.get("profile", {}).get("floor_area_sqft")
+                self.assumptions.setdefault(
+                    "A8",
+                    "No bills uploaded: annual use is a benchmark of 9 kWh per sq ft"
+                    + (f" x {floor_area} sq ft" if floor_area else "")
+                    + " for a NYC school, not measured use.",
+                )
 
         # Check 4 only accepts an ASSUMPTION whose id is already in this register.
         # Tools fill the ids below so the model does not have to invent them.
-        # A1 loss band, A2 setback, A3 sq ft per kW, A4 mock battery, A5 mock incentives, A6 mock hazards, A7 efficiency benchmark (set when the profile is read).
+        # A1 loss band, A2 setback, A3 sq ft per kW, A4 mock battery, A5 mock incentives, A6 mock hazards, A7 efficiency benchmark and A8 benchmark use when bills are missing (both set when the profile is read).
         if tool_name == "get_solar_production" and "range_assumption" in result.data:
             self.assumptions.setdefault("A1", str(result.data["range_assumption"]))
 

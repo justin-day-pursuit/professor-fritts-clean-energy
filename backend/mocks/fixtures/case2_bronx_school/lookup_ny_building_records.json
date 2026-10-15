@@ -1,0 +1,19 @@
+{
+  "retrieved_at": "2026-10-01T12:00:00Z",
+  "dataset_version": "case2-v2-mock-1",
+  "mock": true,
+  "stale": false,
+  "source_url": "https://example.test/fictional/case2/building-records",
+  "tool": "lookup_ny_building_records",
+  "data": {
+    "address": "1200 Example Avenue",
+    "borough": "Bronx",
+    "gross_floor_area_sqft": 42000,
+    "year_built": 1962,
+    "landmark_flag": false,
+    "roof_area_sqft": 9000,
+    "roof_age_years_estimate": 22,
+    "roof_note": "Public records suggest the roof is about 22 years old; no replacement year is recorded."
+  },
+  "flags": []
+}

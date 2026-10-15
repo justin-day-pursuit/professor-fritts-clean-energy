@@ -1,5 +1,7 @@
 # NYC-Version: changes to the build plan
 
+**Status: applied.** The plan, PRD, code, prompt, intake form and case 2 follow this decision. Only the Far Rockaway question below is open.
+
 **Decision (Oct 15, 2026):** Professor Fritts is now **NYC only** (the five boroughs: Manhattan, Brooklyn, Queens, the Bronx, Staten Island). It was "New York State and NYC".
 
 This file sits next to the original [Build Plan](<Building Renewable Energy Planner — Build Plan.md>) and the [PRD](Building_Renewable_Energy_Planner_PRD_v3.md). **Those two files are not edited.** Where this file and they disagree, **this file wins** until the originals are updated.
@@ -60,8 +62,8 @@ The v4 goalpost text stays the same. Only the building changes.
 | Intake form and `frontend/lib/*` | Borough is a required pick-list of the five boroughs; state is fixed to NY. | **Done** |
 | `backend/tools/geocode.py` | The county fallback is kept on purpose: older sessions send the borough as `county`, and `check1` maps county names (Kings, Richmond) to boroughs. | Kept |
 | Tests | Buffalo, Erie County, Albany, Nassau, Westchester, NJ, CA and PA stop; each borough passes; county names map; a missing borough asks once. | **Done** |
-| `backend/mocks/fixtures/` | Add the NYC school fixture for case 2. | **To do (v4)** |
-| PRD and Build Plan | Edit the originals using the tables above. | **To do** |
+| `backend/mocks/fixtures/case2_bronx_school/` | NYC school fixture for case 2: intake, tool data (stale-vs-live incentive conflict) and a scripted run. Saving the refreshed "closed" record to the cache still waits for v4. | **Done** (cache part in v4) |
+| PRD and Build Plan | Originals edited using the tables above (Oct 15, 2026). | **Done** |
 
 ## Open question for Justin and Mara
 

@@ -1,0 +1,15 @@
+{
+  "retrieved_at": "2026-10-01T12:00:00Z",
+  "dataset_version": "case2-v2-mock-1",
+  "mock": true,
+  "stale": false,
+  "source_url": "https://example.test/fictional/case2/utility-rates",
+  "tool": "get_utility_rates",
+  "data": {
+    "utility": "Con Edison",
+    "tariff_name": "SC-9 I",
+    "avg_energy_charge_usd_per_kwh": 0.22,
+    "effective_date": "2026-07-01"
+  },
+  "flags": []
+}

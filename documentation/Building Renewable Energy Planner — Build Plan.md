@@ -18,6 +18,7 @@ Finish this checklist before writing agent code; it takes about half a day and r
 ### Decisions to lock
 
 - [ ] One product name: "Professor Fritts" (persona) or "Building Renewable Energy Planner" (product), used the same way in the prompt, flowchart and README
+- [ ] Scope is NYC only (the five boroughs); New York State and federal programs still apply to NYC buildings (decided Oct 15, 2026; see NYC-Version-Build-Plan-Changes.md)
 - [ ] Label words: FACT, ESTIMATE, ASSUMPTION, RECOMMENDATION everywhere (the flowchart's "guess" becomes ASSUMPTION)
 - [ ] Cache scope: one shared cache for all users, with add-only versioned writes
 - [ ] Tool-call limit per request (suggested start: 40 calls, 2 retries per tool, 10-minute total timeout)
@@ -28,7 +29,7 @@ Finish this checklist before writing agent code; it takes about half a day and r
 - [ ] NLR developer key (covers PVWatts and REopt): developer.nlr.gov/signup
 - [ ] OpenEI key (utility tariffs): openei.org/services/api/signup
 - [ ] EIA key (electricity prices): eia.gov/opendata/register.php
-- [ ] NYC Open Data app token (free account on data.cityofnewyork.us; check whether it also covers data.ny.gov)
+- [ ] NYC Open Data app token (free account on data.cityofnewyork.us; data.ny.gov is no longer needed)
 - [ ] Anthropic API key (the agent itself)
 - [ ] Email dsire-admin@ncsu.edu asking whether light automated reading of the public DSIRE site is allowed, and for API pricing
 
@@ -109,13 +110,13 @@ Read top to bottom: each box is a working version of the agent, and its right si
 
 **Goal:** a code check (not the model judging itself) blocks bad plans before the user sees them.
 
-- **Builder A:** `approved_sources.yaml` (official NY, NYC, federal and utility pages, plus DSIRE marked as finder-only); FEMA hazard tool in mock mode
-- **Builder B:** validator that checks sections, labels, mandatory referrals (structural PE/RA, roof survey, licensed electrician, fire access, interconnection), NY-only rules and no closed programs in net cost. Failures go back to the agent once, then it returns a partial roadmap. Out-of-New-York requests stop immediately.
+- **Builder A:** `approved_sources.yaml` (official NYC, New York State, federal and Con Edison pages, plus DSIRE marked as finder-only); FEMA hazard tool in mock mode
+- **Builder B:** validator that checks sections, labels, mandatory referrals (structural PE/RA, roof survey, licensed electrician, fire access, interconnection), NYC-only rules and no closed programs in net cost. Failures go back to the agent once, then it returns a partial roadmap. Requests outside NYC (another state, or upstate or suburban New York) stop immediately.
 
 **Goalpost:**
 
 - [ ] The validator catches all 5 planted defects: an unlabeled number, a missing structural referral, a California rule, a closed program in net cost, a missing section
-- [ ] A New Jersey building is stopped as out of scope
+- [ ] A New Jersey building and an upstate New York building (Buffalo) are each stopped as out of scope
 - [ ] "Skip the engineer" is declined, and the rest of the plan still returns
 
 ### v4 — Incentives and fresh data (day 3)
@@ -123,7 +124,7 @@ Read top to bottom: each box is a working version of the agent, and its right si
 **Goal:** incentives are checked live on official pages and saved safely.
 
 - **Builder A:** incentives tool that reads approved official pages and extracts status, deadline and eligibility, keeping the exact quoted text and a page hash. SQLite cache with add-only versions, freshness limits (7, 90, 180 and 365 days), rollback, and the safe-change rule: changes that make a plan more cautious save automatically, more favorable changes save as "pending" until a person confirms.
-- **Builder B:** prompt rules for stale data and conflicts; eval case 2 (Erie County school) wired up
+- **Builder B:** prompt rules for stale data and conflicts; eval case 2 (Bronx elementary school) wired up
 
 **Goalpost:**
 
@@ -147,7 +148,7 @@ Read top to bottom: each box is a working version of the agent, and its right si
 
 **Goal:** the agent survives bad inputs and passes every test.
 
-- **Both builders:** retrieved text passed to the agent as data and any hidden instructions flagged; tool failures produce a partial roadmap with no invented numbers; tool-call limit enforced; 5 extra eval cases (outside NY, no budget, DSIRE says open but the official page says closed, a building in a flood zone, a landmark building); README listing what is faked
+- **Both builders:** retrieved text passed to the agent as data and any hidden instructions flagged; tool failures produce a partial roadmap with no invented numbers; tool-call limit enforced; 5 extra eval cases (outside NYC (one upstate NY building and one New Jersey building), no budget, DSIRE says open but the official page says closed, a building in a flood zone, a landmark building); README listing what is faked
 
 **Goalpost (definition of done):**
 
@@ -192,7 +193,7 @@ Six tools run live at the deadline (utility rates only partly); the rest return 
 | Tool | Data source | Key needed | At deadline | Block | Difficulty |
 | --- | --- | --- | --- | --- | --- |
 | get\_building\_profile | Your intake form | None (you build it) | Live (files/SQLite) | v2 | Easy |
-| lookup\_ny\_building\_records | NYC Open Data, data.ny.gov | App token (free) | Live | v1 | Easy |
+| lookup\_ny\_building\_records | NYC Open Data | App token (free) | Live | v1 | Easy |
 | get\_solar\_production | NLR PVWatts v8 | NLR key (free) | Live | v1 | Easy |
 | get\_utility\_rates | OpenEI rates; EIA prices | OpenEI + EIA keys (free) | EIA live, OpenEI mock | v1, v2 | Medium |
 | search\_ny\_incentives\_and\_rules | Approved official pages; DSIRE as finder | None for official pages | Live | v4 | Hard |
@@ -213,7 +214,6 @@ The incentives tool is the biggest schedule risk; if it slips, ship v4 with a fi
 | --- | --- | --- |
 | Incentive pages are hard to read reliably | v4 slips; wrong open/closed status | Keep the quoted text with every status; any unclear status is listed as "uncertain" and left out of net cost |
 | API rate limits or outages during testing | Evals fail for reasons unrelated to the agent | Run evals in mock mode by default; run live only for case 1 |
-| Upstate buildings have thin public records | Case 2 relies on assumptions | Label them ASSUMPTION with low confidence and list the data that would raise confidence |
 | Picking the right utility tariff | Savings wrong by a wide margin | Show the tariff name and effective date; flag it for user confirmation |
 | DSIRE permission not granted | No finder source | Official pages on the approved list cover v1; DSIRE is optional |
 | Schema changes mid-build | Builders block each other | Freeze `tools/schemas.py`; changes only with both builders' agreement |
