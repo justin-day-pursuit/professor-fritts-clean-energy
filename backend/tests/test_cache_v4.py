@@ -33,6 +33,25 @@ class TestApprovedSources:
     def test_random_blog_is_not_approved(self):
         assert not is_approved_source("https://solarreviews.com/best-panels")
 
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "https://wnyc.gov/programs",
+            "https://wwwnyc.gov/programs",
+            "https://wconed.com/solar",
+            "https://wirs.gov/credits",
+            "https://evilnyc.gov/programs",
+        ],
+    )
+    def test_lookalike_domains_are_not_approved(self, url):
+        """A domain that only ends in or starts with an approved name's letters must be rejected."""
+        assert not is_approved_source(url)
+
+    def test_real_subdomains_are_still_approved(self):
+        """www and genuine subdomains of an approved domain keep working after the fix."""
+        assert is_approved_source("https://www.nyc.gov/x")
+        assert is_approved_source("https://a858-nycnotify.nyc.gov/x")
+
     def test_empty_url_is_not_approved(self):
         assert not is_approved_source("")
 

@@ -37,7 +37,10 @@ def _host(source_url: str) -> str:
         host = urlparse(source_url).hostname or ""
     except Exception:
         return ""
-    return host.lower().lstrip("www.")
+    # removeprefix drops the exact text "www." once. The old lstrip("www.") removed any leading
+    # run of the letters w and dots, so look-alikes such as wnyc.gov or wconed.com became nyc.gov
+    # and coned.com and were wrongly approved.
+    return host.lower().removeprefix("www.")
 
 
 def source_entry(source_url: str) -> dict[str, Any] | None:
