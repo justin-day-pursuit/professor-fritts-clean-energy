@@ -1,0 +1,53 @@
+{
+  "tool": "get_solar_production",
+  "data": {
+    "system_kw_dc": 458.3333,
+    "annual_ac_kwh": 568049.7463811899,
+    "annual_ac_kwh_low": 541271.9653460695,
+    "annual_ac_kwh_high": 594827.7825980255,
+    "range_assumption": "ASSUMPTION: system losses of 18% (low) to 10% (high) around PVWatts' 14% default; weather is typical-year data.",
+    "capacity_factor": 0.1414818898365885,
+    "solar_radiation_kwh_m2_day": 4.426414113749777,
+    "monthly_ac_kwh": [
+      29583.18711395433,
+      39415.70950909267,
+      49214.30781616457,
+      55197.3193381103,
+      63864.82041618534,
+      63837.35270004216,
+      66136.55916943622,
+      55332.98392031874,
+      49720.39560363474,
+      39227.68949796677,
+      31094.46294441006,
+      25424.9583518742
+    ],
+    "pvwatts_inputs": {
+      "lat": 40.574815,
+      "lon": -74.099371,
+      "system_capacity": 458.3333,
+      "module_type": 0,
+      "losses": 14,
+      "array_type": 1,
+      "tilt": 10,
+      "azimuth": 180
+    },
+    "location": {
+      "label": "421 LINCOLN AVENUE, Staten Island, NY, USA",
+      "borough": "Staten Island",
+      "postalcode": "10306",
+      "match_type": "fallback",
+      "confidence": 0.8,
+      "bbl": "5037320006",
+      "lat": 40.574815,
+      "lon": -74.099371
+    },
+    "weather_data_source": "NSRDB PSM V3 GOES tmy-2020 3.2.0"
+  },
+  "source_url": "https://developer.nlr.gov/docs/solar/pvwatts/v8/",
+  "retrieved_at": "2026-10-15T20:53:14Z",
+  "dataset_version": "pvwatts-v8.5.0",
+  "mock": false,
+  "stale": false,
+  "flags": []
+}

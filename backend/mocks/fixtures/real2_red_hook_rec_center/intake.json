@@ -1,0 +1,22 @@
+{
+  "_comment": "Real building: Red Hook Recreation Center (NYC Parks), BBL 3005820001. Public: LL84 2024 kWh and floor area; PLUTO says individual landmark (Red Hook Play Center, LP-2241, 2008) and year built 1936 (LL84 says 1920). Basement flooded in Hurricane Sandy (2012). Not public (stated choices): budget, roof area (PLUTO floor area, 1 floor), critical loads. roof_replaced_year left blank on purpose.",
+  "city": "New York",
+  "state": "NY",
+  "utility": "Con Edison",
+  "goal": "Cut grid electricity 30% by 2030",
+  "target_year": 2030,
+  "building_name": "Red Hook Recreation Center (NYC Parks)",
+  "address": "155 Bay Street",
+  "borough": "Brooklyn",
+  "building_type": "park recreation center",
+  "floor_area_sqft": 27069,
+  "year_built": 1936,
+  "roof_type": "flat",
+  "roof_area_sqft": 21600,
+  "annual_kwh": 375066,
+  "budget_amount": 750000,
+  "budget_year": 2027,
+  "budget_type": "capital",
+  "critical_loads": "gym cooling, lighting and communications for a cooling center",
+  "question": "Our rec center flooded in Hurricane Sandy and is used as a cooling center. How do we cut grid power 30% by 2030 and keep critical loads running in outages, on $750k?"
+}

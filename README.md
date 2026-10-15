@@ -184,6 +184,8 @@ Each case folder under `backend/mocks/fixtures/` that has an `expected.json` is 
 
 The live model gets the same rules from `backend/agent/prompts/system_prompt_v4.md` (section "Hardening (v6)").
 
+Four **real** NYC buildings (`real1`–`real4` under `backend/mocks/fixtures/`) are logged with their public data, the live tool results and the live roadmaps from Oct 15, 2026. They are live-only for now, not eval cases. See [documentation/real-cases.md](documentation/real-cases.md) for the inputs, the results and what the traces showed.
+
 The web UI shows mock badges on tool results and downloads the same roadmap Markdown/JSON the CLI prints.
 
 ## Team

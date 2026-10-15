@@ -1,0 +1,22 @@
+{
+  "_comment": "Real building: P.S. 38 (R038), BBL 5037320006. Public: LL84 2024 kWh, floor area and year built (heated with gas and oil). PLUTO lists the lot owner as NYC Parks with 17,620 sq ft, which conflicts with LL84. Not public (stated choices): budget, roof area (single storey, from footprints), critical loads. roof_replaced_year left blank.",
+  "city": "New York",
+  "state": "NY",
+  "utility": "Con Edison",
+  "goal": "Cut grid electricity 30% by 2030",
+  "target_year": 2030,
+  "building_name": "P.S. 38 (R038)",
+  "address": "421 Lincoln Avenue",
+  "borough": "Staten Island",
+  "building_type": "elementary school",
+  "floor_area_sqft": 55860,
+  "year_built": 1955,
+  "roof_type": "flat",
+  "roof_area_sqft": 55000,
+  "annual_kwh": 284403,
+  "budget_amount": 600000,
+  "budget_year": 2027,
+  "budget_type": "capital",
+  "critical_loads": "emergency lighting and communications",
+  "question": "How can our school cut grid power 30% by 2030 on a $600k capital budget?"
+}

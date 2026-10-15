@@ -1,0 +1,33 @@
+{
+  "tool": "lookup_ny_building_records",
+  "data": {
+    "address": "421 LINCOLN AVENUE",
+    "borough": "Staten Island",
+    "bbl": "5037320006",
+    "zipcode": "10306",
+    "gross_floor_area_sqft": 17620.0,
+    "lot_area_sqft": 65000.0,
+    "lot_matches_intake_floor": false,
+    "num_floors": 1.0,
+    "year_built": 1955,
+    "building_class": "W1",
+    "land_use_code": "8",
+    "landmark_flag": false,
+    "differs_from_intake": [
+      {
+        "field": "floor_area_sqft",
+        "intake": 55860.0,
+        "city_record": 17620.0
+      }
+    ],
+    "geocoder_match": "421 LINCOLN AVENUE, Staten Island, NY, USA"
+  },
+  "source_url": "https://data.cityofnewyork.us/City-Government/Primary-Land-Use-Tax-Lot-Output-PLUTO-/64uk-42ks",
+  "retrieved_at": "2026-10-15T20:53:05Z",
+  "dataset_version": "pluto-26v2",
+  "mock": false,
+  "stale": false,
+  "flags": [
+    "intake_mismatch:floor_area_sqft"
+  ]
+}

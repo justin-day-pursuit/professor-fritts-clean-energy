@@ -1,0 +1,34 @@
+{
+  "tool": "lookup_ny_building_records",
+  "data": {
+    "address": "660 WEST 235 STREET",
+    "borough": "Bronx",
+    "bbl": "2059170140",
+    "zipcode": "10471",
+    "gross_floor_area_sqft": 135600.0,
+    "lot_area_sqft": 140975.0,
+    "lot_matches_intake_floor": false,
+    "num_floors": 3.0,
+    "year_built": 1953,
+    "building_class": "W1",
+    "land_use_code": "8",
+    "landmark_flag": false,
+    "differs_from_intake": [
+      {
+        "field": "floor_area_sqft",
+        "intake": 115325.0,
+        "city_record": 135600.0
+      }
+    ],
+    "geocoder_match": "660 WEST 236 STREET, Bronx, NY, USA"
+  },
+  "source_url": "https://data.cityofnewyork.us/City-Government/Primary-Land-Use-Tax-Lot-Output-PLUTO-/64uk-42ks",
+  "retrieved_at": "2026-10-15T20:54:46Z",
+  "dataset_version": "pluto-26v2",
+  "mock": false,
+  "stale": false,
+  "flags": [
+    "intake_mismatch:floor_area_sqft",
+    "address_street_mismatch"
+  ]
+}

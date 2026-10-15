@@ -1,0 +1,22 @@
+{
+  "_comment": "Real building: P.S. 24 (X024), BBL 2059170140. Public: LL84 2024 grid kWh (226,605) and on-site solar generated (457,512 kWh), floor area and year built. The intake has no field for existing solar, so it is stated in the question. Not public (stated choices): budget, roof area (floor area / 3 floors), critical loads.",
+  "city": "New York",
+  "state": "NY",
+  "utility": "Con Edison",
+  "goal": "Cut grid electricity 30% by 2030",
+  "target_year": 2030,
+  "building_name": "P.S. 24 (X024)",
+  "address": "660 West 236th Street",
+  "borough": "Bronx",
+  "building_type": "elementary school",
+  "floor_area_sqft": 115325,
+  "year_built": 1953,
+  "roof_type": "flat",
+  "roof_area_sqft": 38000,
+  "annual_kwh": 226605,
+  "budget_amount": 400000,
+  "budget_year": 2027,
+  "budget_type": "capital",
+  "critical_loads": "emergency lighting and communications",
+  "question": "Our roof already has solar that made about 457,000 kWh last year, and we bought 226,605 kWh from the grid. How do we cut grid power another 30% by 2030 on $400k?"
+}

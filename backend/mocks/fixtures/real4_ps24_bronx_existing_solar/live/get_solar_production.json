@@ -1,0 +1,53 @@
+{
+  "tool": "get_solar_production",
+  "data": {
+    "system_kw_dc": 316.6667,
+    "annual_ac_kwh": 395755.683551773,
+    "annual_ac_kwh_low": 377101.5393218931,
+    "annual_ac_kwh_high": 414398.3333074911,
+    "range_assumption": "ASSUMPTION: system losses of 18% (low) to 10% (high) around PVWatts' 14% default; weather is typical-year data.",
+    "capacity_factor": 0.1426660569189924,
+    "solar_radiation_kwh_m2_day": 4.451894072549558,
+    "monthly_ac_kwh": [
+      20332.43716699006,
+      25420.23023790993,
+      34238.54641281869,
+      35093.35231732635,
+      44854.00584668441,
+      44948.5158634621,
+      46878.54146653318,
+      41661.4416980075,
+      35516.04589781854,
+      27830.63160126696,
+      22617.54498357975,
+      16364.39005937607
+    ],
+    "pvwatts_inputs": {
+      "lat": 40.886845,
+      "lon": -73.914332,
+      "system_capacity": 316.6667,
+      "module_type": 0,
+      "losses": 14,
+      "array_type": 1,
+      "tilt": 10,
+      "azimuth": 180
+    },
+    "location": {
+      "label": "660 WEST 236 STREET, Bronx, NY, USA",
+      "borough": "Bronx",
+      "postalcode": "10463",
+      "match_type": "fallback",
+      "confidence": 0.8,
+      "bbl": "2059170140",
+      "lat": 40.886845,
+      "lon": -73.914332
+    },
+    "weather_data_source": "NSRDB PSM V3 GOES tmy-2020 3.2.0"
+  },
+  "source_url": "https://developer.nlr.gov/docs/solar/pvwatts/v8/",
+  "retrieved_at": "2026-10-15T20:54:56Z",
+  "dataset_version": "pvwatts-v8.5.0",
+  "mock": false,
+  "stale": false,
+  "flags": []
+}

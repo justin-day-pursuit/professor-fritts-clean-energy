@@ -1,0 +1,15 @@
+{
+  "source_url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
+  "retrieved_at": "2026-10-15T12:00:00Z",
+  "dataset_version": "fema-nfhl-effective-2026-10-15",
+  "mock": true,
+  "stale": false,
+  "tool": "get_hazard_context",
+  "data": {
+    "_comment": "Saved by hand from the FEMA NFHL flood-zone layer on 2026-10-15. Heat and storm ratings were not looked up.",
+    "flood_zone": "X",
+    "zone_subtype": "0.2 PCT ANNUAL CHANCE FLOOD HAZARD",
+    "notes": "FEMA effective map: shaded X (0.2%-annual-chance). The basement flooded in Hurricane Sandy. NYC code uses the more restrictive of the effective and 2015 preliminary FIRMs; the preliminary map was not checked."
+  },
+  "flags": []
+}

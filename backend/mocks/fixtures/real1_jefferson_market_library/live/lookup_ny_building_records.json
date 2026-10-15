@@ -1,0 +1,27 @@
+{
+  "tool": "lookup_ny_building_records",
+  "data": {
+    "address": "421 AVENUE OF THE AMERICAS",
+    "borough": "Manhattan",
+    "bbl": "1006060001",
+    "zipcode": "10011",
+    "gross_floor_area_sqft": 19800.0,
+    "lot_area_sqft": 26747.0,
+    "lot_matches_intake_floor": false,
+    "num_floors": 3.0,
+    "year_built": 1877,
+    "building_class": "P8",
+    "land_use_code": "8",
+    "landmark_flag": true,
+    "differs_from_intake": [],
+    "geocoder_match": "425 6 AVENUE, New York, NY, USA"
+  },
+  "source_url": "https://data.cityofnewyork.us/City-Government/Primary-Land-Use-Tax-Lot-Output-PLUTO-/64uk-42ks",
+  "retrieved_at": "2026-10-15T20:49:00Z",
+  "dataset_version": "pluto-26v2",
+  "mock": false,
+  "stale": false,
+  "flags": [
+    "address_street_mismatch"
+  ]
+}

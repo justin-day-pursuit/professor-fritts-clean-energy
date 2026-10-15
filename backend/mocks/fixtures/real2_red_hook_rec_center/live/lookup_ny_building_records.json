@@ -1,0 +1,34 @@
+{
+  "tool": "lookup_ny_building_records",
+  "data": {
+    "address": "140 LORRAINE STREET",
+    "borough": "Brooklyn",
+    "bbl": "3005820001",
+    "zipcode": "11231",
+    "gross_floor_area_sqft": 21600.0,
+    "lot_area_sqft": 212400.0,
+    "lot_matches_intake_floor": false,
+    "num_floors": 1.0,
+    "year_built": 1936,
+    "building_class": "Q3",
+    "land_use_code": "9",
+    "landmark_flag": true,
+    "differs_from_intake": [
+      {
+        "field": "floor_area_sqft",
+        "intake": 27069.0,
+        "city_record": 21600.0
+      }
+    ],
+    "geocoder_match": "155 BAY STREET, Brooklyn, NY, USA"
+  },
+  "source_url": "https://data.cityofnewyork.us/City-Government/Primary-Land-Use-Tax-Lot-Output-PLUTO-/64uk-42ks",
+  "retrieved_at": "2026-10-15T20:51:05Z",
+  "dataset_version": "pluto-26v2",
+  "mock": false,
+  "stale": false,
+  "flags": [
+    "intake_mismatch:floor_area_sqft",
+    "address_street_mismatch"
+  ]
+}
