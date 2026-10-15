@@ -250,18 +250,6 @@ class TestUpsertTool:
         )
         assert "rejected_finder_only" in result.flags
 
-
-def test_system_prompt_has_v4_rules_and_no_merge_markers():
-    """The prompt the model loads must be one clean file: cache rules and all 13 sections."""
-    from agent.harness import load_system_prompt
-
-    text = load_system_prompt()
-    assert "<<<<<<<" not in text
-    assert ">>>>>>>" not in text
-    assert "cached_live_conflict" in text
-    assert "upsert_reference_cache" in text
-    assert "Every section id has to be present" in text
-
     def test_accepts_approved_source(self):
         from tools.upsert_cache import upsert_reference_cache
 
@@ -274,3 +262,16 @@ def test_system_prompt_has_v4_rules_and_no_merge_markers():
         assert result.data.get("version") == 1
         assert "rejected_unapproved_source" not in result.flags
         assert "rejected_no_source" not in result.flags
+
+
+def test_system_prompt_has_v4_rules_and_no_merge_markers():
+    """The prompt the model loads must be one clean file: cache rules and all 13 sections."""
+    from agent.harness import load_system_prompt
+
+    text = load_system_prompt()
+    assert "<<<<<<<" not in text
+    assert ">>>>>>>" not in text
+    assert "cached_live_conflict" in text
+    assert "upsert_reference_cache" in text
+    assert "Every section id has to be present" in text
+
