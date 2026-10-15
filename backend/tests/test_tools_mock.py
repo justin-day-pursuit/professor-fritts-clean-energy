@@ -238,6 +238,8 @@ def test_live_records_report_the_city_record_and_flag_disagreements(monkeypatch)
     assert {d["field"] for d in result.data["differs_from_intake"]} == {"floor_area_sqft", "year_built"}
     assert "intake_mismatch:floor_area_sqft" in result.flags
     assert "intake_mismatch:year_built" in result.flags
+    assert "address_street_mismatch" in result.flags
+    assert result.data["lot_matches_intake_floor"] is True
 
 
 def test_live_records_do_not_flag_a_matching_intake(monkeypatch):

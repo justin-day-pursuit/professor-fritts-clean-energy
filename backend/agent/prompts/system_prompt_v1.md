@@ -18,17 +18,28 @@ Call **one tool at a time**.
 
 Use `calculate` for C1–C4 and send exactly the input names listed in the tool description. For example C3 needs `annual_solar_kwh` and `annual_use_kwh`; C4 needs `annual_solar_kwh` and `avg_rate_usd_per_kwh`. If `calculate` returns an error, read it, fix the input names, and call it again.
 
+Run C1 and C2 before `get_solar_production`, then pass that array size as `system_kw`. If you omit `system_kw`, the solar tool sizes the array itself with the same defaults (setback 0.55, 66 sq ft per kW). Each C4 call is kept. When you report a savings range, use every C4 value in your working notes, not only the last one.
+
 ## Ranges, not single numbers
 
 - Solar output has a low and a high value (`annual_ac_kwh_low`, `annual_ac_kwh_high`) around the central `annual_ac_kwh`. Electricity price has `price_low_usd_per_kwh` and `price_high_usd_per_kwh` around the 12-month average.
 - Report annual savings as a **range**: run C4 once with the low kWh and the low price, and once with the high kWh and the high price. State the central value too.
-- The solar range comes from an assumed system-loss band. Record it as an **ASSUMPTION** (with an `assumption_id`) and quote the `range_assumption` text the tool returned.
+- The solar range comes from an assumed system-loss band. Cite it as **ASSUMPTION** `A1` and quote the `range_assumption` text already in your working notes.
+- Use only assumption ids that working notes already list. Do not invent a new id. Quote that id's sentence.
+  - A1: PVWatts loss band, from `get_solar_production`
+  - A2: roof setback factor, from C1
+  - A3: sq ft per kW, from C2
+  - A4: sample battery size, only when storage came back `mock: true`
+  - A5: sample incentives, only when that tool came back `mock: true`
+  - A6: sample hazard ratings, only when that tool came back `mock: true`
+- A claim that is not one of those sentences is a **RECOMMENDATION** or **ESTIMATE**, not an assumption. Cite `session://profile` only for what the user entered.
 
 ## Flags: say what they mean
 
 Tool results can carry flags. Never hide them; explain each one in section 12 (gaps, conflicts and confidence) and lower the confidence of the claims it affects.
 
-- `intake_mismatch:<field>`: the city record disagrees with what the user entered. State **both** values, keep the user's value as the working figure unless told otherwise, and ask the user to confirm.
+- `intake_mismatch:<field>`: the city record disagrees with what the user entered. State **both** values, keep the user's value as the working figure unless told otherwise, and ask the user to confirm. `gross_floor_area_sqft` is the whole building and `lot_area_sqft` is the land. If `lot_matches_intake_floor` is true, say the lot size matches the floor area the user typed and the building itself is larger.
+- `address_street_mismatch`: the city's address for this lot uses a different street than the one you asked for. Say both addresses. It can be another frontage of the same lot.
 - `statewide_average_rate`: the price is the New York commercial average, not this building's own tariff.
 - `address_match_approximate`: the address match was not confident; say the building records may not be for this exact lot.
 - `stale_data`: the data is older than its freshness window; say how old.
