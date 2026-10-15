@@ -138,3 +138,70 @@ class RunEvent(models.Model):
     def __str__(self) -> str:
         # Labels each log line as "Event seq (kind) on run …" in admin; reorder words here if seq should come last.
         return f"Event {self.seq} ({self.kind}) on run {self.run_id}"
+
+
+class CacheRecord(models.Model):
+    """
+    Versioned reference cache — append-only writes, one row per version.
+
+    The v4 cache stores tool results from approved sources only. Each put()
+    appends a new version row; rollback soft-deletes the latest version.
+    The safe-change rule: changes that make a plan more cautious (e.g. program
+    closed) auto-save; changes that are more favorable (e.g. program reopened,
+    higher incentive) save with pending=True until a person confirms.
+    """
+
+    record_id = models.CharField(
+        max_length=512,
+        db_index=True,
+        help_text="Stable key, e.g. 'incentive:nyserda-clean-green-schools'",
+    )
+    version = models.PositiveIntegerField(
+        help_text="Monotonically increasing within a record_id",
+    )
+    source_url = models.URLField(max_length=1024)
+    retrieved_at = models.DateTimeField()
+    freshness_limit_days = models.PositiveIntegerField(default=7)
+    data = models.JSONField(
+        default=dict,
+        help_text="The full tool-result payload for this version",
+    )
+    page_hash = models.CharField(
+        max_length=128,
+        blank=True,
+        default="",
+        help_text="SHA-256 of the raw page content at retrieval time",
+    )
+    previous_status = models.CharField(
+        max_length=64,
+        blank=True,
+        default="",
+        help_text="Status value from the previous version, for conflict detection",
+    )
+    changed = models.BooleanField(
+        default=False,
+        help_text="True when this version differs from the previous one",
+    )
+    pending = models.BooleanField(
+        default=False,
+        help_text="True when the safe-change rule requires human confirmation",
+    )
+    rolled_back = models.BooleanField(
+        default=False,
+        help_text="Soft-delete flag set by rollback; latest non-rolled-back is current",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["record_id", "version"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["record_id", "version"],
+                name="unique_cache_record_version",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        status = "pending" if self.pending else ("rolled_back" if self.rolled_back else "active")
+        return f"Cache {self.record_id} v{self.version} ({status})"
+

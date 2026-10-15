@@ -1,0 +1,73 @@
+# approved_sources.yaml — pages the cache may store data from.
+# Add entries after both builders agree. DSIRE is finder-only (status must be
+# confirmed on the official page). User input, model estimates, and unverified
+# web pages must never be saved.
+
+sources:
+  # Federal
+  - domain: irs.gov
+    kind: incentive
+    description: IRS guidance on elective pay / direct pay for tax-exempt entities
+
+  - domain: energy.gov
+    kind: incentive
+    description: DOE clean energy programs and guidance
+
+  - domain: congress.gov
+    kind: incentive
+    description: Federal legislation text (IRA, etc.)
+
+  # New York State
+  - domain: nyserda.ny.gov
+    kind: incentive
+    description: NYSERDA programs (NY-Sun, Clean Green Schools, etc.)
+
+  - domain: dps.ny.gov
+    kind: rule
+    description: NYS Department of Public Service (interconnection, VDER)
+
+  - domain: tax.ny.gov
+    kind: incentive
+    description: NYS tax credits for solar and storage
+
+  # New York City
+  - domain: nyc.gov
+    kind: rule
+    description: NYC DOB, FDNY, and other city agency rules
+
+  - domain: data.cityofnewyork.us
+    kind: building_records
+    description: NYC Open Data (PLUTO, permits, etc.)
+
+  # Utility (Con Edison only; Far Rockaway / PSEG Long Island is out of scope)
+  - domain: coned.com
+    kind: rule
+    description: Con Edison interconnection and net metering
+
+  # Finder only (status must be confirmed on the official page)
+  - domain: dsireusa.org
+    kind: finder
+    description: DSIRE — use as a finder only; confirm status on the official program page
+
+  # Energy data
+  - domain: eia.gov
+    kind: utility_rates
+    description: EIA electricity price data
+
+  - domain: openei.org
+    kind: utility_rates
+    description: OpenEI utility rate database
+
+  # Solar/climate
+  - domain: developer.nlr.gov
+    kind: solar_production
+    description: NREL PVWatts and REopt APIs
+
+  - domain: fema.gov
+    kind: hazard
+    description: FEMA National Risk Index and flood maps
+
+  # Test fixtures
+  - domain: example.test
+    kind: fixture
+    description: Fictional official pages for mock eval cases

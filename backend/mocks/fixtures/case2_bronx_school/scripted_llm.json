@@ -39,6 +39,21 @@
     },
     {
       "type": "tool",
+      "name": "upsert_reference_cache",
+      "input": {
+        "record_id": "incentive:nyserda-school-solar",
+        "payload": {
+          "name": "NYSERDA school solar program (fictional stand-in)",
+          "status": "closed",
+          "live_quote": "This program is closed to new applications."
+        },
+        "source_url": "https://example.test/fictional/case2/incentives",
+        "retrieved_at": "2026-10-01T12:00:00Z",
+        "freshness_kind": "incentives"
+      }
+    },
+    {
+      "type": "tool",
       "name": "get_hazard_context",
       "input": {}
     },
@@ -377,7 +392,7 @@
                   "source_url": "session://profile"
                 },
                 {
-                  "text": "Conflict: the saved incentive record said open, the live page says closed. The program is excluded and the conflict is shown. Saving the new closed version arrives with the cache in v4.",
+                  "text": "Conflict: the saved incentive record said open, the live page says closed. The program is excluded, the conflict is shown, and the refreshed closed status was saved to the versioned cache.",
                   "label": "FACT",
                   "confidence": "medium",
                   "source_url": "https://example.test/fictional/case2/incentives"

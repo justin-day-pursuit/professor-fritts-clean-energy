@@ -28,8 +28,8 @@ from tools.registry import TOOL_SPECS, execute_tool, get_tool_spec
 
 
 def load_system_prompt() -> str:
-    """Read the v2 system prompt markdown shipped with the backend (v0 and v1 stay in prompts/ for history)."""
-    path = Path(__file__).resolve().parent / "prompts" / "system_prompt_v2.md"
+    """Read the v3 system prompt markdown shipped with the backend (v0–v2 stay in prompts/ for history)."""
+    path = Path(__file__).resolve().parent / "prompts" / "system_prompt_v3.md"
     return path.read_text(encoding="utf-8")
 
 

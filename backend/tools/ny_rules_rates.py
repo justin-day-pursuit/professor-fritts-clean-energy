@@ -19,8 +19,13 @@ def get_utility_rates(case: str, profile: dict[str, Any] | None = None) -> ToolR
 
 
 def search_ny_incentives_and_rules(case: str) -> ToolResult:
-    """Return saved incentive and rule snippets with status and retrieval dates."""
-    return require_mock_or_fixture(case, "search_ny_incentives_and_rules")
+    """Return saved incentive and rule snippets with status and retrieval dates (v4: conflict detection)."""
+    result = require_mock_or_fixture(case, "search_ny_incentives_and_rules")
+    flags = list(result.flags)
+    for program in result.data.get("programs", []):
+        if program.get("conflict") and "cached_live_conflict" not in flags:
+            flags.append("cached_live_conflict")
+    return result.model_copy(update={"flags": flags})
 
 
 def get_utility_tariff(case: str) -> ToolResult:
