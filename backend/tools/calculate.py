@@ -29,6 +29,30 @@ FORMULA_TEXT = {
 }
 
 
+# The exact input names each formula reads. Single source of truth for the error message below and
+# for the tool description the model sees, so the two cannot drift apart.
+REQUIRED_INPUTS = {
+    "C1": ("roof_area_sqft",),
+    "C2": ("usable_roof_sqft",),
+    "C3": ("annual_solar_kwh", "annual_use_kwh"),
+    "C4": ("annual_solar_kwh", "avg_rate_usd_per_kwh"),
+}
+OPTIONAL_INPUTS = {
+    "C1": "setback_factor (default 0.55)",
+    "C2": "sqft_per_kw (default 66)",
+}
+
+
+def describe_formulas() -> str:
+    """One line per formula with its exact input names; shown to the model in the calculate tool description."""
+    lines = []
+    for formula, text in FORMULA_TEXT.items():
+        required = ", ".join(REQUIRED_INPUTS[formula])
+        optional = f"; optional: {OPTIONAL_INPUTS[formula]}" if formula in OPTIONAL_INPUTS else ""
+        lines.append(f"{formula}: {text}. Inputs: {required}{optional}.")
+    return " ".join(lines)
+
+
 def run_calculate(payload: CalculateInput) -> ToolResult:
     """
     Run a single formula and return a ToolResult whose data holds value, units, and calc_id.
@@ -38,6 +62,17 @@ def run_calculate(payload: CalculateInput) -> ToolResult:
     formula = payload.formula.strip().upper()
     inp = payload.inputs
     assumption_ids = list(payload.assumption_ids)
+
+    # Check the input names up front. A wrong name used to surface as a bare KeyError such as
+    # 'roof_area_sqft', which told the model nothing about what to send instead.
+    if formula in REQUIRED_INPUTS:
+        missing = [name for name in REQUIRED_INPUTS[formula] if name not in inp]
+        if missing:
+            raise ValueError(
+                f"Formula {formula} is missing input(s): {', '.join(missing)}. "
+                f"It needs: {', '.join(REQUIRED_INPUTS[formula])}. "
+                f"You sent: {', '.join(sorted(inp)) or 'no inputs'}."
+            )
 
     if formula == "C1":
         roof = float(inp["roof_area_sqft"])

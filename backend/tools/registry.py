@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 
 from tools.base import ToolResult
 from tools.building_records import get_building_profile, lookup_ny_building_records
-from tools.calculate import CalculateInput, run_calculate
+from tools.calculate import CalculateInput, describe_formulas, run_calculate
 from tools.climate_risk import get_hazard_context
 from tools.ny_rules_rates import get_utility_rates, search_ny_incentives_and_rules
 from tools.solar_savings import get_solar_production, optimize_solar_storage
@@ -32,8 +32,11 @@ class LookupBuildingInput(BaseModel):
 
 
 class CalculateToolInput(BaseModel):
-    formula: str
-    inputs: dict[str, float | int] = Field(default_factory=dict)
+    formula: str = Field(description="One of C1, C2, C3, C4")
+    inputs: dict[str, float | int] = Field(
+        default_factory=dict,
+        description="Numbers for the formula, using exactly the input names in this tool's description.",
+    )
     assumption_ids: list[str] = Field(default_factory=list)
 
 
@@ -70,7 +73,11 @@ TOOL_SPECS: dict[str, ToolSpec] = {
     ),
     "get_solar_production": ToolSpec(
         name="get_solar_production",
-        description="Estimate rooftop solar production (live PVWatts in live mode, saved PVWatts in mock mode).",
+        description=(
+            "Estimate rooftop solar production (live PVWatts in live mode, saved PVWatts in mock mode). "
+            "Pass system_kw from C2 when you have it. If you omit it, the tool sizes the array "
+            "with the same defaults as C1 and C2 (setback 0.55, 66 sq ft per kW)."
+        ),
         input_model=SolarProductionInput,
         freshness_kind="solar_production",
         group=2,
@@ -84,7 +91,7 @@ TOOL_SPECS: dict[str, ToolSpec] = {
     ),
     "calculate": ToolSpec(
         name="calculate",
-        description="Run formulas C1–C4 on explicit numeric inputs.",
+        description="Run one deterministic formula on explicit numbers. " + describe_formulas(),
         input_model=CalculateToolInput,
         freshness_kind="default",
         group=2,
