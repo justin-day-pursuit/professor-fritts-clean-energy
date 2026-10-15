@@ -21,7 +21,7 @@ CASE = "case1_queens_library"
 
 @pytest.mark.parametrize("tool_name", list_tool_names())
 def test_mock_fixtures_have_provenance(tool_name):
-    if tool_name in ("get_building_profile", "calculate"):
+    if tool_name in ("get_building_profile", "calculate", "run_financial_model"):
         pytest.skip("live/session tools have no fixture file")
     result = load_fixture(CASE, tool_name)
     assert result.source_url
