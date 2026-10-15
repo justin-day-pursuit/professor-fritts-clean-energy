@@ -7,6 +7,10 @@
   "data": {
     "heat_rating": "moderate",
     "flood_rating": "low",
+    "winter_storm_rating": "moderate",
+    "flood_zone": "X",
+    "community_resilience_score": "relatively moderate",
+    "data_vintage": "2025",
     "notes": "Fictional FEMA-style context for Queens site."
   },
   "stale": false,

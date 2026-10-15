@@ -14,7 +14,7 @@ from typing import Any
 from django.conf import settings
 from pydantic import ValidationError
 
-from agent.checks import run_check1, run_check2, run_check3, run_check4
+from agent.checks import inspect_raw_roadmap, run_check1, run_check2, run_check3, run_check4, salvage_roadmap
 from agent.claims import RoadmapPayload, RoadmapSection, WriteAnswerInput, WriteRoadmapInput
 from agent.limits import MAX_CONSECUTIVE_THINK_STEPS, RunLimits
 from agent.llm.base import LLMConfigurationError, LLMStep
@@ -413,6 +413,9 @@ def run_harness(
                     tool_call_count=limits.tool_call_count,
                 )
 
+            roadmap_payload: RoadmapPayload | None = None
+            answer_summary = None
+            check4: dict[str, Any] | None = None
             try:
                 if final_tool_name == "write_answer":
                     ans = WriteAnswerInput.model_validate(step.tool_input or {})
@@ -426,27 +429,65 @@ def run_harness(
                             )
                         ]
                     )
+                    # A follow-up is not a 13-section plan. Referrals and labels still apply.
+                    check4 = run_check4(
+                        roadmap_payload,
+                        assumptions_register=notes.assumptions,
+                        user_message=user_message,
+                        require_all_sections=False,
+                    )
                 else:
                     wr = WriteRoadmapInput.model_validate(step.tool_input or {})
                     roadmap_payload = wr.roadmap
                     answer_summary = None
+                    check4 = run_check4(
+                        roadmap_payload,
+                        assumptions_register=notes.assumptions,
+                        user_message=user_message,
+                        require_all_sections=True,
+                    )
             except ValidationError as exc:
-                services.append_event(
-                    run,
-                    seq=seq,
-                    kind="error",
-                    payload={"validation_error": exc.errors(include_url=False)},
+                # A missing label never becomes a Claim. Treat that as a Check 4 miss so the
+                # agent gets one fix pass, then a partial roadmap, instead of a hard stop.
+                raw_roadmap = (step.tool_input or {}).get("roadmap")
+                raw_issues = (
+                    inspect_raw_roadmap(raw_roadmap, user_message=user_message)
+                    if final_tool_name != "write_answer" and isinstance(raw_roadmap, dict)
+                    else []
                 )
+                if raw_issues:
+                    roadmap_payload = salvage_roadmap(raw_roadmap if isinstance(raw_roadmap, dict) else {})
+                    check4 = {
+                        "passed": False,
+                        "code": "check4_fail",
+                        "message": "; ".join(raw_issues),
+                        "details": {"issues": raw_issues},
+                    }
+                else:
+                    services.append_event(
+                        run,
+                        seq=seq,
+                        kind="error",
+                        payload={"validation_error": exc.errors(include_url=False)},
+                    )
+                    return _close_run(
+                        run,
+                        seq=seq + 1,
+                        status=Run.Status.FAILED,
+                        output={"error": "Final roadmap payload failed validation."},
+                        t0=t0,
+                        tool_call_count=limits.tool_call_count,
+                    )
+
+            if roadmap_payload is None or check4 is None:
                 return _close_run(
                     run,
-                    seq=seq + 1,
+                    seq=seq,
                     status=Run.Status.FAILED,
                     output={"error": "Final roadmap payload failed validation."},
                     t0=t0,
                     tool_call_count=limits.tool_call_count,
                 )
-
-            check4 = run_check4(roadmap_payload, assumptions_register=notes.assumptions)
             last_check4 = check4
             seq = _append_check_event(run, seq, "check4", check4)
 

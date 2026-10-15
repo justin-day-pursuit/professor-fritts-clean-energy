@@ -5,69 +5,132 @@
 
 sources:
   # Federal
-  - domain: irs.gov
+  - id: irs
+    name: IRS Clean Energy and Elective Pay Guidance
+    url: https://www.irs.gov/credits-deductions/elective-pay
+    domain: irs.gov
+    jurisdiction: federal
+    role: official
     kind: incentive
     description: IRS guidance on elective pay / direct pay for tax-exempt entities
 
-  - domain: energy.gov
+  - id: energy_gov
+    name: US Department of Energy
+    url: https://www.energy.gov/clean-energy
+    domain: energy.gov
+    jurisdiction: federal
+    role: official
     kind: incentive
     description: DOE clean energy programs and guidance
 
-  - domain: congress.gov
+  - id: congress
+    name: Congress.gov Legislative Information
+    url: https://www.congress.gov/
+    domain: congress.gov
+    jurisdiction: federal
+    role: official
     kind: incentive
     description: Federal legislation text (IRA, etc.)
 
+  - id: eia
+    name: US Energy Information Administration
+    url: https://www.eia.gov/electricity/data/browser/
+    domain: eia.gov
+    jurisdiction: federal
+    role: official
+    kind: utility_rates
+    description: EIA electricity price data
+
+  - id: openei
+    name: OpenEI Utility Rate Database
+    url: https://openei.org/wiki/Utility_Rate_Database
+    domain: openei.org
+    jurisdiction: federal
+    role: official
+    kind: utility_rates
+    description: OpenEI utility rate database
+
+  - id: nlr
+    name: National Renewable Energy Laboratory APIs
+    url: https://developer.nlr.gov/
+    domain: developer.nlr.gov
+    jurisdiction: federal
+    role: official
+    kind: solar_production
+    description: NREL PVWatts and REopt APIs
+
+  - id: fema
+    name: FEMA National Risk Index
+    url: https://www.fema.gov/flood-maps/products-tools/national-risk-index
+    domain: fema.gov
+    jurisdiction: federal
+    role: official
+    kind: hazard
+    description: FEMA National Risk Index and flood maps
+
   # New York State
-  - domain: nyserda.ny.gov
+  - id: nyserda
+    name: NYSERDA Clean Energy Programs
+    url: https://www.nyserda.ny.gov/
+    domain: nyserda.ny.gov
+    jurisdiction: ny_state
+    role: official
     kind: incentive
     description: NYSERDA programs (NY-Sun, Clean Green Schools, etc.)
 
-  - domain: dps.ny.gov
+  - id: dps
+    name: NYS Department of Public Service
+    url: https://dps.ny.gov/
+    domain: dps.ny.gov
+    jurisdiction: ny_state
+    role: official
     kind: rule
     description: NYS Department of Public Service (interconnection, VDER)
 
-  - domain: tax.ny.gov
+  - id: tax_ny
+    name: NYS Department of Taxation and Finance
+    url: https://www.tax.ny.gov/
+    domain: tax.ny.gov
+    jurisdiction: ny_state
+    role: official
     kind: incentive
     description: NYS tax credits for solar and storage
 
   # New York City
-  - domain: nyc.gov
+  - id: nyc_gov
+    name: Official NYC Rules and Agency Portals
+    url: https://www.nyc.gov/
+    domain: nyc.gov
+    jurisdiction: nyc
+    role: official
     kind: rule
     description: NYC DOB, FDNY, and other city agency rules
 
-  - domain: data.cityofnewyork.us
+  - id: nyc_open_data
+    name: NYC Open Data PLUTO Records
+    url: https://data.cityofnewyork.us/
+    domain: data.cityofnewyork.us
+    jurisdiction: nyc
+    role: official
     kind: building_records
     description: NYC Open Data (PLUTO, permits, etc.)
 
   # Utility (Con Edison only; Far Rockaway / PSEG Long Island is out of scope)
-  - domain: coned.com
+  - id: con_edison
+    name: Con Edison Interconnection and Net Metering
+    url: https://www.coned.com/en/save-money/using-solar-energy-at-home
+    domain: coned.com
+    jurisdiction: con_edison
+    role: official
     kind: rule
     description: Con Edison interconnection and net metering
 
   # Finder only (status must be confirmed on the official page)
-  - domain: dsireusa.org
+  - id: dsire
+    name: DSIRE Database of State Incentives for Renewables & Efficiency
+    url: https://www.dsireusa.org/
+    domain: dsireusa.org
+    jurisdiction: federal
+    role: finder_only
     kind: finder
     description: DSIRE — use as a finder only; confirm status on the official program page
-
-  # Energy data
-  - domain: eia.gov
-    kind: utility_rates
-    description: EIA electricity price data
-
-  - domain: openei.org
-    kind: utility_rates
-    description: OpenEI utility rate database
-
-  # Solar/climate
-  - domain: developer.nlr.gov
-    kind: solar_production
-    description: NREL PVWatts and REopt APIs
-
-  - domain: fema.gov
-    kind: hazard
-    description: FEMA National Risk Index and flood maps
-
-  # Test fixtures
-  - domain: example.test
-    kind: fixture
-    description: Fictional official pages for mock eval cases

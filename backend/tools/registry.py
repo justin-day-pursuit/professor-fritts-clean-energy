@@ -136,7 +136,10 @@ TOOL_SPECS: dict[str, ToolSpec] = {
     ),
     "get_hazard_context": ToolSpec(
         name="get_hazard_context",
-        description="Heat and flood exposure context (mock FEMA in v0).",
+        description=(
+            "Heat, flood, and winter-storm context from saved FEMA and NYC flood data "
+            "(mock until a later version; not a live FEMA call)."
+        ),
         input_model=EmptyInput,
         freshness_kind="hazard",
         group=4,
