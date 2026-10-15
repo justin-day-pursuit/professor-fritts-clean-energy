@@ -13,9 +13,9 @@ true afterwards. Every key is optional:
   message_includes     lowercase text the stop message or question must contain
   message_excludes     lowercase text it must not contain
   cache_latest_status  {record_id: status} the cache must hold afterwards
-  cache_must_not_have_records  record ids that must never be saved
-  cache_must_not_have_sources  page addresses nothing may be saved from
-  seed_cache           cache rows to add before the run, when the case starts from saved data
+  cache_must_not_have_records  record ids this run must not save (older rows are ignored)
+  cache_must_not_have_sources  page addresses this run must not save from (older rows are ignored)
+  seed_cache           cache rows this case starts from; each record is replaced so a re-run starts fresh
 
 The runner always uses the scripted model and mock tools, so it needs no key and no network.
 Used by `python manage.py run_evals` and by tests/test_v6_evals.py.
@@ -58,14 +58,21 @@ def load_expected(case: str) -> dict[str, Any]:
     return raw
 
 
+def _cache_row_ids() -> set[int]:
+    """Primary keys already in the cache, so a check can ignore rows from an earlier run."""
+    from core.models import CacheRecord
+
+    return set(CacheRecord.objects.values_list("pk", flat=True))
+
+
 def _seed_cache(rows: list[dict[str, Any]]) -> None:
-    """Add the saved rows a case starts from, once; a later run finds them already there."""
+    """Replace each seeded record with the row this case starts from, including on a re-run."""
+    from core.models import CacheRecord
     from tools.cache import get_reference_cache
 
     cache = get_reference_cache()
     for row in rows:
-        if cache.versions(row["record_id"]):
-            continue
+        CacheRecord.objects.filter(record_id=row["record_id"]).delete()
         cache.put(
             row["record_id"],
             row["payload"],
@@ -74,8 +81,8 @@ def _seed_cache(rows: list[dict[str, Any]]) -> None:
         )
 
 
-def _check_cache(expected: dict[str, Any], failures: list[str]) -> None:
-    """Compare the versioned cache with the cache_* expectations."""
+def _check_cache(expected: dict[str, Any], failures: list[str], before_ids: set[int]) -> None:
+    """Compare the versioned cache with the cache_* expectations. Only rows new since before_ids count as saves."""
     from core.models import CacheRecord
     from tools.cache import get_reference_cache
 
@@ -85,11 +92,12 @@ def _check_cache(expected: dict[str, Any], failures: list[str]) -> None:
         got = (latest or {}).get("data", {}).get("status")
         if got != status:
             failures.append(f"cache {record_id}: latest status {got!r}, expected {status!r}")
+    saved_now = CacheRecord.objects.exclude(pk__in=before_ids)
     for record_id in expected.get("cache_must_not_have_records") or []:
-        if CacheRecord.objects.filter(record_id=record_id).exists():
+        if saved_now.filter(record_id=record_id).exists():
             failures.append(f"cache {record_id}: saved, but it must never be saved")
     for source in expected.get("cache_must_not_have_sources") or []:
-        if CacheRecord.objects.filter(source_url=source).exists():
+        if saved_now.filter(source_url=source).exists():
             failures.append(f"cache: something was saved from {source}")
 
 
@@ -107,6 +115,7 @@ def run_eval_case(case: str) -> EvalResult:
 
     expected = load_expected(case)
     result = EvalResult(case=case)
+    before_ids = _cache_row_ids()
     _seed_cache(expected.get("seed_cache") or [])
 
     profile, question = load_case(case)
@@ -147,7 +156,7 @@ def run_eval_case(case: str) -> EvalResult:
     _includes("message", message, expected.get("message_includes") or [], failures, present=True)
     _includes("message", message, expected.get("message_excludes") or [], failures, present=False)
 
-    _check_cache(expected, failures)
+    _check_cache(expected, failures, before_ids)
     return result
 
 

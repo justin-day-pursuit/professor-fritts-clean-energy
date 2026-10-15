@@ -485,11 +485,12 @@ def _missing_referral_groups(payload: RoadmapPayload) -> list[str]:
     return [name for name, keys in groups if not any(key in ref_text for key in keys)]
 
 
-# "We cannot guarantee savings" declines a promise, it does not make one. These negated phrases are
-# removed before the promise-word scan, so declining a guarantee request passes Check 4.
+# "We cannot guarantee savings" declines a promise, it does not make one. Only a refusal that sits
+# directly against the promise is removed ("cannot guarantee", "no guarantee", "not a guarantee").
+# A "not" or "no" a few words earlier is left alone, so "it is not true we will save" still fails.
 _NEGATED_PROMISE = re.compile(
-    r"\b(cannot|can't|can not|do not|does not|don't|will not|won't|not|no|never|declin\w*(?: to)?)"
-    r"\s+(?:\w+\s+){0,2}(guarantee\w*|will save)",
+    r"\b(?:cannot|can't|can not|do not|does not|don't|will not|won't|never|no|not|declin\w*(?: to)?)"
+    r"\s+(?:(?:a|an|the|any|our|your|these|those)\s+)?(?:guarantee\w*|will save)",
     re.I,
 )
 
@@ -547,10 +548,33 @@ _FAILURE_WORDS = re.compile(
 # Numbers that need solar production data. When PVWatts failed and never succeeded, a claim citing one
 # of these was built on an invented production figure.
 _SOLAR_DEPENDENT_CALCS = {"C3", "C4", "F-B", "F-C"}
-_SOLAR_KWH = re.compile(r"solar[^.]*\d[^.]*kwh|kwh[^.]*solar", re.I)
+# A solar production figure, such as "60,000 kWh". A battery price of "$600/kWh" later in the
+# same sentence does not count: the kWh has to follow the solar number, not a slash.
+_SOLAR_KWH = re.compile(
+    r"solar[^.]*?\d[\d,]*(?:\s*-\s*\d[\d,]*)?\s*kwh"
+    r"|\d[\d,]*(?:\s*-\s*\d[\d,]*)?\s*kwh[^.]*solar",
+    re.I,
+)
+# "Scenario B upfront cost is 120,000 USD" invents a solar scenario. A phase number, as in
+# "Phase 5 ... (Scenario C)", does not. A sentence that says B or C are not costed yet is the honest gap.
+_SCENARIO_BC_DEFERRED = re.compile(
+    r"\b(not costed|not estimated|will be compared|once pvwatts|are missing|is missing)\b",
+    re.I,
+)
+_SCENARIO_BC_FIGURE = re.compile(
+    r"\bscenarios?\s+[bc]\b(?:(?!\bscenarios?\s+[bc]\b).){0,120}?"
+    r"(?:\$\s*\d|\d[\d,]*(?:\.\d+)?(?:\s*-\s*\d[\d,]*(?:\.\d+)?)?\s*(?:%|usd|dollars?|kwh|kw\b|years?)"
+    r"|\b(?:fifty|hundred|thousand)\b)",
+    re.I,
+)
 
 # FEMA flood zones that mean a 1%-a-year (or coastal) flood risk.
 _HIGH_RISK_FLOOD_ZONES = {"A", "AE", "AH", "AO", "AR", "A99", "V", "VE"}
+# "elevate" / "elevated" / "elevation", but not "elevator". "raise" is a whole word, not "fundraise".
+_FLOOD_PROTECTION = re.compile(
+    r"\belevat(?:e|ed|ing|ion)\b|\babove the\b|\bflood-?proof\b|\braise\b",
+    re.I,
+)
 
 
 def _section_text(payload: RoadmapPayload, section_id: str) -> str:
@@ -560,30 +584,52 @@ def _section_text(payload: RoadmapPayload, section_id: str) -> str:
     ).lower()
 
 
+def _section_claims(payload: RoadmapPayload, section_id: str) -> list[str]:
+    """Each claim in one section, lowercased. One claim is one statement, so words cannot leak across them."""
+    return [
+        claim.text.lower()
+        for section in payload.sections
+        if section.section_id == section_id
+        for claim in section.claims
+    ]
+
+
+def _invented_solar_figure(claim: Claim) -> bool:
+    """True when this claim states a solar-production number or a cost that needs one."""
+    if (claim.calc_id or "") in _SOLAR_DEPENDENT_CALCS or _SOLAR_KWH.search(claim.text):
+        return True
+    if _SCENARIO_BC_DEFERRED.search(claim.text):
+        return False
+    return bool(_SCENARIO_BC_FIGURE.search(claim.text))
+
+
 def _run_context_issues(payload: RoadmapPayload, notes: AgentNotes) -> list[str]:
     """
     v6 rules that depend on what happened in this run, not only on the roadmap text.
 
-    - Every tool that failed (and never succeeded later) is named in section 12 as a failure.
-    - When PVWatts failed, no claim states a solar kWh figure or cites a calculation that needs one.
+    - Every tool that failed (and never succeeded later) is named in the same section 12 claim as a failure.
+    - When PVWatts failed, no claim states a solar kWh figure, an assumption of one, or a cost for scenario B or C.
     - No claim cites a page that was ignored for hidden instructions, and section 12 says it was ignored.
-    - A high-risk flood zone needs flood-proofing in section 9; a landmark needs an LPC review and
-      parkland needs a parkland-use review by counsel in section 10.
+    - A high-risk flood zone needs flood protection in section 9 and an Appendix G review in section 10.
+      A landmark needs an LPC review, and parkland needs a parkland-use review by counsel, both in section 10.
     """
     issues: list[str] = []
-    gaps = _section_text(payload, "12")
+    gap_claims = _section_claims(payload, "12")
+    gaps = " ".join(gap_claims)
     claims = _collect_claims(payload)
 
     for tool_name in notes.failed_tools:
         words = _TOOL_PLAIN_NAMES.get(tool_name, (tool_name.replace("_", " "),))
-        if not (any(word in gaps for word in words) and _FAILURE_WORDS.search(gaps)):
+        reported = any(
+            any(word in sentence for word in words) and _FAILURE_WORDS.search(sentence)
+            for sentence in gap_claims
+        )
+        if not reported:
             issues.append(f"Tool failure not reported in section 12: {tool_name}.")
 
     if "get_solar_production" in notes.failed_tools:
         for claim in claims:
-            if claim.label == "ASSUMPTION":
-                continue
-            if (claim.calc_id or "") in _SOLAR_DEPENDENT_CALCS or _SOLAR_KWH.search(claim.text):
+            if _invented_solar_figure(claim):
                 issues.append(f"Solar production number used after PVWatts failed: {claim.text[:80]}")
 
     quarantined = notes.quarantined_urls()
@@ -596,15 +642,20 @@ def _run_context_issues(payload: RoadmapPayload, notes: AgentNotes) -> list[str]
 
     flood_zone = str(notes.site_context.get("flood_zone") or "").upper()
     resilience = _section_text(payload, "9")
+    reviews = _section_text(payload, "10")
     if flood_zone in _HIGH_RISK_FLOOD_ZONES and not (
-        "flood" in resilience and re.search(r"elevat|above the|flood-proof|floodproof|raise", resilience)
+        "flood" in resilience and _FLOOD_PROTECTION.search(resilience)
     ):
         issues.append(
             f"Building is in flood zone {flood_zone}: section 9 must plan flood protection "
             "(for example elevating the battery and electrical equipment)."
         )
+    if flood_zone in _HIGH_RISK_FLOOD_ZONES and "appendix g" not in reviews:
+        issues.append(
+            f"Building is in flood zone {flood_zone}: section 10 must include a flood-zone review "
+            "under NYC Building Code Appendix G."
+        )
 
-    reviews = _section_text(payload, "10")
     if notes.site_context.get("landmark") and not ("landmarks preservation" in reviews or "lpc" in reviews):
         issues.append("Landmark building: section 10 must include a Landmarks Preservation Commission (LPC) review.")
     if notes.site_context.get("parkland") and not ("parkland" in reviews and "counsel" in reviews):

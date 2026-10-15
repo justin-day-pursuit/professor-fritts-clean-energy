@@ -6,6 +6,7 @@ The harness serializes a short summary into the next LLM think step.
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -81,7 +82,8 @@ class AgentNotes(BaseModel):
         if tool_name == "get_building_profile":
             self.building_facts.update(result.data.get("profile", {}))
             building_type = str(result.data.get("profile", {}).get("building_type") or "").lower()
-            if "park" in building_type:
+            # "park recreation center" is a park building. "parking garage" is not.
+            if "parkland" in building_type or re.search(r"\bpark\b", building_type):
                 self.site_context["parkland"] = True
             # A7 (v2): until a building model exists (phase 2), efficiency savings are a benchmark range.
             self.assumptions.setdefault(

@@ -49,6 +49,17 @@ TOOL_FAILED_INSTRUCTION = (
 # Stop a model that keeps calling tools Check 2 refuses, well before the run timeout.
 MAX_BLOCKED_STEPS = 5
 
+# These refusals mean the plan is missing data. A bad input the model then fixes, or a cache write
+# blocked because the page was quarantined, does not.
+_DATA_GAP_BLOCK_PREFIXES = ("tool_blocked:tool_limit:", "tool_blocked:retry_limit:")
+
+
+def missing_tool_data(notes: AgentNotes) -> bool:
+    """True when a tool never returned usable data, or a limit stopped the run from calling it again."""
+    if notes.failed_tools:
+        return True
+    return any(flag.startswith(_DATA_GAP_BLOCK_PREFIXES) for flag in notes.flags)
+
 
 def _blocked_instruction(code: str) -> str:
     """What a real model should do after Check 2 refused a tool call, by refusal code."""
@@ -558,8 +569,9 @@ def run_harness(
 
             status = Run.Status.DONE if check4.get("passed") else Run.Status.PARTIAL
             extra_flags: dict[str, Any] = {}
-            if notes.failed_tools or blocked_steps:
-                # v6: some data never arrived, so the plan is partial even if every claim checks out.
+            if missing_tool_data(notes):
+                # A tool never returned data, or the call/retry limit stopped further calls.
+                # A corrected bad input, or a refused save of a quarantined page, leaves a passing plan done.
                 status = Run.Status.PARTIAL
                 extra_flags = {
                     "stop_reason": "missing_tool_data",
@@ -710,6 +722,9 @@ def run_harness(
             # v6: retrieved text is data, never instructions. The whole result is withheld from the model,
             # its page is noted so it is never cited or saved, and the log keeps only the matched snippets.
             notes.record_quarantine(tool_name, result.source_url, "Hidden instructions in the tool result.")
+            # The result was withheld, so this tool did not return usable data. Check 4 then
+            # requires section 12 to say so, and blocks invented numbers that needed it.
+            notes.record_tool_failure(tool_name, "Result withheld because it contained hidden instructions.")
             withheld = {
                 "quarantined": True,
                 "source_url": result.source_url,

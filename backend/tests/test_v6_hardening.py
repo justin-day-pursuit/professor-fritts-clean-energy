@@ -17,7 +17,7 @@ from django.conf import settings
 from agent import harness
 from agent.checks import run_check3, run_check4
 from agent.claims import Claim, RoadmapPayload, RoadmapSection, roadmap_with_sections
-from agent.harness import MAX_BLOCKED_STEPS, run_harness
+from agent.harness import MAX_BLOCKED_STEPS, missing_tool_data, run_harness
 from agent.llm.base import LLMClient, LLMStep
 from agent.notes import AgentNotes
 from core import services
@@ -118,6 +118,7 @@ class _StubLLM(LLMClient):
     def __init__(self, steps: list[LLMStep]) -> None:
         self._steps = list(steps)
         self.results: list[dict[str, Any]] = []
+        self.notes: list[str] = []
 
     def reset(self) -> None:
         """Nothing to clear; the steps are fixed."""
@@ -125,6 +126,7 @@ class _StubLLM(LLMClient):
     def submit_tool_result(self, tool_use_id: str, payload: str, notes_summary: str) -> None:
         """Remember what the harness sent back for this tool call."""
         self.results.append(json.loads(payload))
+        self.notes.append(notes_summary)
 
     def next_step(self, **_kwargs: Any) -> LLMStep:
         """Return the next canned step, or say the script is over."""
@@ -155,6 +157,7 @@ def test_the_model_never_sees_a_poisoned_result(monkeypatch):
     run, stub = _stub_run(monkeypatch, [LLMStep(kind="tool", tool_name="get_hazard_context", tool_input={}, tool_use_id="t1")])
     assert stub.results[0]["quarantined"] is True
     assert "50%" not in json.dumps(stub.results)
+    assert "get_hazard_context" in stub.notes[0] and "FAILED" in stub.notes[0]
     logged = [e.payload for e in run.events.all() if e.kind == "tool_result"]
     assert logged and "50%" not in json.dumps(logged[0]["data"])
 
@@ -257,15 +260,60 @@ def test_a_failed_tool_must_be_reported_in_section_12():
     assert _issues(reported, notes) == []
 
 
+def test_a_failure_word_for_one_tool_does_not_cover_another():
+    """'PVWatts failed' plus a separate rate sentence does not report a rates failure."""
+    notes = AgentNotes()
+    notes.record_tool_failure("get_solar_production", "HTTP 503")
+    notes.record_tool_failure("get_utility_rates", "timeout")
+    plan = _plan(
+        s12=[
+            _claim("The PVWatts solar production call failed, so solar output is missing."),
+            _claim("The Con Edison rate is 22 cents per kWh."),
+        ]
+    )
+    issues = _issues(plan, notes)
+    assert any("get_utility_rates" in i for i in issues)
+    assert not any("get_solar_production" in i for i in issues)
+
+
 def test_no_solar_numbers_after_pvwatts_failed():
-    """A solar kWh figure, or a calculation that needs one, is an invented number when PVWatts failed."""
+    """A solar kWh figure, an assumption of one, or a scenario B cost is invented when PVWatts failed."""
     notes = AgentNotes()
     notes.record_tool_failure("get_solar_production", "HTTP 503")
     gap = [_claim("The PVWatts call failed; solar output is missing.")]
     by_text = _plan(s5=[_claim("Solar would make about 60,000 kWh a year.")], s12=gap)
     by_calc = _plan(s6=[_claim("Scenario B net cost.", calc_id="F-B", source_url=None)], s12=gap)
+    by_assumption = _plan(
+        s5=[_claim(
+            "Solar production is assumed to be 60,000 kWh a year.",
+            label="ASSUMPTION",
+            assumption_id="A6",
+            source_url=None,
+        )],
+        s12=gap,
+    )
+    by_prose = _plan(s6=[_claim("Scenario B upfront cost is 120,000 USD.")], s12=gap)
+    deferred = _plan(
+        s6=[_claim("Scenarios B and C are not costed in this run; compare them once PVWatts returns for the 30% goal.")],
+        s12=gap,
+    )
+    prices = _plan(
+        s3=[_claim(
+            "Planning-level benchmark prices, not quotes: solar $3,000-4,500/kW DC, battery $600-1,000/kWh."
+        )],
+        s12=gap,
+    )
+    phase = _plan(
+        s8=[_claim("Phase 5, battery and commissioning: add storage if funding allows (Scenario C).")],
+        s12=gap,
+    )
     assert any("PVWatts failed" in i for i in _issues(by_text, notes))
     assert any("PVWatts failed" in i for i in _issues(by_calc, notes))
+    assert any("PVWatts failed" in i for i in _issues(by_assumption, notes))
+    assert any("PVWatts failed" in i for i in _issues(by_prose, notes))
+    assert _issues(deferred, notes) == []
+    assert _issues(prices, notes) == []
+    assert _issues(phase, notes) == []
 
 
 def test_a_quarantined_page_cannot_be_cited_and_must_be_named():
@@ -281,18 +329,66 @@ def test_a_quarantined_page_cannot_be_cited_and_must_be_named():
 
 
 @pytest.mark.parametrize(
-    ("context", "section", "good_text", "issue_word"),
+    ("context", "extra", "issue_word"),
     [
-        ({"flood_zone": "AE"}, "s9", "Flood zone AE: elevate the battery above the design flood elevation.", "flood zone"),
-        ({"landmark": True}, "s10", "Landmarks Preservation Commission (LPC) permit before rooftop work.", "Landmark"),
-        ({"parkland": True}, "s10", "Parkland use review by counsel.", "parkland"),
+        (
+            {"flood_zone": "AE"},
+            {
+                "s9": [_claim("Flood zone AE: elevate the battery above the design flood elevation.")],
+                "s10": [_claim("Flood-zone review under NYC Building Code Appendix G.")],
+            },
+            "flood zone",
+        ),
+        (
+            {"landmark": True},
+            {"s10": [_claim("Landmarks Preservation Commission (LPC) permit before rooftop work.")]},
+            "Landmark",
+        ),
+        (
+            {"parkland": True},
+            {"s10": [_claim("Parkland use review by counsel.")]},
+            "parkland",
+        ),
     ],
 )
-def test_site_conditions_need_their_own_review(context, section, good_text, issue_word):
+def test_site_conditions_need_their_own_review(context, extra, issue_word):
     """Flood zone, landmark and parkland each add a required line; without it Check 4 rejects the plan."""
     notes = AgentNotes(site_context=context)
     assert any(issue_word.lower() in i.lower() for i in _issues(_plan(), notes))
-    assert _issues(_plan(**{section: [_claim(good_text)]}), notes) == []
+    assert _issues(_plan(**extra), notes) == []
+
+
+def test_elevator_does_not_count_as_flood_protection():
+    """Mentioning the elevator, or skipping Appendix G, does not satisfy a high-risk flood zone."""
+    notes = AgentNotes(site_context={"flood_zone": "AE"})
+    elevator = _plan(
+        s9=[_claim("The building is in a flood zone. The elevator serves the roof.")],
+        s10=[_claim("Flood-zone review under NYC Building Code Appendix G.")],
+    )
+    no_appendix = _plan(s9=[_claim("Flood zone AE: elevate the battery above the design flood elevation.")])
+    assert any("flood protection" in i for i in _issues(elevator, notes))
+    assert any("Appendix G" in i for i in _issues(no_appendix, notes))
+
+
+def test_parking_garage_is_not_treated_as_parkland():
+    """'park' as its own word marks a park building. 'parking' does not."""
+    garage = ToolResult(
+        tool="get_building_profile",
+        data={"profile": {"building_type": "parking garage"}, "missing_fields": []},
+        source_url="session://profile",
+        dataset_version="session-v0",
+    )
+    park = ToolResult(
+        tool="get_building_profile",
+        data={"profile": {"building_type": "park recreation center"}, "missing_fields": []},
+        source_url="session://profile",
+        dataset_version="session-v0",
+    )
+    notes = AgentNotes()
+    notes.record_tool_result("get_building_profile", garage)
+    assert "parkland" not in notes.site_context
+    notes.record_tool_result("get_building_profile", park)
+    assert notes.site_context.get("parkland") is True
 
 
 def test_a_low_risk_flood_zone_needs_nothing_extra():
@@ -305,10 +401,25 @@ def test_declining_a_guarantee_passes_but_promising_one_fails():
     message = "Guarantee my savings."
     declined = _plan(s1=[_claim("We cannot guarantee savings; every figure is an estimate.")])
     promised = _plan(s1=[_claim("We guarantee these savings.")])
+    sneaky = _plan(s1=[_claim("It is not true we will save 30%.")])
     silent = _plan()
     assert _issues(declined, AgentNotes(), message) == []
     assert any("Promise wording" in i for i in _issues(promised, AgentNotes(), message))
+    assert any("will save" in i for i in _issues(sneaky, AgentNotes(), message))
     assert any("asked for a guarantee" in i for i in _issues(silent, AgentNotes(), message))
+
+
+def test_a_corrected_refusal_is_not_missing_data():
+    """A fixed bad input, or a blocked save of a quarantined page, does not make the plan partial."""
+    notes = AgentNotes()
+    notes.flags.append("tool_blocked:invalid_input:calculate")
+    notes.flags.append("tool_blocked:quarantined_source:upsert_reference_cache")
+    assert missing_tool_data(notes) is False
+    notes.flags.append("tool_blocked:tool_limit:get_solar_production")
+    assert missing_tool_data(notes) is True
+    failed = AgentNotes()
+    failed.record_tool_failure("get_solar_production", "HTTP 503")
+    assert missing_tool_data(failed) is True
 
 
 def test_an_out_of_area_rebate_request_must_be_declined_in_words():
