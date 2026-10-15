@@ -1,0 +1,15 @@
+{
+  "retrieved_at": "2026-10-01T12:00:00Z",
+  "dataset_version": "case2-v2-mock-1",
+  "mock": true,
+  "stale": false,
+  "source_url": "https://example.test/fictional/case2/pvwatts",
+  "tool": "get_solar_production",
+  "data": {
+    "system_kw_dc": 75,
+    "annual_ac_kwh": 90000,
+    "capacity_factor": 0.137,
+    "notes": "Fictional PVWatts stand-in for a ~75 kW array in the Bronx."
+  },
+  "flags": []
+}

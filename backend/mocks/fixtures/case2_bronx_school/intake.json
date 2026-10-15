@@ -1,0 +1,19 @@
+{
+  "_comment": "Fictional Bronx elementary school - eval case 2 (edge case): no bills, roof age unknown, budget with no year or type.",
+  "contact_name": "Marcus Bell",
+  "building_name": "Riverside Elementary School (fictional)",
+  "address": "1200 Example Avenue",
+  "borough": "Bronx",
+  "city": "New York",
+  "state": "NY",
+  "building_type": "elementary school",
+  "floor_area_sqft": 42000,
+  "year_built": 1962,
+  "roof_type": "flat",
+  "roof_area_sqft": 9000,
+  "utility": "Con Edison",
+  "budget_amount": 250000,
+  "goal": "Cut grid electricity 30% by 2032",
+  "target_year": 2032,
+  "question": "We have no bills handy and a $250k budget. What should we do first to cut our electricity use 30% by 2032?"
+}

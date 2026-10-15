@@ -1,0 +1,404 @@
+{
+  "_comment": "Deterministic LLM replay for case 2 (Bronx school): tool calls then write_roadmap.",
+  "steps": [
+    {
+      "type": "think",
+      "message": "Reviewing Marcus's Bronx school question and intake."
+    },
+    {
+      "type": "tool",
+      "name": "get_building_profile",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "lookup_ny_building_records",
+      "input": {
+        "address": "1200 Example Avenue"
+      }
+    },
+    {
+      "type": "tool",
+      "name": "get_solar_production",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "get_utility_rates",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "get_utility_tariff",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "search_ny_incentives_and_rules",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "get_hazard_context",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "calculate",
+      "input": {
+        "formula": "C1",
+        "inputs": {
+          "roof_area_sqft": 9000,
+          "setback_factor": 0.55
+        }
+      }
+    },
+    {
+      "type": "tool",
+      "name": "calculate",
+      "input": {
+        "formula": "C3",
+        "inputs": {
+          "annual_solar_kwh": 90000,
+          "annual_use_kwh": 378000
+        }
+      }
+    },
+    {
+      "type": "tool",
+      "name": "calculate",
+      "input": {
+        "formula": "C4",
+        "inputs": {
+          "annual_solar_kwh": 90000,
+          "avg_rate_usd_per_kwh": 0.22
+        }
+      }
+    },
+    {
+      "type": "final",
+      "name": "write_roadmap",
+      "input": {
+        "roadmap": {
+          "sections": [
+            {
+              "section_id": "1",
+              "title": "Summary and goal status",
+              "claims": [
+                {
+                  "text": "No bills were uploaded, so the baseline is a benchmark of about 378,000 kWh/yr, not measured use.",
+                  "label": "ASSUMPTION",
+                  "confidence": "low",
+                  "assumption_id": "A8",
+                  "value_low": 378000,
+                  "value_high": 378000,
+                  "units": "kWh/yr"
+                },
+                {
+                  "text": "Rooftop solar of about 75 kW would produce about 90,000 kWh/yr, roughly 24% of benchmark use, so solar alone does not reach the 30% goal.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": "https://example.test/fictional/case2/pvwatts",
+                  "calc_id": "C3",
+                  "value_low": 24,
+                  "value_high": 24,
+                  "units": "% of benchmark use"
+                },
+                {
+                  "text": "Please upload 12 months of bills and tell us the budget year and whether USD 250,000 is capital or annual; this will raise confidence.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "session://profile"
+                }
+              ]
+            },
+            {
+              "section_id": "2",
+              "title": "Building profile and data provenance",
+              "claims": [
+                {
+                  "text": "42,000 sq ft elementary school built in 1962, flat roof of 9,000 sq ft, in the Bronx.",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "session://profile",
+                  "value_low": 42000,
+                  "value_high": 42000,
+                  "units": "sq ft"
+                },
+                {
+                  "text": "Public records match the intake for floor area and year built.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://example.test/fictional/case2/building-records"
+                },
+                {
+                  "text": "Public records suggest the roof is about 22 years old; no replacement year is recorded.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://example.test/fictional/case2/building-records",
+                  "value_low": 22,
+                  "value_high": 22,
+                  "units": "years"
+                }
+              ]
+            },
+            {
+              "section_id": "3",
+              "title": "Assumptions register",
+              "claims": []
+            },
+            {
+              "section_id": "4",
+              "title": "Baseline and efficiency opportunities",
+              "claims": [
+                {
+                  "text": "Baseline is a benchmark of 9 kWh per sq ft, about 378,000 kWh/yr. It is not measured use.",
+                  "label": "ASSUMPTION",
+                  "confidence": "low",
+                  "assumption_id": "A8",
+                  "value_low": 378000,
+                  "value_high": 378000,
+                  "units": "kWh/yr"
+                },
+                {
+                  "text": "Start with LED lighting and controls; savings use benchmark percentages until a building model exists.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "low",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "Benchmark efficiency savings of 10-20% of annual use.",
+                  "label": "ASSUMPTION",
+                  "confidence": "low",
+                  "assumption_id": "A7",
+                  "value_low": 10,
+                  "value_high": 20,
+                  "units": "% of annual use"
+                }
+              ]
+            },
+            {
+              "section_id": "5",
+              "title": "Solar assessment with calculations",
+              "claims": [
+                {
+                  "text": "C1 usable roof about 4,950 sq ft (9,000 x 0.55).",
+                  "label": "ESTIMATE",
+                  "confidence": "medium",
+                  "source_url": "internal://calculate",
+                  "calc_id": "C1",
+                  "value_low": 4950,
+                  "value_high": 4950,
+                  "units": "sq ft"
+                },
+                {
+                  "text": "C3 solar covers about 23.8% of benchmark use (90,000 / 378,000).",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": "internal://calculate",
+                  "calc_id": "C3",
+                  "value_low": 23.8,
+                  "value_high": 23.8,
+                  "units": "% of benchmark use"
+                },
+                {
+                  "text": "C4 annual bill savings from solar about USD 19,800/yr at USD 0.22/kWh.",
+                  "label": "ESTIMATE",
+                  "confidence": "medium",
+                  "source_url": "internal://calculate",
+                  "calc_id": "C4",
+                  "value_low": 19800,
+                  "value_high": 19800,
+                  "units": "USD/yr"
+                },
+                {
+                  "text": "Solar should wait until the roof is surveyed; a roof this age may need replacing first.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "https://example.test/fictional/case2/building-records"
+                }
+              ]
+            },
+            {
+              "section_id": "6",
+              "title": "Scenario comparison table",
+              "claims": [
+                {
+                  "text": "Scenario A: LED and controls efficiency only (qualitative).",
+                  "label": "RECOMMENDATION",
+                  "confidence": "low",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "Scenario B: efficiency, then re-roof, then solar within USD 250,000 (qualitative).",
+                  "label": "RECOMMENDATION",
+                  "confidence": "low",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "Scenario C: efficiency, re-roof and a larger solar plan that may exceed the budget (qualitative).",
+                  "label": "RECOMMENDATION",
+                  "confidence": "low",
+                  "source_url": "session://profile"
+                }
+              ]
+            },
+            {
+              "section_id": "7",
+              "title": "Cost, financing and incentives",
+              "claims": [
+                {
+                  "text": "Federal elective pay for public entities is listed open (retrieved 2026-10-01, saved sample data).",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://example.test/fictional/case2/incentives"
+                },
+                {
+                  "text": "The NYSERDA school solar program was saved as open 120 days ago (2026-06-03) but the live official page now says closed. It is left out of net cost.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://example.test/fictional/case2/incentives"
+                },
+                {
+                  "text": "Con Edison SC-9 Rate I, effective 2026-07-01, energy charge range. Confirm the tariff against a recent bill.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://example.test/fictional/case2/openei-tariff",
+                  "value_low": 0.2,
+                  "value_high": 0.24,
+                  "units": "USD/kWh"
+                },
+                {
+                  "text": "Net cost after incentives is not calculated yet; the financial model arrives in v5.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "low",
+                  "source_url": "session://profile"
+                }
+              ]
+            },
+            {
+              "section_id": "8",
+              "title": "Priority roadmap",
+              "claims": [
+                {
+                  "text": "Phase 0: upload 12 months of bills and confirm the budget year and type.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "Phase 1: LED lighting and controls.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "Phase 2: commission a roof condition survey early, and plan re-roofing before any solar.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "https://example.test/fictional/case2/building-records"
+                },
+                {
+                  "text": "Phase 3: solar design, professional reviews and utility interconnection once the roof is sound.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "low",
+                  "source_url": "session://profile"
+                }
+              ]
+            },
+            {
+              "section_id": "9",
+              "title": "Resilience and reliability plan",
+              "claims": [
+                {
+                  "text": "No critical loads were given. Tell us whether the school is used as an emergency shelter so backup power can be sized.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "low",
+                  "source_url": "session://profile"
+                }
+              ]
+            },
+            {
+              "section_id": "10",
+              "title": "Required professional reviews and permits",
+              "claims": [
+                {
+                  "text": "Licensed Professional Engineer or Registered Architect structural analysis for rooftop solar loads.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "Roof condition survey by a qualified roofing contractor, before design.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "https://example.test/fictional/case2/building-records"
+                },
+                {
+                  "text": "NYC licensed electrician for interconnection and service upgrades.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "FDNY rooftop access review for equipment layout.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "Con Edison utility interconnection review and application.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "session://profile"
+                }
+              ]
+            },
+            {
+              "section_id": "11",
+              "title": "Path to net-zero and learning resources",
+              "claims": [
+                {
+                  "text": "Rooftop solar plus efficiency is unlikely to reach net-zero on this roof; plan off-site renewable procurement for the remainder.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "low",
+                  "calc_id": "C3"
+                }
+              ]
+            },
+            {
+              "section_id": "12",
+              "title": "Gaps, conflicts and confidence summary",
+              "claims": [
+                {
+                  "text": "Overall confidence is low. Missing: 12 months of bills, roof replacement year, budget year and type. Each would raise confidence.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "Conflict: the saved incentive record said open, the live page says closed. The program is excluded and the conflict is shown. Saving the new closed version arrives with the cache in v4.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://example.test/fictional/case2/incentives"
+                }
+              ]
+            },
+            {
+              "section_id": "13",
+              "title": "Sources",
+              "claims": [
+                {
+                  "text": "Session intake, fictional building records, PVWatts, utility and incentive samples for case 2, and the internal calculate tool.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://example.test/fictional/case2/building-records"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

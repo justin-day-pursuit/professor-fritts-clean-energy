@@ -1,0 +1,32 @@
+{
+  "retrieved_at": "2026-10-01T12:00:00Z",
+  "dataset_version": "case2-v2-mock-1",
+  "mock": true,
+  "stale": false,
+  "source_url": "https://example.test/fictional/case2/incentives",
+  "tool": "search_ny_incentives_and_rules",
+  "data": {
+    "programs": [
+      {
+        "name": "Federal elective pay (direct pay) for public entities",
+        "status": "open",
+        "retrieved_at": "2026-10-01T12:00:00Z"
+      },
+      {
+        "name": "NYSERDA school solar program (fictional stand-in)",
+        "status": "closed",
+        "cached_status": "open",
+        "cached_retrieved_at": "2026-06-03T12:00:00Z",
+        "cached_age_days": 120,
+        "live_status": "closed",
+        "live_retrieved_at": "2026-10-01T12:00:00Z",
+        "live_quote": "This program is closed to new applications.",
+        "conflict": true,
+        "retrieved_at": "2026-10-01T12:00:00Z"
+      }
+    ]
+  },
+  "flags": [
+    "cached_live_conflict"
+  ]
+}

@@ -33,6 +33,7 @@ Run C1 and C2 before `get_solar_production`, then pass that array size as `syste
   - A5: sample incentives, only when that tool came back `mock: true`
   - A6: sample hazard ratings, only when that tool came back `mock: true`
   - A7: efficiency savings benchmark of 10-20% of annual use, from the building profile (use it for efficiency estimates; there is no building model yet)
+  - A8: benchmark annual use of 9 kWh per sq ft, only when the intake has no bills (`missing_field:annual_kwh`); label that baseline an ASSUMPTION with low confidence
 - A claim that is not one of those sentences is a **RECOMMENDATION** or **ESTIMATE**, not an assumption. Cite `session://profile` only for what the user entered.
 
 ## Flags: say what they mean

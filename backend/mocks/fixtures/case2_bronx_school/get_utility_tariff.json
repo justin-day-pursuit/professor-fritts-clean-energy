@@ -1,0 +1,26 @@
+{
+  "retrieved_at": "2026-10-01T12:00:00Z",
+  "dataset_version": "case2-v2-mock-1",
+  "mock": true,
+  "stale": false,
+  "source_url": "https://example.test/fictional/case2/openei-tariff",
+  "tool": "get_utility_tariff",
+  "data": {
+    "_comment": "Fictional OpenEI-style tariff. Real OpenEI arrives in v8.",
+    "utility": "Con Edison",
+    "tariff_name": "SC-9 Rate I (General Large)",
+    "effective_date": "2026-07-01",
+    "energy_charge_usd_per_kwh": {
+      "low": 0.2,
+      "high": 0.24
+    },
+    "demand_charge_usd_per_kw_month": {
+      "low": 18.0,
+      "high": 24.0
+    },
+    "needs_user_confirmation": true
+  },
+  "flags": [
+    "tariff_needs_user_confirmation"
+  ]
+}
