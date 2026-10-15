@@ -12,6 +12,8 @@ Professor Fritts is an AI planning agent for managers of public buildings in New
 
 v1 scope: energy efficiency and solar PV (battery storage only for solar resilience), New York State and NYC only.
 
+**Scope update:** the team decided on **NYC only** (five boroughs). Read [documentation/NYC-Version-Build-Plan-Changes.md](documentation/NYC-Version-Build-Plan-Changes.md); where it disagrees with the plan or PRD, it wins. The code still has the old scope until those changes are made.
+
 ## Docs
 
 - [Product Requirements Document](documentation/Building_Renewable_Energy_Planner_PRD_v3.md)
