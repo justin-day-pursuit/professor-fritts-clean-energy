@@ -166,3 +166,28 @@ def run_to_response(run) -> RunResponse:
         created_at=run.created_at,
         events=events,
     )
+
+
+class RoofBuilding(BaseModel):
+    """One building outline on the tax lot, with the ground area that was measured from it."""
+
+    area_sqft: int
+    height_ft: float | None = None
+    construction_year: int | None = None
+    name: str | None = None
+    counted: bool
+
+
+class RoofSuggestionResponse(BaseModel):
+    """A suggested roof area from city building footprints, with its source and what it is not."""
+
+    suggested_roof_area_sqft: int
+    total_footprint_sqft: int
+    largest_footprint_sqft: int
+    building_count: int
+    buildings: list[RoofBuilding]
+    bbl: str
+    geocoder_match: str | None = None
+    source_url: str
+    retrieved_at: str
+    note: str

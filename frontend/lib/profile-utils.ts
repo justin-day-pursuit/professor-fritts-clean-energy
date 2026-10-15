@@ -13,6 +13,9 @@ const NUMERIC_KEYS: (keyof IntakeProfile)[] = [
   "budget_year",
   "target_year",
   "critical_load_hours",
+  "verified_usable_roof_sqft",
+  "existing_solar_kw",
+  "existing_solar_kwh",
 ];
 
 /**
@@ -86,4 +89,23 @@ export function missingRequiredFields(profile: IntakeProfile): string[] {
 
 export function emptyProfile(): IntakeProfile {
   return { state: "NY", budget_type: "capital" };
+}
+
+/**
+ * The roof types the intake offers. The backend reads this text to decide whether a roof is flat:
+ * anything but "flat" is not sized from the flat-roof defaults until an engineer or roofer has
+ * verified the usable area (see backend/tools/roof.py). To add a type, add a row here and, if it is
+ * not flat, nothing else: the backend treats every word it does not know as "unknown", which is
+ * still sized as flat, so a new non-flat type also needs its word added to NON_FLAT_WORDS there.
+ */
+export const ROOF_TYPES = [
+  { value: "flat", label: "Flat" },
+  { value: "pitched", label: "Pitched or sloped" },
+  { value: "mixed", label: "Flat and pitched" },
+  { value: "other", label: "Dome, tower or other" },
+] as const;
+
+/** True when the chosen roof type is one the planner does not size like a flat roof. */
+export function isNotFlat(roofType: string | undefined): boolean {
+  return roofType === "pitched" || roofType === "mixed" || roofType === "other";
 }

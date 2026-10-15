@@ -16,6 +16,7 @@ from agent.scenarios import FinancialModelInput, run_financial_model
 from tools.base import ToolResult
 from tools.building_records import get_building_profile, lookup_ny_building_records
 from tools.calculate import CalculateInput, describe_formulas, run_calculate
+from tools.roof import check_roof_sizing_allowed, roof_kind, verified_usable_area
 from tools.climate_risk import get_hazard_context
 from tools.ny_rules_rates import get_utility_rates, get_utility_tariff, search_ny_incentives_and_rules
 from tools.solar_savings import get_solar_production, optimize_solar_storage
@@ -196,6 +197,29 @@ def validate_tool_input(name: str, raw: dict[str, Any]) -> BaseModel:
     return spec.input_model.model_validate(raw or {})
 
 
+def _check_roof_formula(formula: str, inputs: dict[str, Any], profile: dict[str, Any]) -> None:
+    """
+    v6: keep the flat-roof formulas off a roof that is not flat.
+
+    C1 and C2 size the usable roof and the array from flat-roof defaults. For a pitched, tower, dome or
+    mixed roof they are refused until the intake has a usable area verified by an engineer or roofer. Once it
+    does, C1 must be run on that verified area with no setback (setback_factor 1), so the plan cites the
+    verified number and not the flat-roof guess.
+    """
+    if formula.strip().upper() not in ("C1", "C2") or roof_kind(profile.get("roof_type")) != "non_flat":
+        return
+    check_roof_sizing_allowed(profile)
+    verified = verified_usable_area(profile) or 0.0
+    if formula.strip().upper() == "C1":
+        area = float(inputs.get("roof_area_sqft", 0))
+        setback = float(inputs.get("setback_factor", 0.55))
+        if abs(area - verified) > 0.5 or abs(setback - 1.0) > 1e-9:
+            raise ValueError(
+                f"This roof is not flat and its usable area was verified at {verified:,.0f} sq ft. "
+                f"Run C1 with roof_area_sqft={verified:,.0f} and setback_factor=1."
+            )
+
+
 def execute_tool(
     name: str,
     raw_input: dict[str, Any],
@@ -219,6 +243,7 @@ def execute_tool(
     if name == "optimize_solar_storage":
         return optimize_solar_storage(fixture_case)
     if name == "calculate":
+        _check_roof_formula(validated.formula, validated.inputs, session_profile)
         calc_in = CalculateInput(
             formula=validated.formula,
             inputs=dict(validated.inputs),

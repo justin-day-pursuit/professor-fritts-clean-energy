@@ -13,6 +13,7 @@ from typing import Any
 from mocks.mock_mode import get_tool_mode, require_mock_or_fixture
 from tools.base import ToolResult
 from tools.cache import get_reference_cache, is_stale
+from tools.injection import has_hidden_instructions
 from tools.live_rates import fetch_live_utility_rates
 from tools.upsert_cache import upsert_reference_cache
 
@@ -63,22 +64,56 @@ def _refresh_stale_program(program: dict[str, Any], source_url: str) -> None:
     )
 
 
+def _quarantine_entry(program: dict[str, Any], source_url: str) -> dict[str, Any]:
+    """
+    What the agent is told about a program page that carried hidden instructions.
+
+    Only the name and the page address are kept, so the plan can say the page was ignored.
+    None of the page's own text (status, amounts, the injected sentence) is passed on.
+    """
+    return {
+        "name": str(program.get("name") or "Unnamed program"),
+        "source_url": str(program.get("source_url") or source_url),
+        "reason": "Page contains hidden instructions; ignored and not saved.",
+    }
+
+
 def search_ny_incentives_and_rules(case: str) -> ToolResult:
     """
     Return saved incentive snippets, and refresh any program whose cache row is stale.
 
     A conflict between the cached status and the live page is flagged cached_live_conflict.
     The refresh writes the live status, the exact quote, and a page hash.
+
+    v6: a program whose text carries hidden instructions is moved to data["quarantined"] with only
+    its name and page address, is never refreshed into the cache, and adds the flag
+    hidden_instruction_pattern. A program where DSIRE (a finder, not a source) disagrees with the
+    official page adds finder_official_conflict; the official status is the one used and saved.
     """
     result = require_mock_or_fixture(case, "search_ny_incentives_and_rules")
     flags = list(result.flags)
-    programs = [dict(program) for program in result.data.get("programs", []) if isinstance(program, dict)]
-    for program in programs:
+    programs: list[dict[str, Any]] = []
+    quarantined: list[dict[str, Any]] = []
+    for raw in result.data.get("programs", []):
+        if not isinstance(raw, dict):
+            continue
+        program = dict(raw)
+        if has_hidden_instructions(program):
+            quarantined.append(_quarantine_entry(program, result.source_url))
+            if "hidden_instruction_pattern" not in flags:
+                flags.append("hidden_instruction_pattern")
+            continue
         if program.get("conflict") and "cached_live_conflict" not in flags:
             flags.append("cached_live_conflict")
-        _refresh_stale_program(program, result.source_url)
+        if program.get("finder_status") and "finder_official_conflict" not in flags:
+            if str(program["finder_status"]).lower() != str(program.get("status") or "").lower():
+                flags.append("finder_official_conflict")
+        _refresh_stale_program(program, str(program.get("source_url") or result.source_url))
+        programs.append(program)
     data = dict(result.data)
     data["programs"] = programs
+    if quarantined:
+        data["quarantined"] = quarantined
     return result.model_copy(update={"flags": flags, "data": data})
 
 

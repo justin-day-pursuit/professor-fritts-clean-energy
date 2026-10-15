@@ -14,6 +14,7 @@ from typing import Any
 from tools.base import ToolResult
 from tools.calculate import CalculateInput, run_calculate
 from tools.geocode import borough_of, geocode_nyc_address, is_approximate
+from tools.roof import check_new_array_fits, free_array_kw, verified_usable_area
 from tools.web import get_with_retry
 
 PVWATTS_URL = "https://developer.nlr.gov/api/pvwatts/v8.json"
@@ -41,15 +42,22 @@ class LiveSolarError(RuntimeError):
 
 
 def default_system_kw(profile: dict[str, Any]) -> float:
-    """Size the array from roof area with the shared C1 and C2 formulas (setback 0.55, 66 sq ft per kW)."""
+    """
+    Size the array from the intake with the shared C1 and C2 formulas (setback 0.55, 66 sq ft per kW).
+
+    A verified usable area replaces the setback step, and an existing array is taken out of the result (v6).
+    """
     try:
         roof = float(profile.get("roof_area_sqft"))
     except (TypeError, ValueError):
         roof = 0.0
-    if roof <= 0:
+    if roof <= 0 and verified_usable_area(profile) is None:
         raise LiveSolarError("The intake profile has no valid roof area to size the solar array.")
-    usable = run_calculate(CalculateInput(formula="C1", inputs={"roof_area_sqft": roof})).data["value"]
-    return float(run_calculate(CalculateInput(formula="C2", inputs={"usable_roof_sqft": usable})).data["value"])
+    check_new_array_fits(profile, None)
+    free = free_array_kw(profile)
+    if free is None:
+        raise LiveSolarError("The intake profile has no valid roof area to size the solar array.")
+    return float(free)
 
 
 def rerun_pvwatts(inputs: dict[str, Any], api_key: str) -> dict[str, Any]:

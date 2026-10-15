@@ -40,7 +40,7 @@ class FinancialModelInput(BaseModel):
     floor_area_sqft: float = Field(gt=0)
     annual_use_kwh: float = Field(gt=0, description="Annual grid use in kWh (measured or the A8 benchmark)")
     budget_usd: float = Field(ge=0, description="The user's budget; 0 if none was given")
-    full_array_kw_dc: float = Field(gt=0, description="Whole-roof array size from C2")
+    full_array_kw_dc: float = Field(gt=0, description="Array size that fits the free roof: C2, or free_capacity_kw from get_solar_production when the roof already has solar")
     annual_solar_kwh_low: float = Field(ge=0, description="Low end of solar output for the whole-roof array")
     annual_solar_kwh_high: float = Field(ge=0, description="High end of solar output for the whole-roof array")
     price_low_usd_per_kwh: float = Field(gt=0)
@@ -116,6 +116,8 @@ def run_financial_model(inp: FinancialModelInput) -> ToolResult:
         "scenario_name": SCENARIO_NAMES[sid],
         "solar_alone_pct_of_use": solar_alone,
         "solar_alone_reaches_goal": solar_alone[0] >= inp.goal_fraction * 100.0,
+        # Solar sized for the whole roof can out-produce the building's use (v6); the part above 100% is surplus.
+        "solar_alone_exceeds_use": solar_alone[1] > 100.0,
         "goal_pct": inp.goal_fraction * 100.0,
         "assumption_text": benchmark_assumption_text(),
         **result,

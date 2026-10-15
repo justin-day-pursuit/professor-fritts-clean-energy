@@ -1,0 +1,13 @@
+{
+  "_comment": "Fictional Queens senior center - v6 eval case 6: no budget given, must ask once before planning.",
+  "building_name": "Jamaica Senior Center (fictional)",
+  "address": "90-10 Example Boulevard",
+  "borough": "Queens",
+  "city": "New York",
+  "state": "NY",
+  "building_type": "senior center",
+  "floor_area_sqft": 12000,
+  "annual_kwh": 150000,
+  "goal": "Cut grid electricity 30% by 2030",
+  "question": "What should we do to cut grid power 30% by 2030?"
+}

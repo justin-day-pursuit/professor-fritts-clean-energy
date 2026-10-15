@@ -1,0 +1,11 @@
+{
+  "_comment": "Flood zone AE. Written before the run; checked by agent/evals.py.",
+  "status": "done",
+  "check4_passed": true,
+  "roadmap_includes": [
+    "flood zone ae",
+    "elevate",
+    "design flood elevation",
+    "appendix g"
+  ]
+}

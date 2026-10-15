@@ -266,11 +266,19 @@ def test_tool_error_goes_back_to_the_model_and_the_run_continues(monkeypatch):
     assert calc_results[0].payload["data"]["calc_id"] == "C3"
 
 
-def test_tool_error_without_a_tool_use_id_still_ends_the_run_readably(monkeypatch):
-    """The scripted model cannot react to an error, so the run ends, with a readable message."""
-    run, _ = _run(monkeypatch, [_calc(None, {"annual_solar_kwh": 1000, "annual_kwh": 5000})])
-    assert run.status == Run.Status.FAILED
-    assert "annual_use_kwh" in run.output["error"]
+def test_tool_error_without_a_tool_use_id_is_logged_and_the_run_continues(monkeypatch):
+    """
+    v6: the scripted model cannot react to an error, but the run no longer stops there. The error is
+    logged in readable words and the next scripted step still runs (it used to end the run as failed).
+    """
+    wrong = {"annual_solar_kwh": 1000, "annual_kwh": 5000}
+    right = {"annual_solar_kwh": 1000, "annual_use_kwh": 5000}
+    run, _ = _run(monkeypatch, [_calc(None, wrong), _calc(None, right)])
+
+    errors = [e for e in run.events.all() if e.kind == "error" and e.payload.get("tool") == "calculate"]
+    assert errors and "annual_use_kwh" in errors[0].payload["message"]
+    calc_results = [e for e in run.events.all() if e.kind == "tool_result" and e.payload["tool"] == "calculate"]
+    assert len(calc_results) == 1 and calc_results[0].payload["data"]["calc_id"] == "C3"
 
 
 def test_intake_and_calculate_are_not_flagged_stale(monkeypatch):

@@ -1,0 +1,24 @@
+{
+  "source_url": "https://example.test/fictional/incentives-v0",
+  "retrieved_at": "2025-10-01T12:00:00Z",
+  "dataset_version": "case1-v0-mock-1",
+  "mock": true,
+  "tool": "search_ny_incentives_and_rules",
+  "data": {
+    "programs": [
+      {
+        "name": "Federal ITC (commercial)",
+        "status": "open",
+        "placed_in_service_deadline": "2027-12-31",
+        "retrieved_at": "2025-10-01T12:00:00Z"
+      },
+      {
+        "name": "NYSERDA NY-Sun commercial incentive (fictional stand-in)",
+        "status": "open",
+        "retrieved_at": "2025-10-01T12:00:00Z"
+      }
+    ]
+  },
+  "stale": false,
+  "flags": []
+}

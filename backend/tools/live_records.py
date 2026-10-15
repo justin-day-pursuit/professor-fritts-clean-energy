@@ -12,7 +12,10 @@ import re
 from datetime import datetime, timezone
 from typing import Any
 
+import httpx
+
 from tools.base import ToolResult
+from tools.footprints import FOOTPRINTS_SOURCE_URL, FootprintError, fetch_footprints
 from tools.geocode import borough_of, geocode_nyc_address, is_approximate
 from tools.web import get_with_retry
 
@@ -21,6 +24,10 @@ PLUTO_SOURCE_URL = "https://data.cityofnewyork.us/City-Government/Primary-Land-U
 
 TIMEOUT_SECONDS = 15
 AREA_MISMATCH_RATIO = 0.10  # flag floor areas that differ by more than 10%
+# A typed roof area is a rough number, so it is only flagged when it is more than half again as big as the
+# building outlines on the lot, or less than half of them.
+ROOF_MISMATCH_HIGH = 1.5
+ROOF_MISMATCH_LOW = 0.5
 
 
 class LiveRecordsError(RuntimeError):
@@ -94,6 +101,23 @@ def _compare_with_intake(profile: dict[str, Any], city_area: float | None, city_
     return differences
 
 
+def compare_roof_with_footprints(profile: dict[str, Any], footprint_total: float | None) -> dict[str, Any] | None:
+    """
+    Compare the roof area the user typed with the building outlines on the lot (v6).
+
+    Returns the difference to report, or None when there is nothing to compare or the two roughly agree.
+    A footprint is not a measured roof, so the wide tolerance only catches large slips, such as a floor
+    area typed into the roof field. The user's value is never changed.
+    """
+    typed = _number(profile.get("roof_area_sqft"))
+    if not typed or not footprint_total:
+        return None
+    ratio = typed / footprint_total
+    if ROOF_MISMATCH_LOW <= ratio <= ROOF_MISMATCH_HIGH:
+        return None
+    return {"field": "roof_area_sqft", "intake": typed, "city_record": footprint_total}
+
+
 def fetch_live_building_records(profile: dict[str, Any], address: str | None = None) -> ToolResult:
     """Look up the tax lot for the building's address and return its city records."""
     address = address or profile.get("address")
@@ -129,6 +153,18 @@ def fetch_live_building_records(profile: dict[str, Any], address: str | None = N
     city_year = int(_number(row.get("yearbuilt")) or 0) or None  # PLUTO uses 0 for "unknown"
     differences = _compare_with_intake(profile, city_area, city_year)
 
+    # v6: the outlines of the buildings on the lot, to sanity-check the roof area. A failed lookup never
+    # fails the records tool; the roof area then simply has no cross-check.
+    footprints: dict[str, Any] = {}
+    footprints_error: str | None = None
+    try:
+        footprints = fetch_footprints(place["bbl"])
+    except (FootprintError, httpx.HTTPError, ValueError) as exc:
+        footprints_error = str(exc)
+    roof_difference = compare_roof_with_footprints(profile, footprints.get("total_footprint_sqft"))
+    if roof_difference:
+        differences.append(roof_difference)
+
     flags = [f"intake_mismatch:{d['field']}" for d in differences]
     if is_approximate(place):
         flags.append("address_match_approximate")
@@ -155,6 +191,13 @@ def fetch_live_building_records(profile: dict[str, Any], address: str | None = N
             "landmark_flag": bool(row.get("landmark")) or bool(row.get("histdist")),
             "differs_from_intake": differences,
             "geocoder_match": place["label"],
+            # Ground area of the building outlines on the lot. A footprint is not a measured roof.
+            "footprint_total_sqft": footprints.get("total_footprint_sqft"),
+            "footprint_building_count": footprints.get("building_count"),
+            "footprint_buildings_sqft": [b["area_sqft"] for b in footprints.get("buildings", []) if b["counted"]],
+            "footprints_error": footprints_error,
+            # The outlines come from a different dataset than the rest of this record; cite this address for them.
+            "footprints_source_url": FOOTPRINTS_SOURCE_URL if footprints else None,
         },
         source_url=PLUTO_SOURCE_URL,
         retrieved_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),

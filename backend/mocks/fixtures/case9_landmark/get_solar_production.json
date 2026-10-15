@@ -1,0 +1,18 @@
+{
+  "retrieved_at": "2026-10-10T12:00:00Z",
+  "dataset_version": "case9_landmark-v6-mock-1",
+  "mock": true,
+  "stale": false,
+  "source_url": "https://example.test/fictional/case9_landmark/pvwatts",
+  "tool": "get_solar_production",
+  "data": {
+    "system_kw_dc": 37.5,
+    "annual_ac_kwh": 45000,
+    "annual_ac_kwh_low": 41400,
+    "annual_ac_kwh_high": 49500,
+    "capacity_factor": 0.137,
+    "range_assumption": "System losses of 10-18% around the PVWatts default of 14% give the low and high output.",
+    "notes": "Fictional PVWatts stand-in for a ~37.5 kW array."
+  },
+  "flags": []
+}

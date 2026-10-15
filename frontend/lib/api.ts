@@ -11,6 +11,7 @@ import type {
   MessageCreateRequest,
   MessageRunResponse,
   ProfileUpdateRequest,
+  RoofSuggestion,
   RunResponse,
   SessionCreateRequest,
   SessionResponse,
@@ -159,4 +160,14 @@ export async function downloadRoadmapJson(runId: number): Promise<string> {
     throw new ApiError(res.status, await parseErrorMessage(res));
   }
   return res.text();
+}
+
+/**
+ * Asks the backend for a suggested roof area: the ground area of the building outlines on the tax
+ * lot at this address, from NYC building footprints. The answer is a suggestion for the user to
+ * confirm, never a measured roof. A 404 means the address or its outlines were not found.
+ */
+export async function getRoofSuggestion(address: string, borough: string): Promise<RoofSuggestion> {
+  const params = new URLSearchParams({ address, borough });
+  return requestJson<RoofSuggestion>(`/api/records/roof-suggestion?${params.toString()}`);
 }

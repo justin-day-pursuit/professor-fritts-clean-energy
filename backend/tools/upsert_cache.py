@@ -12,6 +12,7 @@ from typing import Any
 from tools.approved_sources import is_approved_source, is_finder_only
 from tools.base import ToolResult
 from tools.cache import FRESHNESS_DAYS, get_reference_cache
+from tools.injection import has_hidden_instructions
 
 
 def upsert_reference_cache(
@@ -30,6 +31,7 @@ def upsert_reference_cache(
     - Missing source_url (user input or a model estimate with nothing to cite)
     - A finder-only page such as DSIRE
     - Any other URL that is not on the approved list
+    - A payload with hidden instructions in it (v6), even from an approved page
     """
     if not source_url:
         return ToolResult(
@@ -50,6 +52,14 @@ def upsert_reference_cache(
             tool="upsert_reference_cache",
             data={"error": f"Source {source_url} is not on the approved list"},
             flags=["rejected_unapproved_source"],
+        )
+
+    # v6: even an approved page can be tampered with. Text written to the model never reaches the cache.
+    if has_hidden_instructions(payload):
+        return ToolResult(
+            tool="upsert_reference_cache",
+            data={"error": "Payload contains hidden instructions and cannot be saved"},
+            flags=["rejected_hidden_instruction"],
         )
 
     limit_days = FRESHNESS_DAYS.get(freshness_kind, FRESHNESS_DAYS["default"])

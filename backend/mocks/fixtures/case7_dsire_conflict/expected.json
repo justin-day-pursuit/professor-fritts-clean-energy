@@ -1,0 +1,20 @@
+{
+  "_comment": "DSIRE vs official page. Written before the run; checked by agent/evals.py.",
+  "status": "done",
+  "check4_passed": true,
+  "flags_include": [
+    "finder_official_conflict"
+  ],
+  "roadmap_includes": [
+    "dsire",
+    "official",
+    "closed",
+    "left out of net cost"
+  ],
+  "cache_latest_status": {
+    "incentive:nyserda-cec-grant": "closed"
+  },
+  "cache_must_not_have_sources": [
+    "https://programs.dsireusa.org/system/program/detail/0000"
+  ]
+}

@@ -26,6 +26,8 @@ export const DANA_INTAKE: IntakeProfile = {
   target_year: 2030,
   critical_loads: "Cooling center loads during outages",
   critical_load_hours: 8,
+  existing_renewables: "none",
+  existing_efficiency: "none",
 };
 
 /** Default question Dana asks in the eval case and browser walkthrough. */

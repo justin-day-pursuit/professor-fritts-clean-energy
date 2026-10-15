@@ -1,0 +1,18 @@
+{
+  "retrieved_at": "2026-10-10T12:00:00Z",
+  "dataset_version": "case3_park_rec_center-v6-mock-1",
+  "mock": true,
+  "stale": false,
+  "source_url": "https://example.test/fictional/case3_park_rec_center/hazard",
+  "tool": "get_hazard_context",
+  "data": {
+    "heat_rating": "moderate",
+    "flood_rating": "low",
+    "winter_storm_rating": "moderate",
+    "flood_zone": "X",
+    "community_resilience_score": "relatively moderate",
+    "data_vintage": "2025",
+    "notes": "Fictional FEMA-style context."
+  },
+  "flags": []
+}

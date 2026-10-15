@@ -1,0 +1,18 @@
+{
+  "retrieved_at": "2026-10-10T12:00:00Z",
+  "dataset_version": "case9_landmark-v6-mock-1",
+  "mock": true,
+  "stale": false,
+  "source_url": "https://example.test/fictional/case9_landmark/building-records",
+  "tool": "lookup_ny_building_records",
+  "data": {
+    "address": "425 Example Avenue",
+    "borough": "Manhattan",
+    "gross_floor_area_sqft": 14000,
+    "year_built": 1877,
+    "landmark_flag": true,
+    "roof_area_sqft": 4500,
+    "landmark_note": "Individual NYC landmark (fictional)."
+  },
+  "flags": []
+}

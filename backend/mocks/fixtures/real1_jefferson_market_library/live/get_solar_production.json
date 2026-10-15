@@ -1,0 +1,53 @@
+{
+  "tool": "get_solar_production",
+  "data": {
+    "system_kw_dc": 55.0,
+    "annual_ac_kwh": 69563.08344726182,
+    "annual_ac_kwh_low": 66285.71451130713,
+    "annual_ac_kwh_high": 72833.31705126747,
+    "range_assumption": "ASSUMPTION: system losses of 18% (low) to 10% (high) around PVWatts' 14% default; weather is typical-year data.",
+    "capacity_factor": 0.1443816592927817,
+    "solar_radiation_kwh_m2_day": 4.421294074489058,
+    "monthly_ac_kwh": [
+      3679.528449410361,
+      4408.654116746608,
+      5948.00373531161,
+      6235.325784890319,
+      7835.276835640366,
+      7886.808159783073,
+      8162.502209217359,
+      7177.360493247555,
+      6071.107387470255,
+      4992.515146005649,
+      4098.351221828743,
+      3067.649907709947
+    ],
+    "pvwatts_inputs": {
+      "lat": 40.734613,
+      "lon": -73.999149,
+      "system_capacity": 55.0,
+      "module_type": 0,
+      "losses": 14,
+      "array_type": 1,
+      "tilt": 10,
+      "azimuth": 180
+    },
+    "location": {
+      "label": "425 6 AVENUE, New York, NY, USA",
+      "borough": "Manhattan",
+      "postalcode": "10011",
+      "match_type": "fallback",
+      "confidence": 0.8,
+      "bbl": "1006060001",
+      "lat": 40.734613,
+      "lon": -73.999149
+    },
+    "weather_data_source": "NSRDB PSM V3 GOES tmy-2020 3.2.0"
+  },
+  "source_url": "https://developer.nlr.gov/docs/solar/pvwatts/v8/",
+  "retrieved_at": "2026-10-15T20:49:09Z",
+  "dataset_version": "pvwatts-v8.5.0",
+  "mock": false,
+  "stale": false,
+  "flags": []
+}

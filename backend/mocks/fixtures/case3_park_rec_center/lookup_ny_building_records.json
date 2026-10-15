@@ -1,0 +1,19 @@
+{
+  "retrieved_at": "2026-10-10T12:00:00Z",
+  "dataset_version": "case3_park_rec_center-v6-mock-1",
+  "mock": true,
+  "stale": false,
+  "source_url": "https://example.test/fictional/case3_park_rec_center/building-records",
+  "tool": "lookup_ny_building_records",
+  "data": {
+    "address": "2900 Example Parkway",
+    "borough": "Brooklyn",
+    "gross_floor_area_sqft": 24000,
+    "year_built": 1978,
+    "landmark_flag": false,
+    "roof_area_sqft": 8000,
+    "parkland_flag": true,
+    "roof_note": "The building sits on mapped city parkland."
+  },
+  "flags": []
+}
