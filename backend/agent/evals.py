@@ -40,6 +40,9 @@ class EvalResult:
     case: str
     status: str = ""
     failures: list[str] = field(default_factory=list)
+    run_id: int | None = None
+    llm_provider: str = ""
+    tool_mode: str = ""
 
     @property
     def passed(self) -> bool:
@@ -108,25 +111,28 @@ def _includes(label: str, text: str, wanted: list[str], failures: list[str], *, 
             failures.append(f"{label} {'is missing' if present else 'must not contain'} {phrase!r}")
 
 
-def run_eval_case(case: str) -> EvalResult:
-    """Run one case with the scripted model and mock tools, and list every expectation it misses."""
+def run_eval_case(case: str, *, llm_provider: str = "scripted", tool_mode: str = "mock") -> EvalResult:
+    """Run one case and list every expectation it misses. Defaults stay on the scripted model and mock tools."""
     from agent.harness import run_harness
     from core import services
 
     expected = load_expected(case)
-    result = EvalResult(case=case)
+    result = EvalResult(case=case, llm_provider=llm_provider, tool_mode=tool_mode)
     before_ids = _cache_row_ids()
     _seed_cache(expected.get("seed_cache") or [])
 
     profile, question = load_case(case)
     previous_mode = getattr(settings, "TOOL_MODE", "mock")
-    settings.TOOL_MODE = "mock"
+    settings.TOOL_MODE = tool_mode
     try:
         session = services.create_session(profile=profile, fixture_case=case)
         services.add_message(session, role="user", content=question)
-        run = run_harness(session, question, llm_provider="scripted", tool_mode="mock")
+        run = run_harness(session, question, llm_provider=llm_provider, tool_mode=tool_mode)
     finally:
         settings.TOOL_MODE = previous_mode
+    result.run_id = run.pk
+    result.llm_provider = run.llm_provider
+    result.tool_mode = run.tool_mode
 
     output = run.output or {}
     flags = run.flags or {}
