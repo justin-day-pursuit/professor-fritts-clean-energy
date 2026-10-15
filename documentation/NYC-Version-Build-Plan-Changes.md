@@ -50,17 +50,18 @@ The v4 goalpost text stays the same. Only the building changes.
 - Golden example 2 (Erie County) is replaced by the case above.
 - Mandatory referrals: drop wording that implies upstate utilities. Keep structural PE/RA, roof survey, NYC-licensed electrician, FDNY rooftop access, Con Edison interconnection.
 
-## Changes needed in the code and repo (not done yet)
+## Changes needed in the code and repo
 
-| File | Change |
-| --- | --- |
-| `backend/agent/checks.py` (`run_check1`) | It currently accepts any New York State building. Require a NYC borough (Manhattan, Brooklyn, Queens, Bronx, Staten Island, or the city name). Anything else stops with `out_of_scope`. |
-| `backend/agent/prompts/system_prompt_v2.md` | "New York public buildings only" becomes "NYC (five boroughs) public buildings only". |
-| `README.md` line 13 | "New York State and NYC only" becomes "NYC only". |
-| Intake form and `frontend/lib/*` | Borough becomes a required pick-list of the five boroughs. The state field can be fixed to NY. |
-| `backend/tools/geocode.py`, `live_records.py` | The county fallback exists for non-NYC addresses. Re-check whether it is still needed. |
-| `backend/mocks/fixtures/` | Add the NYC school fixture for case 2. |
-| Tests | Add: Buffalo is stopped, New Jersey is stopped, each of the five boroughs passes. |
+| File | Change | Status |
+| --- | --- | --- |
+| `backend/agent/checks.py` (`run_check1`) | Require a NYC borough. Anything else (other state, Buffalo, Erie County, Long Island) stops with `out_of_scope`. A missing borough asks once. | **Done** |
+| `backend/agent/prompts/system_prompt_v2.md` | "NYC (five boroughs) public buildings only", state programs still in scope. | **Done** |
+| `README.md` | Scope line says NYC only. | **Done** |
+| Intake form and `frontend/lib/*` | Borough is a required pick-list of the five boroughs; state is fixed to NY. | **Done** |
+| `backend/tools/geocode.py` | The county fallback is kept on purpose: older sessions send the borough as `county`, and `check1` maps county names (Kings, Richmond) to boroughs. | Kept |
+| Tests | Buffalo, Erie County, Albany, Nassau, Westchester, NJ, CA and PA stop; each borough passes; county names map; a missing borough asks once. | **Done** |
+| `backend/mocks/fixtures/` | Add the NYC school fixture for case 2. | **To do (v4)** |
+| PRD and Build Plan | Edit the originals using the tables above. | **To do** |
 
 ## Open question for Justin and Mara
 

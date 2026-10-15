@@ -14,7 +14,7 @@ from core.models import Run
 def test_anthropic_missing_key_message(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     os.environ.pop("ANTHROPIC_API_KEY", None)
-    profile = {"state": "NY", "budget_amount": 1, "goal": "cut"}
+    profile = {"state": "NY", "borough": "Queens", "budget_amount": 1, "goal": "cut"}
     session = services.create_session(profile=profile)
     run = run_harness(session, "hi", llm_provider="anthropic")
     run = services.get_run_with_events(run.pk)

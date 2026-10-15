@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { missingRequiredFields } from "@/lib/profile-utils";
+import { NYC_BOROUGHS, missingRequiredFields } from "@/lib/profile-utils";
 import type { IntakeProfile } from "@/lib/types";
 import type { ReactNode } from "react";
 
@@ -93,15 +93,27 @@ export function IntakeForm({
           />
         </Field>
         <div className="grid grid-cols-2 gap-2">
-          <Field id="borough" label="Borough or county" required>
-            <Input
-              id="borough"
-              value={profile.borough ?? profile.county ?? ""}
-              onChange={(e) => set("borough", e.target.value)}
-            />
+          {/* NYC only: the borough is a pick-list of the five boroughs, so a typo or an upstate town cannot be sent. */}
+          <Field id="borough" label="Borough" required>
+            <Select
+              value={NYC_BOROUGHS.find((b) => b === (profile.borough ?? profile.county)) ?? null}
+              onValueChange={(v) => set("borough", v ?? "")}
+            >
+              <SelectTrigger id="borough" className="w-full">
+                <SelectValue placeholder="Choose a borough" />
+              </SelectTrigger>
+              <SelectContent>
+                {NYC_BOROUGHS.map((b) => (
+                  <SelectItem key={b} value={b}>
+                    {b}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
+          {/* The state is fixed to NY because the tool only covers New York City. */}
           <Field id="state" label="State">
-            <Input id="state" value={profile.state ?? ""} onChange={(e) => set("state", e.target.value)} />
+            <Input id="state" value="NY" readOnly disabled />
           </Field>
         </div>
         <Field id="building_type" label="Building type">

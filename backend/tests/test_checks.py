@@ -202,3 +202,52 @@ def test_check4_fact_and_estimate_still_need_source_or_calc():
             ]
         )
         assert not run_check4(payload, assumptions_register=register)["passed"]
+
+
+# --- NYC-only scope (decided Oct 15, 2026) -------------------------------------------------------
+
+import pytest  # noqa: E402  (kept next to the tests that use it)
+
+from agent.checks import normalize_borough  # noqa: E402
+
+
+def _nyc_profile(**overrides):
+    """A complete NYC intake that passes Check 1; each test changes only the field it is about."""
+    profile = {"state": "NY", "borough": "Queens", "budget_amount": 100, "goal": "cut 30%"}
+    profile.update(overrides)
+    return profile
+
+
+@pytest.mark.parametrize("borough", ["Manhattan", "Brooklyn", "Queens", "Bronx", "The Bronx", "Staten Island"])
+def test_check1_passes_for_each_of_the_five_boroughs(borough):
+    """Every borough is in scope."""
+    assert run_check1(_nyc_profile(borough=borough), "help")["passed"]
+
+
+@pytest.mark.parametrize("county", ["Kings County", "Richmond", "New York County", "borough of queens"])
+def test_check1_accepts_county_names_and_filler_words(county):
+    """County names map to boroughs, and 'Borough of' or 'County' is ignored."""
+    assert normalize_borough(county) is not None
+    assert run_check1(_nyc_profile(borough=county), "help")["passed"]
+
+
+@pytest.mark.parametrize("borough", ["Buffalo", "Erie County", "Albany", "Nassau", "Westchester"])
+def test_check1_stops_upstate_and_suburban_new_york(borough):
+    """New York State outside the five boroughs is out of scope, even with state set to NY."""
+    result = run_check1(_nyc_profile(borough=borough), "help")
+    assert not result["passed"]
+    assert result["details"]["stop_reason"] == "out_of_scope"
+
+
+@pytest.mark.parametrize("state", ["NJ", "CA", "Pennsylvania"])
+def test_check1_stops_other_states(state):
+    """Any other state stops at once, not just the few the old check listed."""
+    result = run_check1(_nyc_profile(state=state), "help")
+    assert result["details"]["stop_reason"] == "out_of_scope"
+
+
+def test_check1_asks_for_missing_borough():
+    """No borough means one clarifying question, not a stop."""
+    result = run_check1(_nyc_profile(borough=""), "help")
+    assert result["details"]["stop_reason"] == "needs_input"
+    assert "borough" in result["details"]["question"]

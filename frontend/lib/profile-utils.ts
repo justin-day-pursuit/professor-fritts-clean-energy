@@ -63,6 +63,9 @@ function validRoofArea(profile: IntakeProfile): number | "" {
   return n !== undefined && n > 0 ? n : "";
 }
 
+/** The five NYC boroughs: the only places the planner covers. Used by the intake form pick-list. */
+export const NYC_BOROUGHS = ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"] as const;
+
 /**
  * Fields the live tools cannot work without: the solar lookup needs the address and borough
  * to find the building and the roof area to size the array. To require another field, add a
@@ -70,7 +73,7 @@ function validRoofArea(profile: IntakeProfile): number | "" {
  */
 const REQUIRED_FIELDS: { label: string; value: (p: IntakeProfile) => unknown }[] = [
   { label: "Address", value: (p) => p.address },
-  { label: "Borough or county", value: (p) => p.borough || p.county },
+  { label: "Borough", value: (p) => p.borough || p.county },
   { label: "Roof area (a number above 0)", value: validRoofArea },
 ];
 

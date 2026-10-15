@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Professor Fritts — building renewable energy planner",
-  description: "AI planning agent for New York public buildings — intake, chat, and roadmap.",
+  description: "AI planning agent for New York City public buildings — intake, chat, and roadmap.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

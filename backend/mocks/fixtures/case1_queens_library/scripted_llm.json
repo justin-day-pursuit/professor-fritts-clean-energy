@@ -42,7 +42,6 @@
           "setback_factor": 0.55
         },
         "assumption_ids": [
-          "A1",
           "A2"
         ]
       }
@@ -124,7 +123,7 @@
                   "text": "Efficiency measures (LED and controls) cut electricity use 10-20% based on published benchmarks, not a building model.",
                   "label": "ASSUMPTION",
                   "confidence": "low",
-                  "assumption_id": "A1",
+                  "assumption_id": "A7",
                   "value_low": 10,
                   "value_high": 20,
                   "units": "% of annual use"
@@ -163,10 +162,10 @@
                   "source_url": "session://profile"
                 },
                 {
-                  "text": "Benchmark efficiency savings of 10-20% of annual use, see A1.",
+                  "text": "Benchmark efficiency savings of 10-20% of annual use, see A7.",
                   "label": "ASSUMPTION",
                   "confidence": "low",
-                  "assumption_id": "A1",
+                  "assumption_id": "A7",
                   "value_low": 10,
                   "value_high": 20,
                   "units": "% of annual use"

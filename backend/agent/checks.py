@@ -29,6 +29,33 @@ HIDDEN_INSTRUCTION_PATTERNS = [
 
 NY_STATE_CODES = {"NY", "NEW YORK", "NYC", "NEW YORK CITY"}
 
+# Scope is NYC only (decided Oct 15, 2026): the five boroughs. Each borough can also arrive under its
+# county name (Kings = Brooklyn, Richmond = Staten Island, New York = Manhattan), so those map here.
+# Anything not in this table, such as Buffalo or Erie County, is out of scope.
+NYC_BOROUGH_NAMES: dict[str, str] = {
+    "manhattan": "Manhattan",
+    "new york": "Manhattan",
+    "brooklyn": "Brooklyn",
+    "kings": "Brooklyn",
+    "queens": "Queens",
+    "bronx": "Bronx",
+    "the bronx": "Bronx",
+    "staten island": "Staten Island",
+    "richmond": "Staten Island",
+}
+
+
+def normalize_borough(raw: str | None) -> str | None:
+    """
+    Turn what the user typed into one of the five borough names, or None if it is not a NYC borough.
+
+    Ignores case, extra spaces and filler words ("Borough of", "County"), so "Kings County" and
+    "borough of queens" both work. To support another spelling, add it to NYC_BOROUGH_NAMES.
+    """
+    text = re.sub(r"\b(borough of|county)\b", " ", (raw or "").lower())
+    text = re.sub(r"\s+", " ", text).strip()
+    return NYC_BOROUGH_NAMES.get(text)
+
 
 class CheckResult(dict):
     """Structured check outcome — use like a dict with keys passed, code, message, details."""
@@ -59,23 +86,33 @@ def _has_goal(profile: dict[str, Any]) -> bool:
 
 def run_check1(profile: dict[str, Any], user_message: str) -> CheckResult:
     """
-    Start gate: New York only; budget and goal required or ask once (needs_input).
+    Start gate: NYC only (five boroughs); budget and goal required or ask once (needs_input).
 
-    Out-of-state buildings stop with out_of_scope; missing fields get one clarifying question.
+    A building in another state, or in New York State outside the five boroughs (Buffalo, Erie
+    County, Long Island), stops as out_of_scope. A missing borough, budget or goal gets one
+    clarifying question. State programs still apply to NYC buildings; this only checks location.
     """
     state = _profile_state(profile)
+    # The intake form calls this field "Borough" but older sessions may send it as "county".
+    borough_text = str(profile.get("borough") or profile.get("county") or "").strip()
+    out_of_scope_message = (
+        "Professor Fritts supports New York City public buildings only "
+        "(Manhattan, Brooklyn, Queens, the Bronx and Staten Island)."
+    )
+
+    # Another state entirely (NJ, CA, ...) stops at once.
     if state and state not in NY_STATE_CODES and "NEW YORK" not in state:
-        # Treat obvious non-NY (e.g. NJ) as out of scope.
-        if state in ("NJ", "NEW JERSEY", "PA", "CONNECTICUT", "CT"):
-            return CheckResult.fail(
-                "out_of_scope",
-                "Professor Fritts v0 supports New York public buildings only.",
-                stop_reason="out_of_scope",
-            )
+        return CheckResult.fail("out_of_scope", out_of_scope_message, stop_reason="out_of_scope")
+
+    # A borough was given but it is not one of the five (for example Buffalo or Erie): stop at once.
+    if borough_text and normalize_borough(borough_text) is None:
+        return CheckResult.fail("out_of_scope", out_of_scope_message, stop_reason="out_of_scope")
 
     missing: list[str] = []
-    if not state or (state not in NY_STATE_CODES and "NEW YORK" not in state):
-        missing.append("state (New York)")
+    if not state:
+        missing.append("state (NY)")
+    if not borough_text:
+        missing.append("borough")
     if not _has_budget(profile):
         missing.append("capital budget")
     if not _has_goal(profile):
@@ -94,7 +131,7 @@ def run_check1(profile: dict[str, Any], user_message: str) -> CheckResult:
             question=question,
         )
 
-    return CheckResult.ok("check1_pass", "New York building with budget and goal present.")
+    return CheckResult.ok("check1_pass", "NYC building with borough, budget and goal present.")
 
 
 def run_check2(
