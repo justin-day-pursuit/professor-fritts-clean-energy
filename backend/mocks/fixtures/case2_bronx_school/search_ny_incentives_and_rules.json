@@ -21,6 +21,7 @@
         "live_status": "closed",
         "live_retrieved_at": "2026-10-01T12:00:00Z",
         "live_quote": "This program is closed to new applications.",
+        "record_id": "incentive:nyserda-school-solar",
         "conflict": true,
         "retrieved_at": "2026-10-01T12:00:00Z"
       }

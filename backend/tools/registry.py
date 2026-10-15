@@ -1,8 +1,8 @@
 """
-Central registry of tools the v0 agent may call, with Pydantic input schemas.
+Central registry of tools the agent may call, with Pydantic input schemas.
 
-Not registered in v0 (listed here for the roadmap only):
-  run_financial_model, search_evidence, upsert_reference_cache
+Not registered (listed here for the roadmap only):
+  run_financial_model, search_evidence
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ from tools.calculate import CalculateInput, describe_formulas, run_calculate
 from tools.climate_risk import get_hazard_context
 from tools.ny_rules_rates import get_utility_rates, get_utility_tariff, search_ny_incentives_and_rules
 from tools.solar_savings import get_solar_production, optimize_solar_storage
+from tools.upsert_cache import upsert_reference_cache as _upsert_cache_handler
 
 ToolHandler = Callable[..., ToolResult]
 
@@ -44,6 +45,19 @@ class SolarProductionInput(BaseModel):
     """Optional array size in kW DC; left out, the tool sizes it from the roof area."""
 
     system_kw: float | None = Field(default=None, gt=0)
+
+
+class UpsertCacheInput(BaseModel):
+    """Arguments for the upsert_reference_cache write tool."""
+
+    record_id: str = Field(description="Stable key, e.g. 'incentive:nyserda-clean-green-schools'")
+    payload: dict[str, Any] = Field(
+        description="The data to cache (status, deadline, eligibility, quoted text)",
+    )
+    source_url: str = Field(description="Official page URL the data was retrieved from")
+    retrieved_at: str = Field(default="", description="ISO 8601 retrieval timestamp")
+    page_hash: str = Field(default="", description="SHA-256 of the raw page content")
+    freshness_kind: str = Field(default="incentives", description="Cache freshness category")
 
 
 class ToolSpec(BaseModel):
@@ -130,6 +144,18 @@ TOOL_SPECS: dict[str, ToolSpec] = {
         freshness_kind="hazard",
         group=4,
     ),
+    "upsert_reference_cache": ToolSpec(
+        name="upsert_reference_cache",
+        description=(
+            "Save a fresh result to the versioned cache. Only accepts data from approved "
+            "official sources. Returns the version number and a changed flag. Changes that "
+            "make a plan more cautious save automatically; more favorable changes save as "
+            "'pending' until a person confirms."
+        ),
+        input_model=UpsertCacheInput,
+        freshness_kind="default",
+        group=5,
+    ),
 }
 
 
@@ -187,4 +213,13 @@ def execute_tool(
         return search_ny_incentives_and_rules(fixture_case)
     if name == "get_hazard_context":
         return get_hazard_context(fixture_case)
+    if name == "upsert_reference_cache":
+        return _upsert_cache_handler(
+            record_id=validated.record_id,
+            payload=validated.payload,
+            source_url=validated.source_url,
+            retrieved_at=validated.retrieved_at,
+            page_hash=validated.page_hash,
+            freshness_kind=validated.freshness_kind,
+        )
     raise KeyError(f"Tool {name!r} is not implemented.")
