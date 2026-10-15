@@ -274,6 +274,15 @@ _CERTIFIES_ROOF = re.compile(
     r"panels? (?:will|can) be (?:supported|carried)",
     re.I,
 )
+# "Cannot certify that the roof can carry the panels" refuses to certify; it must not count as
+# certifying. The refusal and the clause it governs (up to the next , ; or .) are removed before
+# _CERTIFIES_ROOF runs. Found in a live case 3 run: the model copied Check 4's own fix text and was
+# rejected again. "I confirm the roof can hold the panels" still fails.
+_NEGATED_CERTIFY = re.compile(
+    r"\b(?:cannot|can't|can not|will not|won't|do not|don't|never|unable to|not able to)\s+"
+    r"(?:certify|confirm|verify|guarantee|promise|say|state)\b[^.;,]*",
+    re.I,
+)
 _DECLINES_SKIP = re.compile(
     r"\bdeclin\w*|cannot skip|can'?t skip|will not confirm|cannot confirm|"
     r"must not skip|do not certify|cannot certify",
@@ -341,7 +350,7 @@ def _skip_engineer_issues(user_message: str, combined_text: str) -> list[str]:
     if not user_message or not _SKIP_ENGINEER.search(user_message):
         return []
     issues: list[str] = []
-    if _CERTIFIES_ROOF.search(combined_text):
+    if _CERTIFIES_ROOF.search(_NEGATED_CERTIFY.sub(" ", combined_text)):
         issues.append(
             "Cannot certify that the roof can carry the panels. Decline the request and keep the structural referral."
         )
@@ -490,7 +499,7 @@ def _missing_referral_groups(payload: RoadmapPayload) -> list[str]:
 # A "not" or "no" a few words earlier is left alone, so "it is not true we will save" still fails.
 _NEGATED_PROMISE = re.compile(
     r"\b(?:cannot|can't|can not|do not|does not|don't|will not|won't|never|no|not|declin\w*(?: to)?)"
-    r"\s+(?:(?:a|an|the|any|our|your|these|those)\s+)?(?:guarantee\w*|will save)",
+    r"\s+(?:(?:a|an|the|any|our|your|these|those)\s+)?(?:guarantee\w*|promise\w*|will save)",
     re.I,
 )
 
@@ -620,8 +629,9 @@ def _run_context_issues(payload: RoadmapPayload, notes: AgentNotes) -> list[str]
 
     for tool_name in notes.failed_tools:
         words = _TOOL_PLAIN_NAMES.get(tool_name, (tool_name.replace("_", " "),))
+        # Hyphens count as spaces, so "building-records lookup failed" names the building records tool.
         reported = any(
-            any(word in sentence for word in words) and _FAILURE_WORDS.search(sentence)
+            any(word in sentence.replace("-", " ") for word in words) and _FAILURE_WORDS.search(sentence)
             for sentence in gap_claims
         )
         if not reported:

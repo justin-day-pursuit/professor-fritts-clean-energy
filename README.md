@@ -139,7 +139,7 @@ That prints the run log (checks, tool calls, mock results) and the roadmap Markd
 - No evidence library (`search_evidence`) and no EnergyPlus building model; efficiency savings are a 10–20% benchmark (assumption A7).
 - The hidden-instruction filter is a pattern list (`backend/tools/injection.py`). It catches common phrasings, not every possible attack, which is why retrieved text is also never saved unless it comes from an approved page.
 - Far Rockaway (PSEG Long Island, not Con Edison) is still an open scope question; every NYC building is assumed to be on Con Edison and the utility is flagged for the user to confirm.
-- "Case 1 passes with live data" (v6 goalpost) needs a live run with real keys; it is not part of the automated tests.
+- Live runs are not part of the automated tests. They were run by hand on Oct 15, 2026 (`TOOL_MODE=live`, `LLM_PROVIDER=anthropic`, `run_case --llm anthropic --message "<the case's question>"`): case 1 `done` and case 2 `done`, both passing Check 4 on the first try; case 3 `partial` as expected (the fictional address does not geocode, so building records and PVWatts fail for real; the poisoned page is ignored and not saved). Note that `run_case` uses Dana's question unless `--message` is given.
 
 ### Checking the v2 goalpost
 

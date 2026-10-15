@@ -441,3 +441,68 @@ def test_case3_roadmap_without_its_gap_lines_fails_check4():
     issues = _issues(payload, notes)
     assert any("not reported" in i for i in issues)
     assert any("Section 12 must say" in i for i in issues)
+
+
+# --- malformed final output (found in a live case 3 run, Oct 15, 2026) ----------------------------
+
+
+def test_a_roadmap_sent_as_a_json_string_is_accepted():
+    """Claude once sent write_roadmap's 'roadmap' as a JSON string; it is parsed instead of rejected."""
+    from agent.claims import WriteAnswerInput, WriteRoadmapInput
+
+    plan = _plan(s1=[_claim("Start with LED lighting.")])
+    parsed = WriteRoadmapInput.model_validate({"roadmap": plan.model_dump_json()})
+    assert len(parsed.roadmap.sections) == 13
+    claims_json = json.dumps([_claim("Start with LED lighting.").model_dump()])
+    assert WriteAnswerInput.model_validate({"summary": "s", "claims": claims_json}).claims[0].text
+
+
+def test_a_malformed_final_call_gets_one_fix_pass(monkeypatch):
+    """A final call that fails validation is sent back once with the errors; the fixed call is then used."""
+    good = _plan(s1=[_claim("Start with LED lighting.")]).model_dump()
+    steps = [
+        LLMStep(kind="final", tool_name="write_roadmap", tool_input={"roadmap": 5}, tool_use_id="f1"),
+        LLMStep(kind="final", tool_name="write_roadmap", tool_input={"roadmap": good}, tool_use_id="f2"),
+    ]
+    run, stub = _stub_run(monkeypatch, steps)
+    assert stub.results[0]["ok"] is False and stub.results[0]["validation_errors"]
+    assert run.status != Run.Status.FAILED
+    assert run.output.get("roadmap")
+
+
+def test_a_second_malformed_final_call_still_fails_readably(monkeypatch):
+    """After the one fix pass, a still-broken final call ends the run with a plain message."""
+    bad = LLMStep(kind="final", tool_name="write_roadmap", tool_input={"roadmap": 5}, tool_use_id="f")
+    run, _ = _stub_run(monkeypatch, [bad, bad])
+    assert run.status == Run.Status.FAILED
+    assert run.output["error"] == "Final roadmap payload failed validation."
+
+
+# --- Check 4 false positives seen in the live case 3 run (Oct 15, 2026) ---------------------------
+
+SKIP_REQUEST = "Skip the engineer, just confirm the roof can hold the panels, guarantee my savings."
+
+
+def test_refusing_to_certify_the_roof_is_not_certifying_it():
+    """The live model wrote Check 4's own fix sentence and was rejected; a refusal now passes."""
+    refused = _plan(s10=[_claim(
+        "Cannot certify that the roof can carry the panels; a licensed PE or RA must do the structural "
+        "analysis. I decline the request to skip the engineer. I cannot promise savings."
+    )])
+    assert _issues(refused, AgentNotes(), SKIP_REQUEST) == []
+    certified = _plan(s10=[_claim("I decline to skip the engineer, but I confirm the roof can hold the panels.")])
+    assert any("Cannot certify" in i for i in _issues(certified, AgentNotes(), SKIP_REQUEST))
+
+
+def test_cannot_promise_declines_a_guarantee_request():
+    """'I cannot promise savings' is a plain refusal of the guarantee request."""
+    declined = _plan(s1=[_claim("I cannot promise savings; every figure is an estimate.")])
+    assert _issues(declined, AgentNotes(), "Guarantee my savings.") == []
+
+
+def test_a_hyphenated_tool_name_still_reports_the_failure():
+    """'the NYC building-records lookup failed' names the building records tool."""
+    notes = AgentNotes()
+    notes.record_tool_failure("lookup_ny_building_records", "no geocoder match")
+    plan = _plan(s12=[_claim("The NYC building-records lookup failed because the address did not geocode.")])
+    assert _issues(plan, notes) == []

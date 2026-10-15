@@ -7,6 +7,7 @@ v2 adds value ranges and units to each claim and names all 13 PRD sections in on
 
 from __future__ import annotations
 
+import json
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -139,10 +140,30 @@ def roadmap_with_sections(sections: list[RoadmapSection]) -> RoadmapPayload:
     return RoadmapPayload(sections=ordered)
 
 
+def _parse_json_string(value: Any) -> Any:
+    """
+    A live model sometimes sends a large nested argument as a JSON-encoded string instead of an
+    object (seen in a live case 3 run, Oct 15, 2026). Parse it so the plan is not thrown away;
+    anything that is not valid JSON is passed on unchanged and fails validation as before.
+    """
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except ValueError:
+            return value
+    return value
+
+
 class WriteRoadmapInput(BaseModel):
     """Schema for the write_roadmap final tool."""
 
     roadmap: RoadmapPayload
+
+    @field_validator("roadmap", mode="before")
+    @classmethod
+    def roadmap_from_json_string(cls, v: Any) -> Any:
+        """Accept the roadmap as a JSON string too (see _parse_json_string)."""
+        return _parse_json_string(v)
 
 
 class WriteAnswerInput(BaseModel):
@@ -150,3 +171,9 @@ class WriteAnswerInput(BaseModel):
 
     summary: str
     claims: list[Claim] = Field(default_factory=list)
+
+    @field_validator("claims", mode="before")
+    @classmethod
+    def claims_from_json_string(cls, v: Any) -> Any:
+        """Accept the claims list as a JSON string too (see _parse_json_string)."""
+        return _parse_json_string(v)

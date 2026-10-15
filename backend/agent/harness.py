@@ -15,7 +15,7 @@ from django.conf import settings
 from pydantic import ValidationError
 
 from agent.checks import inspect_raw_roadmap, run_check1, run_check2, run_check3, run_check4, salvage_roadmap
-from agent.claims import RoadmapPayload, RoadmapSection, WriteAnswerInput, WriteRoadmapInput
+from agent.claims import RoadmapPayload, RoadmapSection, WriteAnswerInput, WriteRoadmapInput, _parse_json_string
 from agent.limits import MAX_CONSECUTIVE_THINK_STEPS, RunLimits
 from agent.llm.base import LLMConfigurationError, LLMStep
 from agent.llm.factory import get_llm_client
@@ -497,7 +497,7 @@ def run_harness(
             except ValidationError as exc:
                 # A missing label never becomes a Claim. Treat that as a Check 4 miss so the
                 # agent gets one fix pass, then a partial roadmap, instead of a hard stop.
-                raw_roadmap = (step.tool_input or {}).get("roadmap")
+                raw_roadmap = _parse_json_string((step.tool_input or {}).get("roadmap"))
                 raw_issues = (
                     inspect_raw_roadmap(raw_roadmap, user_message=user_message)
                     if final_tool_name != "write_answer" and isinstance(raw_roadmap, dict)
@@ -512,15 +512,44 @@ def run_harness(
                         "details": {"issues": raw_issues},
                     }
                 else:
+                    errors = exc.errors(include_url=False)
                     services.append_event(
                         run,
                         seq=seq,
                         kind="error",
-                        payload={"validation_error": exc.errors(include_url=False)},
+                        payload={"validation_error": errors},
                     )
+                    seq += 1
+                    if not fix_attempted:
+                        # v6: a malformed final call gets the same single fix pass as a Check 4 miss,
+                        # instead of throwing away a plan the model can repair.
+                        fix_attempted = True
+                        issues = [
+                            f"{'.'.join(str(part) for part in err.get('loc', ()))}: {err.get('msg')}"
+                            for err in errors[:10]
+                        ]
+                        fix_context = (
+                            f"The {final_tool_name} call did not match its schema. Send the arguments as "
+                            "JSON objects (not strings) and fix:\n" + "\n".join(f"- {item}" for item in issues)
+                        )
+                        if step.tool_use_id:
+                            llm.submit_tool_result(
+                                step.tool_use_id,
+                                json.dumps({"ok": False, "validation_errors": issues}),
+                                notes.summarize_for_llm(),
+                            )
+                        llm.prepare_check4_retry(issues, user_message)
+                        services.append_event(
+                            run,
+                            seq=seq,
+                            kind="think",
+                            payload={"message": "Final output failed validation; requesting one fix pass.", "issues": issues},
+                        )
+                        seq += 1
+                        continue
                     return _close_run(
                         run,
-                        seq=seq + 1,
+                        seq=seq,
                         status=Run.Status.FAILED,
                         output={"error": "Final roadmap payload failed validation."},
                         t0=t0,
