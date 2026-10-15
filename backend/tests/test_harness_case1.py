@@ -10,7 +10,7 @@ import pytest
 
 from typing import Any
 
-from agent.claims import Claim, RoadmapPayload, RoadmapSection
+from agent.claims import Claim, RoadmapPayload, RoadmapSection, roadmap_with_sections
 from agent.harness import run_harness
 from agent.llm.base import LLMClient, LLMStep
 from core import services
@@ -111,58 +111,56 @@ class _Check4RetryRecordingLLM(LLMClient):
                 tool_input={"roadmap": bad.model_dump()},
                 tool_use_id="toolu_check4_retry_test",
             )
-        good = RoadmapPayload(
-            sections=[
-                RoadmapSection(
-                    section_id="1",
-                    title="Summary",
-                    claims=[
-                        Claim(
-                            text="Ok fact",
-                            label="FACT",
-                            confidence="high",
-                            source_url="https://example.test/a",
-                        )
-                    ],
-                ),
-                RoadmapSection(
-                    section_id="10",
-                    title="Referrals",
-                    claims=[
-                        Claim(
-                            text="PE/RA structural analysis required.",
-                            label="RECOMMENDATION",
-                            confidence="high",
-                            source_url="session://profile",
-                        ),
-                        Claim(
-                            text="Roof condition survey required.",
-                            label="RECOMMENDATION",
-                            confidence="high",
-                            source_url="session://profile",
-                        ),
-                        Claim(
-                            text="Licensed electrician for interconnection.",
-                            label="RECOMMENDATION",
-                            confidence="high",
-                            source_url="session://profile",
-                        ),
-                        Claim(
-                            text="FDNY rooftop access review.",
-                            label="RECOMMENDATION",
-                            confidence="high",
-                            source_url="session://profile",
-                        ),
-                        Claim(
-                            text="Con Edison utility interconnection review.",
-                            label="RECOMMENDATION",
-                            confidence="high",
-                            source_url="session://profile",
-                        ),
-                    ],
-                ),
-            ]
-        )
+        good = roadmap_with_sections([
+            RoadmapSection(
+                section_id="1",
+                title="Summary",
+                claims=[
+                    Claim(
+                        text="Ok fact",
+                        label="FACT",
+                        confidence="high",
+                        source_url="https://example.test/a",
+                    )
+                ],
+            ),
+            RoadmapSection(
+                section_id="10",
+                title="Referrals",
+                claims=[
+                    Claim(
+                        text="PE/RA structural analysis required.",
+                        label="RECOMMENDATION",
+                        confidence="high",
+                        source_url="session://profile",
+                    ),
+                    Claim(
+                        text="Roof condition survey required.",
+                        label="RECOMMENDATION",
+                        confidence="high",
+                        source_url="session://profile",
+                    ),
+                    Claim(
+                        text="Licensed electrician for interconnection.",
+                        label="RECOMMENDATION",
+                        confidence="high",
+                        source_url="session://profile",
+                    ),
+                    Claim(
+                        text="FDNY rooftop access review.",
+                        label="RECOMMENDATION",
+                        confidence="high",
+                        source_url="session://profile",
+                    ),
+                    Claim(
+                        text="Con Edison utility interconnection review.",
+                        label="RECOMMENDATION",
+                        confidence="high",
+                        source_url="session://profile",
+                    ),
+                ],
+            ),
+        ])
         return LLMStep(
             kind="final",
             tool_name="write_roadmap",

@@ -368,7 +368,7 @@ def test_notes_auto_registers_tool_and_calculation_assumptions():
 def test_check4_passes_with_notes_auto_registered_assumptions():
     """Check 4 passes on an ASSUMPTION claim citing A1 from notes.assumptions."""
     from agent.checks import run_check4
-    from agent.claims import Claim, RoadmapPayload, RoadmapSection
+    from agent.claims import Claim, RoadmapSection, roadmap_with_sections
 
     notes = AgentNotes()
     solar_res = ToolResult(
@@ -381,38 +381,36 @@ def test_check4_passes_with_notes_auto_registered_assumptions():
     )
     notes.record_tool_result("get_solar_production", solar_res)
 
-    payload = RoadmapPayload(
-        sections=[
-            RoadmapSection(
-                section_id="3",
-                title="Assumptions",
-                claims=[
-                    Claim(
-                        text="Assumed loss band: system losses 10%-18%",
-                        label="ASSUMPTION",
-                        confidence="medium",
-                        assumption_id="A1",
-                    )
-                ],
-            ),
-            RoadmapSection(
-                section_id="10",
-                title="Referrals",
-                claims=[
-                    Claim(
-                        text=(
-                            "Mandatory referrals: professional engineer structural PE/RA analysis, "
-                            "roof survey and condition, licensed electrician, FDNY rooftop access, "
-                            "and Con Edison utility interconnection."
-                        ),
-                        label="RECOMMENDATION",
-                        confidence="high",
-                        source_url="session://profile",
-                    )
-                ],
-            ),
-        ]
-    )
+    payload = roadmap_with_sections([
+        RoadmapSection(
+            section_id="3",
+            title="Assumptions",
+            claims=[
+                Claim(
+                    text="Assumed loss band: system losses 10%-18%",
+                    label="ASSUMPTION",
+                    confidence="medium",
+                    assumption_id="A1",
+                )
+            ],
+        ),
+        RoadmapSection(
+            section_id="10",
+            title="Referrals",
+            claims=[
+                Claim(
+                    text=(
+                        "Mandatory referrals: professional engineer structural PE/RA analysis, "
+                        "roof survey and condition, licensed electrician, FDNY rooftop access, "
+                        "and Con Edison utility interconnection."
+                    ),
+                    label="RECOMMENDATION",
+                    confidence="high",
+                    source_url="session://profile",
+                )
+            ],
+        ),
+    ])
 
     check_res = run_check4(payload, assumptions_register=notes.assumptions)
     assert check_res["passed"] is True, check_res.get("message")
