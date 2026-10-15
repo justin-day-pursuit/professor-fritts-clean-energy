@@ -12,6 +12,8 @@ Professor Fritts is an AI planning agent for managers of public buildings in New
 
 v1 scope: energy efficiency and solar PV (battery storage only for solar resilience), New York State and NYC only.
 
+**Scope update:** the team decided on **NYC only** (five boroughs). Read [documentation/NYC-Version-Build-Plan-Changes.md](documentation/NYC-Version-Build-Plan-Changes.md); where it disagrees with the plan or PRD, it wins. The code still has the old scope until those changes are made.
+
 ## Docs
 
 - [Product Requirements Document](documentation/Building_Renewable_Energy_Planner_PRD_v3.md)
@@ -106,7 +108,7 @@ LLM_PROVIDER=scripted TOOL_MODE=mock python manage.py run_case --case case1_quee
 
 That prints the run log (checks, tool calls, mock results) and the roadmap Markdown. It exits non-zero on `failed`. Pass `--llm anthropic` when a key is in `.env`. Optional `--message "..."` overrides Dana's question.
 
-## What is faked in v0
+## What is faked (v0 to v2)
 
 | Area | v0 stand-in | Later owner |
 | --- | --- | --- |
@@ -114,8 +116,18 @@ That prints the run log (checks, tool calls, mock results) and the roadmap Markd
 | LLM planning loop | `LLM_PROVIDER=scripted` replays `scripted_llm.json`; optional Anthropic when keyed | Production LLM + eval harness |
 | Tool result cache | In-memory / JSON file cache in the backend | Supabase-backed reference cache |
 | Database | Supabase Postgres (via `DATABASE_URL`; SQLite dev.sqlite3 when unset) | Production Supabase Postgres |
-| Roadmap sections | PRD sections 1,2,3,5,6,8,9,10,12,13 only; footer notes missing 4, 7, 11 | v2 / v5 product blocks |
+| Roadmap sections | All 13 sections print in order. Sections 4, 6, 7 and 11 hold short stand-in content until the financial model and scenarios arrive | v5 product block |
+| Utility tariff (`get_utility_tariff`) | Saved OpenEI-style sample, always mock, flagged for user confirmation | v8 live OpenEI |
 | Financial model, evidence search | Tools not registered in v0 | Future tool units |
+
+### Checking the v2 goalpost
+
+```bash
+cd backend
+LLM_PROVIDER=scripted TOOL_MODE=mock python manage.py check_coverage --case case1_queens_library
+```
+
+It runs case 1, confirms all 13 sections print in order, and confirms 100% of the numbers carry a label, a confidence and an id. It exits non-zero if either fails.
 
 The web UI shows mock badges on tool results and downloads the same roadmap Markdown/JSON the CLI prints.
 

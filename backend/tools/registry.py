@@ -15,7 +15,7 @@ from tools.base import ToolResult
 from tools.building_records import get_building_profile, lookup_ny_building_records
 from tools.calculate import CalculateInput, describe_formulas, run_calculate
 from tools.climate_risk import get_hazard_context
-from tools.ny_rules_rates import get_utility_rates, search_ny_incentives_and_rules
+from tools.ny_rules_rates import get_utility_rates, get_utility_tariff, search_ny_incentives_and_rules
 from tools.solar_savings import get_solar_production, optimize_solar_storage
 
 ToolHandler = Callable[..., ToolResult]
@@ -103,6 +103,16 @@ TOOL_SPECS: dict[str, ToolSpec] = {
         freshness_kind="utility_rates",
         group=3,
     ),
+    "get_utility_tariff": ToolSpec(
+        name="get_utility_tariff",
+        description=(
+            "Named utility tariff with effective date and energy/demand charge ranges "
+            "(saved OpenEI-style sample data until v8; flagged for the user to confirm)."
+        ),
+        input_model=EmptyInput,
+        freshness_kind="utility_rates",
+        group=3,
+    ),
     "search_ny_incentives_and_rules": ToolSpec(
         name="search_ny_incentives_and_rules",
         description="NY and federal incentives and permit rules (mock in v0).",
@@ -168,6 +178,8 @@ def execute_tool(
         return run_calculate(calc_in)
     if name == "get_utility_rates":
         return get_utility_rates(fixture_case, session_profile)
+    if name == "get_utility_tariff":
+        return get_utility_tariff(fixture_case)
     if name == "search_ny_incentives_and_rules":
         return search_ny_incentives_and_rules(fixture_case)
     if name == "get_hazard_context":

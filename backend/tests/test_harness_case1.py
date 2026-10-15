@@ -30,6 +30,7 @@ def scripted_env(monkeypatch):
 def test_harness_case1_scripted():
     profile = {
         "state": "NY",
+        "borough": "Queens",
         "budget_amount": 400000,
         "goal": "Cut grid electricity 30% by 2030",
         "address": "41-17 Main Street",
@@ -179,7 +180,7 @@ def test_harness_submits_tool_result_before_check4_retry(monkeypatch):
     fake = _Check4RetryRecordingLLM()
     monkeypatch.setattr("agent.harness.get_llm_client", lambda _provider, fixture_case=None: fake)
 
-    profile = {"state": "NY", "budget_amount": 100, "goal": "cut 30%"}
+    profile = {"state": "NY", "borough": "Queens", "budget_amount": 100, "goal": "cut 30%"}
     session = services.create_session(profile=profile)
     run = run_harness(session, "retry test", llm_provider="anthropic")
 
@@ -272,7 +273,7 @@ def test_write_answer_summary_in_run_output(monkeypatch):
         "agent.harness.get_llm_client",
         lambda _provider, fixture_case=None: _WriteAnswerSummaryLLM(),
     )
-    profile = {"state": "NY", "budget_amount": 100, "goal": "cut 30%"}
+    profile = {"state": "NY", "borough": "Queens", "budget_amount": 100, "goal": "cut 30%"}
     session = services.create_session(profile=profile)
     run = run_harness(session, "follow up", llm_provider="anthropic")
 
@@ -343,7 +344,7 @@ def test_think_cap_after_payload_finishes_partial(monkeypatch):
         "agent.harness.get_llm_client",
         lambda _provider, fixture_case=None: _ThinkCapAfterPayloadLLM(),
     )
-    profile = {"state": "NY", "budget_amount": 100, "goal": "cut 30%"}
+    profile = {"state": "NY", "borough": "Queens", "budget_amount": 100, "goal": "cut 30%"}
     session = services.create_session(profile=profile)
     run = run_harness(session, "think cap test", llm_provider="anthropic")
 
@@ -378,7 +379,7 @@ def test_think_cap_without_payload_finishes_partial_no_roadmap(monkeypatch):
         "agent.harness.get_llm_client",
         lambda _provider, fixture_case=None: _ThinkOnlyLLM(),
     )
-    profile = {"state": "NY", "budget_amount": 100, "goal": "cut 30%"}
+    profile = {"state": "NY", "borough": "Queens", "budget_amount": 100, "goal": "cut 30%"}
     session = services.create_session(profile=profile)
     run = run_harness(session, "think only", llm_provider="anthropic")
 
