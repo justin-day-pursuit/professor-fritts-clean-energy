@@ -78,6 +78,7 @@ def fetch_live_solar_production(profile: dict[str, Any], system_kw: float | None
     kw = float(system_kw) if system_kw else default_system_kw(profile)
     payload = run_pvwatts(place["lat"], place["lon"], kw, api_key)
     base_inputs = {"lat": place["lat"], "lon": place["lon"], "system_capacity": kw, **PVWATTS_DEFAULTS}
+    # Two extra PVWatts calls with the same inputs but different losses give the low and high end of the kWh range.
     low = rerun_pvwatts({**base_inputs, "losses": LOSSES_LOW_OUTPUT}, api_key)["outputs"]["ac_annual"]
     high = rerun_pvwatts({**base_inputs, "losses": LOSSES_HIGH_OUTPUT}, api_key)["outputs"]["ac_annual"]
 

@@ -16,6 +16,7 @@ LIVE_TOOLS = ("get_solar_production", "get_utility_rates", "lookup_ny_building_r
 
 
 def main() -> None:
+    """Run the three live tools on case 1 and write each response to the live fixtures folder."""
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "fritts.settings")
     os.environ["TOOL_MODE"] = "live"
     import django

@@ -49,6 +49,8 @@ def fetch_live_utility_rates(profile: dict[str, Any]) -> ToolResult:
     if len(rows) < MONTHS_AVERAGED:
         raise LiveRatesError(f"EIA returned {len(rows)} months of prices; expected {MONTHS_AVERAGED}.")
 
+    # EIA sends prices as text in cents per kWh. The average is the figure for annual savings (summer months
+    # cost more); the lowest and highest month bound the dollar range.
     cents = [float(row["price"]) for row in rows]
     average_cents = sum(cents) / len(cents)
 

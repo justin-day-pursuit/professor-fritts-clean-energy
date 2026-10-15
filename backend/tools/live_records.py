@@ -61,6 +61,7 @@ def fetch_live_building_records(profile: dict[str, Any], address: str | None = N
     headers = {}
     if os.environ.get("SODA_APP_TOKEN", "").strip():
         headers["X-App-Token"] = os.environ["SODA_APP_TOKEN"].strip()
+    # PLUTO stores the lot ID as a decimal string ("4050430011.00000000"), so the ID from the geocoder needs that suffix.
     response = get_with_retry(
         PLUTO_URL,
         params={"$where": f"bbl='{place['bbl']}.00000000'", "$limit": 1},

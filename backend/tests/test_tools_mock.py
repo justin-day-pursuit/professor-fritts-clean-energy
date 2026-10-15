@@ -42,10 +42,12 @@ def test_calculate_c1_c4():
 
 
 def _queens_profile() -> dict:
+    """Dana's intake for eval case 1, read from the saved fixture."""
     return json.loads((FIXTURES_ROOT / CASE / "intake.json").read_text(encoding="utf-8"))
 
 
 class _FakeResponse:
+    """Stands in for an httpx response so the tests never touch the network."""
     def __init__(self, payload: dict, status_code: int = 200):
         self._payload = payload
         self.status_code = status_code
@@ -58,6 +60,7 @@ class _FakeResponse:
 
 
 def _fake_httpx_get(url, params=None, timeout=None):
+    """Fake web call: the NYC geocoder or PVWatts, with PVWatts output that shrinks as losses grow."""
     if "geosearch" in url:
         return _FakeResponse(
             {
@@ -92,12 +95,14 @@ def _fake_httpx_get(url, params=None, timeout=None):
 
 
 def test_live_mode_keeps_fixtures_for_tools_without_a_live_version(monkeypatch):
+    """A tool with no live version still answers from its saved file, marked mock, when live mode is on."""
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
     result = execute_tool("get_hazard_context", {}, session_profile={}, fixture_case=CASE)
     assert result.mock is True
 
 
 def test_live_solar_returns_real_shaped_result(monkeypatch):
+    """Live solar returns real-shaped output: array size from the roof, a kWh range, source and date, and no API key leaked."""
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
     monkeypatch.setenv("NLR_API_KEY", "test-key")
     monkeypatch.setattr("httpx.get", _fake_httpx_get)
@@ -120,6 +125,7 @@ def test_live_solar_returns_real_shaped_result(monkeypatch):
 
 
 def test_live_solar_accepts_an_explicit_system_size(monkeypatch):
+    """If the agent passes a system size in kW, the tool uses it instead of sizing from the roof."""
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
     monkeypatch.setenv("NLR_API_KEY", "test-key")
     monkeypatch.setattr("httpx.get", _fake_httpx_get)
@@ -130,6 +136,7 @@ def test_live_solar_accepts_an_explicit_system_size(monkeypatch):
 
 
 def test_live_solar_needs_an_api_key(monkeypatch):
+    """Live solar stops with a clear message when NLR_API_KEY is missing."""
     from tools.live_solar import LiveSolarError
 
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
@@ -139,6 +146,7 @@ def test_live_solar_needs_an_api_key(monkeypatch):
 
 
 def test_live_solar_needs_a_borough(monkeypatch):
+    """Live solar stops when the borough is blank, so it cannot match a same-named street elsewhere."""
     from tools.live_solar import LiveSolarError
 
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
@@ -150,6 +158,7 @@ def test_live_solar_needs_a_borough(monkeypatch):
 
 
 def _fake_eia_get(url, params=None, timeout=None):
+    """Fake EIA reply: 12 months of prices, 24 cents for the newest six and 20 cents for the older six."""
     months = [f"2026-{m:02d}" for m in range(7, 0, -1)] + [f"2025-{m:02d}" for m in range(12, 7, -1)]
     prices = ["24.00"] * 6 + ["20.00"] * 6
     rows = [
@@ -160,6 +169,7 @@ def _fake_eia_get(url, params=None, timeout=None):
 
 
 def test_live_rates_average_the_last_twelve_months(monkeypatch):
+    """The rate is the 12-month average, with the latest month, low and high price, and the statewide flag."""
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
     monkeypatch.setenv("EIA_API_KEY", "test-key")
     monkeypatch.setattr("httpx.get", _fake_eia_get)
@@ -179,6 +189,7 @@ def test_live_rates_average_the_last_twelve_months(monkeypatch):
 
 
 def test_live_rates_need_an_api_key(monkeypatch):
+    """Live rates stop with a clear message when EIA_API_KEY is missing."""
     from tools.live_rates import LiveRatesError
 
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
@@ -188,6 +199,7 @@ def test_live_rates_need_an_api_key(monkeypatch):
 
 
 def _fake_records_get(url, params=None, timeout=None, headers=None):
+    """Fake geocoder plus fake PLUTO row for the lot at 41-24 Kissena Boulevard."""
     if "geosearch" in url:
         response = _fake_httpx_get(url, params=params, timeout=timeout).json()
         response["features"][0]["properties"]["addendum"] = {"pad": {"bbl": "4050430011"}}
@@ -212,6 +224,7 @@ def _fake_records_get(url, params=None, timeout=None, headers=None):
 
 
 def test_live_records_report_the_city_record_and_flag_disagreements(monkeypatch):
+    """The city record is returned as it is, and the fields that disagree with the intake are listed and flagged."""
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
     monkeypatch.setattr("httpx.get", _fake_records_get)
 
@@ -228,6 +241,7 @@ def test_live_records_report_the_city_record_and_flag_disagreements(monkeypatch)
 
 
 def test_live_records_do_not_flag_a_matching_intake(monkeypatch):
+    """No mismatch flags when the intake agrees with the city record."""
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
     monkeypatch.setattr("httpx.get", _fake_records_get)
     profile = {**_queens_profile(), "floor_area_sqft": 75000, "year_built": 1996}
@@ -239,6 +253,7 @@ def test_live_records_do_not_flag_a_matching_intake(monkeypatch):
 
 
 def test_live_records_need_a_borough(monkeypatch):
+    """Live records stop when the borough is blank."""
     from tools.live_records import LiveRecordsError
 
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
@@ -253,6 +268,7 @@ LIVE_FIXTURE_DIR = FIXTURES_ROOT / CASE / "live"
 
 @pytest.mark.parametrize("tool_name", ["get_solar_production", "get_utility_rates", "lookup_ny_building_records"])
 def test_saved_live_fixtures_have_provenance_and_no_secrets(tool_name):
+    """The saved live responses are marked not mock, carry source, date and version, and hold no API key."""
     path = LIVE_FIXTURE_DIR / f"{tool_name}.json"
     result = ToolResult.model_validate_json(path.read_text(encoding="utf-8"))
     assert result.mock is False
@@ -263,6 +279,7 @@ def test_saved_live_fixtures_have_provenance_and_no_secrets(tool_name):
 
 
 def test_low_confidence_geocode_is_flagged_as_approximate(monkeypatch):
+    """A low-confidence address match is flagged so nobody trusts the wrong building."""
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
     monkeypatch.setenv("NLR_API_KEY", "test-key")
 
@@ -278,6 +295,7 @@ def test_low_confidence_geocode_is_flagged_as_approximate(monkeypatch):
 
 
 def test_web_requests_retry_after_a_network_error(monkeypatch):
+    """A request that fails twice and then works succeeds on the third try."""
     import httpx
 
     from tools import web
@@ -297,6 +315,7 @@ def test_web_requests_retry_after_a_network_error(monkeypatch):
 
 
 def test_web_requests_give_up_after_the_retries(monkeypatch):
+    """A service that stays down raises the error after the retries run out."""
     import httpx
 
     from tools import web
@@ -330,6 +349,7 @@ def _case1_ranges(profile: dict) -> dict:
 
 
 def test_case1_live_gives_kwh_and_dollar_ranges_with_sources(monkeypatch):
+    """Case 1 live gives a kWh range and a dollar range (through calculation C4), each with a source or a calculation ID."""
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
     monkeypatch.setenv("NLR_API_KEY", "test-key")
     monkeypatch.setenv("EIA_API_KEY", "test-key")
@@ -350,6 +370,7 @@ def test_case1_live_gives_kwh_and_dollar_ranges_with_sources(monkeypatch):
 
 @pytest.mark.skipif(os.environ.get("RUN_LIVE_TESTS") != "1", reason="set RUN_LIVE_TESTS=1 to call the real APIs")
 def test_pvwatts_rerun_from_logged_inputs_matches_within_one_percent():
+    """Real network: rerunning PVWatts from the saved inputs lands within 1% of the saved answer."""
     from tools.live_solar import rerun_pvwatts
 
     saved = ToolResult.model_validate_json((LIVE_FIXTURE_DIR / "get_solar_production.json").read_text(encoding="utf-8"))
@@ -359,6 +380,7 @@ def test_pvwatts_rerun_from_logged_inputs_matches_within_one_percent():
 
 @pytest.mark.skipif(os.environ.get("RUN_LIVE_TESTS") != "1", reason="set RUN_LIVE_TESTS=1 to call the real APIs")
 def test_live_records_against_real_nyc_open_data(monkeypatch):
+    """Real network: the Queens address returns a real tax lot with a floor area."""
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
     result = execute_tool("lookup_ny_building_records", {}, session_profile=_queens_profile(), fixture_case=CASE)
     assert result.data["bbl"]
@@ -367,6 +389,7 @@ def test_live_records_against_real_nyc_open_data(monkeypatch):
 
 @pytest.mark.skipif(os.environ.get("RUN_LIVE_TESTS") != "1", reason="set RUN_LIVE_TESTS=1 to call the real APIs")
 def test_live_rates_against_real_eia(monkeypatch):
+    """Real network: the New York price from EIA is in a sane range."""
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
     result = execute_tool("get_utility_rates", {}, session_profile=_queens_profile(), fixture_case=CASE)
     assert 0.10 < result.data["avg_energy_charge_usd_per_kwh"] < 0.50
@@ -374,6 +397,7 @@ def test_live_rates_against_real_eia(monkeypatch):
 
 @pytest.mark.skipif(os.environ.get("RUN_LIVE_TESTS") != "1", reason="set RUN_LIVE_TESTS=1 to call the real APIs")
 def test_live_solar_against_real_apis(monkeypatch):
+    """Real network: 50 kW at the Queens address makes a sane number of kWh."""
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
     result = execute_tool("get_solar_production", {}, session_profile=_queens_profile(), fixture_case=CASE)
     assert 50000 < result.data["annual_ac_kwh"] < 75000
@@ -381,6 +405,7 @@ def test_live_solar_against_real_apis(monkeypatch):
 
 @pytest.mark.skipif(os.environ.get("RUN_LIVE_TESTS") != "1", reason="set RUN_LIVE_TESTS=1 to call the real APIs")
 def test_case1_live_ranges_against_real_apis(monkeypatch):
+    """Real network: the Case 1 dollar range is ordered low to high and in a sane range."""
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
     got = _case1_ranges(_queens_profile())
     assert 5_000 < got["dollars_low"].data["value"] < got["dollars_high"].data["value"] < 30_000
