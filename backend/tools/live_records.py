@@ -8,6 +8,7 @@ lists where that disagrees with the intake; it never overwrites what the user ty
 from __future__ import annotations
 
 import os
+import re
 from datetime import datetime, timezone
 from typing import Any
 
@@ -32,6 +33,49 @@ def _number(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _street_name(address: str | None) -> str:
+    """
+    Street words after the house number, with short suffixes spelled out.
+
+    "41-17 Main Street" and "41-24 Kissena Boulevard" can then be compared even when
+    one of them is another frontage of the same tax lot.
+    """
+    if not address:
+        return ""
+    suffix = {
+        "ST": "STREET",
+        "AVE": "AVENUE",
+        "BLVD": "BOULEVARD",
+        "RD": "ROAD",
+        "DR": "DRIVE",
+        "PL": "PLACE",
+        "LN": "LANE",
+        "CT": "COURT",
+        "PKWY": "PARKWAY",
+        "TER": "TERRACE",
+    }
+    stop = {"NY", "USA", "NEW", "YORK", "FLUSHING", "QUEENS", "BROOKLYN", "MANHATTAN", "BRONX", "STATEN", "ISLAND"}
+    parts = re.sub(r"[^A-Za-z0-9\- ]", " ", address).upper().split()
+    if parts and any(ch.isdigit() for ch in parts[0]):
+        parts = parts[1:]
+    name: list[str] = []
+    for part in parts:
+        if part in stop:
+            break
+        name.append(suffix.get(part, part))
+        if name[-1] in set(suffix.values()):
+            break
+    return " ".join(name)
+
+
+def _lot_matches_intake_floor(profile: dict[str, Any], lot_area: float | None) -> bool:
+    """True when the land area is within 10% of the floor area the user typed."""
+    intake_area = _number(profile.get("floor_area_sqft"))
+    if not intake_area or not lot_area:
+        return False
+    return abs(lot_area - intake_area) / intake_area <= AREA_MISMATCH_RATIO
 
 
 def _compare_with_intake(profile: dict[str, Any], city_area: float | None, city_year: int | None) -> list[dict[str, Any]]:
@@ -77,12 +121,18 @@ def fetch_live_building_records(profile: dict[str, Any], address: str | None = N
     row = rows[0]
 
     city_area = _number(row.get("bldgarea"))
+    lot_area = _number(row.get("lotarea"))
     city_year = int(_number(row.get("yearbuilt")) or 0) or None  # PLUTO uses 0 for "unknown"
     differences = _compare_with_intake(profile, city_area, city_year)
 
     flags = [f"intake_mismatch:{d['field']}" for d in differences]
     if is_approximate(place):
         flags.append("address_match_approximate")
+    # Confidence 0.8 can still point at a lot whose official street is not the one we asked for.
+    asked_street = _street_name(address)
+    recorded_street = _street_name(str(row.get("address") or ""))
+    if asked_street and recorded_street and asked_street != recorded_street:
+        flags.append("address_street_mismatch")
 
     return ToolResult(
         tool="lookup_ny_building_records",
@@ -92,7 +142,8 @@ def fetch_live_building_records(profile: dict[str, Any], address: str | None = N
             "bbl": place["bbl"],
             "zipcode": row.get("zipcode"),
             "gross_floor_area_sqft": city_area,
-            "lot_area_sqft": _number(row.get("lotarea")),
+            "lot_area_sqft": lot_area,
+            "lot_matches_intake_floor": _lot_matches_intake_floor(profile, lot_area),
             "num_floors": _number(row.get("numfloors")),
             "year_built": city_year,
             "building_class": row.get("bldgclass"),

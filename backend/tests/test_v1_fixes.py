@@ -21,8 +21,10 @@ from agent.harness import load_system_prompt, run_harness
 from agent.llm import anthropic_client
 from agent.llm.anthropic_client import AnthropicLLM
 from agent.llm.base import LLMCallError, LLMClient, LLMStep
+from agent.notes import AgentNotes
 from core import services
 from core.models import Run
+from tools.base import ToolResult
 from tools.cache import is_stale_for_tool
 from tools.calculate import CalculateInput, run_calculate
 from tools.registry import TOOL_SPECS
@@ -185,7 +187,13 @@ def test_system_prompt_covers_live_data_ranges_and_flags():
     prompt = load_system_prompt()
     assert "one tool at a time" in prompt.lower()
     assert "annual_ac_kwh_low" in prompt
-    for flag in ("intake_mismatch", "statewide_average_rate", "mock_data_in_live_run", "stale_data"):
+    for flag in (
+        "intake_mismatch",
+        "statewide_average_rate",
+        "mock_data_in_live_run",
+        "stale_data",
+        "address_street_mismatch",
+    ):
         assert flag in prompt
 
 
@@ -291,3 +299,170 @@ def test_mock_results_are_flagged_in_a_live_run_only(monkeypatch):
     run, _ = _run(monkeypatch, [step], mode="mock")
     mocked = [e for e in run.events.all() if e.kind == "tool_result"][0]
     assert "mock_data_in_live_run" not in mocked.payload["flags"]
+
+
+# ---------------------------------------------------------------- assumptions register fixes
+
+
+def test_notes_auto_registers_tool_and_calculation_assumptions():
+    """
+    ISSUE:
+    In live Anthropic runs, Check 4 rejected claims with:
+    "Claim ASSUMPTION 'A1' not in notes assumptions register"
+    because AgentNotes only populated assumptions from calculate calls with explicit assumption_ids.
+    
+    FIX:
+    AgentNotes now auto-populates assumptions from tools:
+    - get_solar_production (range_assumption -> A1)
+    - calculate C1 (setback_factor -> A2)
+    - calculate C2 (sqft_per_kw -> A3)
+    - optimize_solar_storage (stand-in storage sizing -> A4)
+    - mock incentive and hazard tools (A5, A6)
+    """
+    notes = AgentNotes()
+
+    # 1. get_solar_production registers A1 from range_assumption
+    solar_res = ToolResult(
+        tool="get_solar_production",
+        data={"annual_ac_kwh": 60000, "range_assumption": "ASSUMPTION: system losses 10%-18%"},
+        source_url="https://developer.nlr.gov/docs/solar/pvwatts/v8/",
+        retrieved_at="2026-10-15T00:00:00Z",
+        dataset_version="pvwatts-v8",
+        mock=False,
+    )
+    notes.record_tool_result("get_solar_production", solar_res)
+    assert "A1" in notes.assumptions
+    assert "system losses" in notes.assumptions["A1"]
+
+    # 2. calculate C1 and C2 auto-populate A2 and A3
+    c1_res = run_calculate(CalculateInput(formula="C1", inputs={"roof_area_sqft": 6000}))
+    notes.record_tool_result("calculate", c1_res)
+    assert "A2" in notes.assumptions
+    assert "0.55" in notes.assumptions["A2"]
+
+    c2_res = run_calculate(CalculateInput(formula="C2", inputs={"usable_roof_sqft": 3300}))
+    notes.record_tool_result("calculate", c2_res)
+    assert "A3" in notes.assumptions
+    assert "66" in notes.assumptions["A3"]
+
+    # 3. optimize_solar_storage registers A4
+    reopt_res = ToolResult(
+        tool="optimize_solar_storage",
+        data={"notes": "Sized for 8 hours cooling center", "battery_kw": 120},
+        source_url="https://example.test/fictional/reopt",
+        retrieved_at="2026-10-15T00:00:00Z",
+        dataset_version="reopt-v0",
+        mock=True,
+    )
+    notes.record_tool_result("optimize_solar_storage", reopt_res)
+    assert "A4" in notes.assumptions
+
+    # 4. Working notes summary presents them to the LLM context
+    summary = notes.summarize_for_llm()
+    assert "Assumptions: A1:" in summary
+    assert "A2:" in summary
+    assert "A3:" in summary
+    assert "A4:" in summary
+
+
+def test_check4_passes_with_notes_auto_registered_assumptions():
+    """Check 4 passes on an ASSUMPTION claim citing A1 from notes.assumptions."""
+    from agent.checks import run_check4
+    from agent.claims import Claim, RoadmapPayload, RoadmapSection
+
+    notes = AgentNotes()
+    solar_res = ToolResult(
+        tool="get_solar_production",
+        data={"annual_ac_kwh": 60000, "range_assumption": "ASSUMPTION: system losses 10%-18%"},
+        source_url="https://developer.nlr.gov/docs/solar/pvwatts/v8/",
+        retrieved_at="2026-10-15T00:00:00Z",
+        dataset_version="pvwatts-v8",
+        mock=False,
+    )
+    notes.record_tool_result("get_solar_production", solar_res)
+
+    payload = RoadmapPayload(
+        sections=[
+            RoadmapSection(
+                section_id="3",
+                title="Assumptions",
+                claims=[
+                    Claim(
+                        text="Assumed loss band: system losses 10%-18%",
+                        label="ASSUMPTION",
+                        confidence="medium",
+                        assumption_id="A1",
+                    )
+                ],
+            ),
+            RoadmapSection(
+                section_id="10",
+                title="Referrals",
+                claims=[
+                    Claim(
+                        text=(
+                            "Mandatory referrals: professional engineer structural PE/RA analysis, "
+                            "roof survey and condition, licensed electrician, FDNY rooftop access, "
+                            "and Con Edison utility interconnection."
+                        ),
+                        label="RECOMMENDATION",
+                        confidence="high",
+                        source_url="session://profile",
+                    )
+                ],
+            ),
+        ]
+    )
+
+    check_res = run_check4(payload, assumptions_register=notes.assumptions)
+    assert check_res["passed"] is True, check_res.get("message")
+
+
+def test_live_storage_does_not_become_an_assumption():
+    """A real storage result is data, not a sample assumption. Only mock storage fills A4."""
+    notes = AgentNotes()
+    live = ToolResult(
+        tool="optimize_solar_storage",
+        data={"notes": "Live optimizer result", "battery_kw": 40},
+        source_url="https://example.test/live-reopt",
+        retrieved_at="2026-10-15T00:00:00Z",
+        dataset_version="reopt-live",
+        mock=False,
+    )
+    notes.record_tool_result("optimize_solar_storage", live)
+    assert "A4" not in notes.assumptions
+
+
+def test_repeated_calculations_stay_in_the_notes_summary():
+    """Three C4 calls (low, high, central) all remain visible. The last one must not erase the range."""
+    notes = AgentNotes()
+    for kwh, rate in ((58976, 0.1981), (64809, 0.2418), (61894, 0.222)):
+        result = run_calculate(
+            CalculateInput(formula="C4", inputs={"annual_solar_kwh": kwh, "avg_rate_usd_per_kwh": rate})
+        )
+        notes.record_tool_result("calculate", result)
+
+    assert len(notes.calculation_runs["C4"]) == 3
+    summary = notes.summarize_for_llm()
+    assert "11683" in summary
+    assert "15670" in summary
+    assert "13740" in summary
+
+
+def test_mock_fixtures_do_not_share_the_solar_source_url():
+    """Incentives, hazards, storage, rates, and building records each cite their own sample source."""
+    from mocks.mock_mode import load_fixture
+
+    solar = load_fixture(CASE, "get_solar_production").source_url
+    assert "pvwatts" in solar
+    others = [
+        "optimize_solar_storage",
+        "search_ny_incentives_and_rules",
+        "get_hazard_context",
+        "get_utility_rates",
+        "lookup_ny_building_records",
+    ]
+    urls = [load_fixture(CASE, name).source_url for name in others]
+    assert solar not in urls
+    assert len(set(urls)) == len(urls)
+    assert all("pvwatts" not in url for url in urls)

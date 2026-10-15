@@ -73,7 +73,11 @@ TOOL_SPECS: dict[str, ToolSpec] = {
     ),
     "get_solar_production": ToolSpec(
         name="get_solar_production",
-        description="Estimate rooftop solar production (live PVWatts in live mode, saved PVWatts in mock mode).",
+        description=(
+            "Estimate rooftop solar production (live PVWatts in live mode, saved PVWatts in mock mode). "
+            "Pass system_kw from C2 when you have it. If you omit it, the tool sizes the array "
+            "with the same defaults as C1 and C2 (setback 0.55, 66 sq ft per kW)."
+        ),
         input_model=SolarProductionInput,
         freshness_kind="solar_production",
         group=2,
