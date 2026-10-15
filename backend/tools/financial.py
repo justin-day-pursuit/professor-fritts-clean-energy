@@ -103,7 +103,8 @@ def model_package(package: Package, site: Site) -> dict:
     credit = [0.0, 0.0]
     if site.federal_credit_open:
         credit = [ITC_RATE * (solar_cost[i] + battery_cost[i]) for i in (0, 1)]
-    # Best case net cost = cheapest cost minus the biggest credit; worst case is the reverse.
+    # The credit grows with the solar and battery spend, so the low-cost case pairs with the low credit
+    # and the high-cost case with the high credit. Low net is still the lowest net cost, high the highest.
     net = [upfront[0] - credit[0], upfront[1] - credit[1]]
 
     # --- energy: how many kWh per year the package removes from the grid bill ---

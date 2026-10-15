@@ -2,9 +2,8 @@
 Eval case 2 (edge case), NYC version: a fictional Bronx elementary school with no bills, an unknown roof
 age, a budget with no year or type, and a saved incentive record that disagrees with the live page.
 
-These run the scripted model on saved fixtures, so they need no network and no API key. The stale-record
-refresh itself (saving the new "closed" version to the cache) arrives with v4; here we check that the
-conflict is detected, shown, and kept out of net cost.
+These run the scripted model on saved fixtures, so they need no network and no API key. The incentives
+tool refreshes a cache row older than 7 days and saves the live "closed" status with a page hash.
 """
 
 from __future__ import annotations
@@ -35,6 +34,18 @@ def scripted_env(monkeypatch):
 @pytest.fixture
 def run_and_payload():
     """Run case 2 end to end and return the finished run plus its roadmap."""
+    from tools.cache import get_reference_cache
+
+    cache = get_reference_cache()
+    record_id = "incentive:nyserda-school-solar"
+    # Seed the 120-day-old 'open' record if not present, as described in case 2 spec
+    if not cache.versions(record_id):
+        cache.put(
+            record_id,
+            {"name": "NYSERDA school solar program (fictional stand-in)", "status": "open"},
+            source_url="https://example.test/fictional/case2/incentives",
+            retrieved_at="2026-06-03T12:00:00Z",
+        )
     profile, question = load_case(CASE)
     session = services.create_session(profile=profile, fixture_case=CASE)
     services.add_message(session, role="user", content=question)
@@ -89,3 +100,63 @@ def test_case2_is_listed_for_the_dev_landing_page(api_client):
     """The landing page lists the new case so it can be run from the browser."""
     ids = [item["id"] for item in api_client.get("/api/dev/fixtures").json()["fixtures"]]
     assert CASE in ids
+
+
+def test_case2_upsert_cache_called_for_stale_incentive(run_and_payload):
+    """The stale open record is refreshed: closed is a new version, and the old open row remains."""
+    from tools.cache import get_reference_cache
+    from tools.ny_rules_rates import quote_page_hash
+
+    run, _ = run_and_payload
+    events = list(run.events.order_by("seq"))
+    upsert_calls = [
+        e for e in events if e.kind == "tool_call" and e.payload.get("tool") == "upsert_reference_cache"
+    ]
+    assert len(upsert_calls) >= 1
+    upsert_input = upsert_calls[0].payload.get("input", {})
+    assert upsert_input.get("payload", {}).get("status") == "closed"
+
+    cache = get_reference_cache()
+    record_id = "incentive:nyserda-school-solar"
+    latest = cache.get_latest(record_id)
+    assert latest is not None
+    assert latest["data"]["status"] == "closed"
+    assert latest["page_hash"] == quote_page_hash("This program is closed to new applications.")
+    assert any(version["data"].get("status") == "open" for version in cache.versions(record_id))
+
+
+def test_case2_cache_rollback_restores_previous():
+    """v4 goalpost: rolling back one cache record restores the previous version."""
+    from tools.cache import get_reference_cache
+
+    cache = get_reference_cache()
+    record_id = "incentive:nyserda-school-solar-rollback"
+    cache.put(
+        record_id,
+        {"name": "NYSERDA school solar program (fictional stand-in)", "status": "open"},
+        source_url="https://example.test/fictional/case2/incentives",
+        retrieved_at="2026-06-03T12:00:00Z",
+    )
+    cache.put(
+        record_id,
+        {"name": "NYSERDA school solar program (fictional stand-in)", "status": "closed"},
+        source_url="https://example.test/fictional/case2/incentives",
+        retrieved_at="2026-10-01T12:00:00Z",
+    )
+    assert cache.get(record_id)["status"] == "closed"
+    rolled = cache.rollback(record_id)
+    assert rolled is not None
+    assert rolled["data"]["status"] == "open"
+    assert cache.get(record_id)["status"] == "open"
+
+
+def test_case2_nothing_from_user_or_model_saved(run_and_payload):
+    """v4 goalpost: only approved-source data ends up in the cache."""
+    from core.models import CacheRecord
+    from tools.approved_sources import is_approved_source
+
+    for record in CacheRecord.objects.all():
+        assert is_approved_source(record.source_url), (
+            f"Cache record {record.record_id} has unapproved source: {record.source_url}"
+        )
+

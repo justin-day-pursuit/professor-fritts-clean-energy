@@ -27,6 +27,7 @@ class AgentNotes(BaseModel):
     assumptions: dict[str, str] = Field(default_factory=dict)
     sources: list[dict[str, str]] = Field(default_factory=list)
     flags: list[str] = Field(default_factory=list)
+    cache_conflicts: list[dict[str, Any]] = Field(default_factory=list)
     tool_calls: list[dict[str, Any]] = Field(default_factory=list)
 
     def record_tool_result(self, tool_name: str, result: ToolResult) -> None:
@@ -106,6 +107,15 @@ class AgentNotes(BaseModel):
                 "A5",
                 "Incentive programs and rules from mock sample fixture, pending live verification",
             )
+        if tool_name == "search_ny_incentives_and_rules":
+            for program in result.data.get("programs", []):
+                if program.get("conflict"):
+                    self.cache_conflicts.append({
+                        "program": program.get("name"),
+                        "cached_status": program.get("cached_status"),
+                        "cached_age_days": program.get("cached_age_days"),
+                        "live_status": program.get("live_status"),
+                    })
 
         if tool_name == "get_hazard_context" and result.mock:
             self.assumptions.setdefault(
@@ -135,6 +145,12 @@ class AgentNotes(BaseModel):
             lines.append("Assumptions: " + "; ".join(f"{k}: {v}" for k, v in self.assumptions.items()))
         if self.flags:
             lines.append("Flags: " + "; ".join(self.flags))
+        if self.cache_conflicts:
+            conflicts = "; ".join(
+                f"{c['program']}: cached={c['cached_status']} ({c['cached_age_days']}d old) vs live={c['live_status']}"
+                for c in self.cache_conflicts
+            )
+            lines.append("Cache conflicts: " + conflicts)
         if self.tool_calls:
             lines.append(f"Tools used so far ({len(self.tool_calls)}): " + ", ".join(t["tool"] for t in self.tool_calls))
         return "\n".join(lines)

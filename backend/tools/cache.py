@@ -143,12 +143,203 @@ class JsonFileReferenceCache(ReferenceCache):
         return list(self._data.get(record_id, []))
 
 
+def _payload_amount(payload: dict[str, Any]) -> float | None:
+    """Dollar figure on a cache row, when the payload has one."""
+    for key in ("amount", "incentive_amount"):
+        value = payload.get(key)
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            continue
+        return float(value)
+    return None
+
+
+def _payload_deadline(payload: dict[str, Any]) -> str:
+    """ISO date string for a program deadline, or empty when the row has none."""
+    value = payload.get("deadline")
+    if isinstance(value, str):
+        return value.strip()
+    return ""
+
+
+class DjangoCacheBackend(ReferenceCache):
+    """
+    SQLite-backed cache using the CacheRecord Django model (v4+).
+
+    Append-only versioned writes. Rollback soft-deletes the latest version.
+    Safe-change rule: cautious changes auto-save, favorable changes save as pending.
+    """
+
+    def get(self, record_id: str) -> dict[str, Any] | None:
+        """Return the latest non-rolled-back, non-pending version's data."""
+        from core.models import CacheRecord
+
+        row = (
+            CacheRecord.objects.filter(record_id=record_id, rolled_back=False, pending=False)
+            .order_by("-version")
+            .first()
+        )
+        return row.data if row else None
+
+    def get_latest(self, record_id: str, *, include_pending: bool = False) -> dict[str, Any] | None:
+        """Return the latest version with full metadata, optionally including pending."""
+        from core.models import CacheRecord
+
+        qs = CacheRecord.objects.filter(record_id=record_id, rolled_back=False)
+        if not include_pending:
+            qs = qs.filter(pending=False)
+        row = qs.order_by("-version").first()
+        if not row:
+            return None
+        return {
+            "record_id": row.record_id,
+            "version": row.version,
+            "source_url": row.source_url,
+            "retrieved_at": row.retrieved_at.isoformat(),
+            "data": row.data,
+            "page_hash": row.page_hash,
+            "changed": row.changed,
+            "pending": row.pending,
+        }
+
+    def put(
+        self,
+        record_id: str,
+        payload: dict[str, Any],
+        *,
+        source_url: str = "",
+        retrieved_at: str = "",
+        page_hash: str = "",
+        freshness_limit_days: int = 7,
+    ) -> dict[str, Any]:
+        """
+        Append a new version. Apply the safe-change rule:
+        - Cautious changes (e.g. open→closed) auto-save.
+        - Favorable changes (e.g. closed→open) save as pending.
+        Returns {record_id, version, changed, pending, previous_status}.
+        """
+        from core.models import CacheRecord
+
+        prev = (
+            CacheRecord.objects.filter(record_id=record_id)
+            .order_by("-version")
+            .first()
+        )
+        prev_version = prev.version if prev else 0
+        prev_active = (
+            CacheRecord.objects.filter(record_id=record_id, rolled_back=False)
+            .order_by("-version")
+            .first()
+        )
+        prev_payload = prev_active.data if prev_active else {}
+        prev_status = prev_payload.get("status", "") if prev_payload else ""
+
+        changed = prev is None or prev.data != payload
+        pending = self._is_favorable_change(prev_payload, payload) if changed else False
+
+        dt = parse_iso_datetime(retrieved_at) or datetime.now(timezone.utc)
+        row = CacheRecord.objects.create(
+            record_id=record_id,
+            version=prev_version + 1,
+            source_url=source_url,
+            retrieved_at=dt,
+            freshness_limit_days=freshness_limit_days,
+            data=payload,
+            page_hash=page_hash,
+            previous_status=prev_status,
+            changed=changed,
+            pending=pending,
+        )
+        return {
+            "record_id": record_id,
+            "version": row.version,
+            "changed": changed,
+            "pending": pending,
+            "previous_status": prev_status,
+        }
+
+    def rollback(self, record_id: str) -> dict[str, Any] | None:
+        """
+        Soft-delete the latest version and return the restored previous version.
+        Returns None if no versions remain after rollback.
+        """
+        from core.models import CacheRecord
+
+        latest = (
+            CacheRecord.objects.filter(record_id=record_id, rolled_back=False)
+            .order_by("-version")
+            .first()
+        )
+        if not latest:
+            return None
+        latest.rolled_back = True
+        latest.save(update_fields=["rolled_back"])
+        return self.get_latest(record_id)
+
+    def confirm_pending(self, record_id: str, version: int) -> bool:
+        """Confirm a pending record (human approval of a favorable change)."""
+        from core.models import CacheRecord
+
+        updated = CacheRecord.objects.filter(
+            record_id=record_id, version=version, pending=True
+        ).update(pending=False)
+        return updated > 0
+
+    def versions(self, record_id: str) -> list[dict[str, Any]]:
+        """List all stored versions including rolled-back ones, for debugging."""
+        from core.models import CacheRecord
+
+        rows = CacheRecord.objects.filter(record_id=record_id).order_by("version")
+        return [
+            {
+                "version": r.version,
+                "data": r.data,
+                "source_url": r.source_url,
+                "retrieved_at": r.retrieved_at.isoformat(),
+                "page_hash": r.page_hash,
+                "changed": r.changed,
+                "pending": r.pending,
+                "rolled_back": r.rolled_back,
+            }
+            for r in rows
+        ]
+
+    @staticmethod
+    def _is_favorable_change(old_payload: dict[str, Any], new_payload: dict[str, Any]) -> bool:
+        """
+        A change that makes a plan more cautious saves immediately.
+        A change that makes a plan more favorable waits for a person.
+
+        Cautious: open to closed, a smaller amount, or an earlier deadline.
+        Favorable: closed to open, a larger amount, or a later deadline.
+        Status wins over amount and deadline, so closing a program still saves
+        even if the dollar figure went up. The first write has no old row and saves.
+        """
+        old_status = str(old_payload.get("status") or "").lower().strip()
+        new_status = str(new_payload.get("status") or "").lower().strip()
+        if old_status and new_status:
+            if new_status in ("closed", "expired", "suspended"):
+                return False
+            if old_status in ("closed", "expired", "suspended") and new_status in ("open", "active"):
+                return True
+
+        old_amount = _payload_amount(old_payload)
+        new_amount = _payload_amount(new_payload)
+        if old_amount is not None and new_amount is not None and new_amount != old_amount:
+            return new_amount > old_amount
+
+        old_deadline = _payload_deadline(old_payload)
+        new_deadline = _payload_deadline(new_payload)
+        if old_deadline and new_deadline and old_deadline != new_deadline:
+            return new_deadline > old_deadline
+        return False
+
+
 _default_cache: ReferenceCache | None = None
 
 
 def get_reference_cache() -> ReferenceCache:
-    """Return the process-wide cache (JSON file in dev, same interface in tests)."""
+    """Return the process-wide cache (Django-backed in v4+, JSON file as fallback)."""
     global _default_cache
     if _default_cache is None:
-        _default_cache = JsonFileReferenceCache()
+        _default_cache = DjangoCacheBackend()
     return _default_cache

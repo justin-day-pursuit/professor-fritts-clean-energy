@@ -219,3 +219,32 @@ def test_case1_compares_three_scenarios_end_to_end(monkeypatch):
     # Every number carries a label, a confidence and an id.
     payload = RoadmapPayload.model_validate(run.output["roadmap"])
     assert check_coverage(payload).complete
+
+
+# --- review fixes (PR #12 comments) -----------------------------------------------------------
+
+
+def test_scenario_c_without_a_battery_or_critical_load_is_rejected():
+    """C must not silently report 0 outage hours: a missing battery or critical load is an error."""
+    with pytest.raises(ValueError, match="optimize_solar_storage"):
+        run_financial_model(_inputs("C", critical_load_kw=0))
+    with pytest.raises(ValueError, match="optimize_solar_storage"):
+        run_financial_model(_inputs("C", battery_kwh=0))
+    # A and B never need a battery, so a zero critical load is fine for them.
+    assert _run("A", critical_load_kw=0)["outage_hours"] == [0.0, 0.0]
+
+
+def test_prompt_lets_the_model_cite_both_calculate_and_scenario_ids():
+    """The labels rule must not forbid the F-A/F-B/F-C ids the scenarios section requires."""
+    from agent.harness import load_system_prompt
+
+    text = load_system_prompt()
+    rule = text.split("Only cite a `source_url`")[1].split("\n")[0]
+    assert "run_financial_model" in rule and "F-A" in rule
+
+
+def test_case2_has_a_storage_sample_so_a_live_model_run_does_not_fail():
+    """Case 2 once had no optimize_solar_storage fixture, so a non-scripted mock run broke on that call."""
+    result = execute_tool("optimize_solar_storage", {}, session_profile={}, fixture_case="case2_bronx_school")
+    assert result.mock is True
+    assert result.data["battery_kwh"] > 0 and result.data["critical_load_kw"] > 0

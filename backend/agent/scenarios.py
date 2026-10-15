@@ -82,6 +82,13 @@ def run_financial_model(inp: FinancialModelInput) -> ToolResult:
         raise ValueError("annual_solar_kwh_low must not be above annual_solar_kwh_high.")
     if inp.price_low_usd_per_kwh > inp.price_high_usd_per_kwh:
         raise ValueError("price_low_usd_per_kwh must not be above price_high_usd_per_kwh.")
+    # Scenario C promises backup power. A missing battery or critical load would quietly report zero
+    # outage hours, so refuse the input and tell the agent what to fetch instead.
+    if sid == "C" and (inp.battery_kwh <= 0 or inp.critical_load_kw <= 0):
+        raise ValueError(
+            "Scenario C needs battery_kwh and critical_load_kw above 0. "
+            "Call optimize_solar_storage first and pass its battery_kwh and critical_load_kw."
+        )
     package = build_package(sid, inp)
     site = Site(
         floor_area_sqft=inp.floor_area_sqft,

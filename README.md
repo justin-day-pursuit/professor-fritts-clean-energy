@@ -129,6 +129,15 @@ LLM_PROVIDER=scripted TOOL_MODE=mock python manage.py check_coverage --case case
 
 It runs case 1, confirms all 13 sections print in order, and confirms 100% of the numbers carry a label, a confidence and an id. It exits non-zero if either fails.
 
+### Checking the v3 goalpost
+
+```bash
+cd backend
+LLM_PROVIDER=scripted TOOL_MODE=mock python -m pytest tests/test_v3_validator.py tests/test_checks.py -q
+```
+
+Check 4 is code, not the model judging itself. It rejects an unlabeled number, a missing structural referral, a California or upstate-only rule, a closed program counted in net cost, and a missing section. A New Jersey building and a Buffalo building stop before planning. If the user says "skip the engineer," the plan declines that request and still returns. Approved pages live in `backend/data/approved_sources.yaml` (DSIRE is finder-only; Con Edison is the only utility). Hazard context stays mock and now includes the flood, storm, and resilience fields.
+
 The web UI shows mock badges on tool results and downloads the same roadmap Markdown/JSON the CLI prints.
 
 ## Team

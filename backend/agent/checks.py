@@ -10,10 +10,11 @@ import re
 from typing import Any
 
 from agent.claims import (
-    MANDATORY_REFERRAL_KEYWORDS,
     PROMISE_WORDS,
+    SECTION_TITLES,
     Claim,
     RoadmapPayload,
+    RoadmapSection,
 )
 from agent.limits import RunLimits, tool_call_limit, tool_retry_limit
 from tools.base import ToolResult
@@ -215,6 +216,205 @@ def run_check3(result: ToolResult, *, freshness_kind: str = "default") -> CheckR
     )
 
 
+# A digit in the claim text, or a value range, counts as a number that needs a label,
+# a confidence, and an id. Dates and dollar amounts count too.
+_HAS_DIGIT = re.compile(r"\d")
+
+# Rules and rebates that do not apply to an NYC building. New York State programs
+# (NYSERDA, NY-Sun) and federal programs are intentionally not in this list.
+_NON_NYC_RULE = re.compile(
+    r"\b(california|calif\.|ca rebate|sgip|upstate(?:-only)?|erie county|buffalo|new jersey|nj rebate)\b",
+    re.I,
+)
+
+# The claim is naming the outside rule in order to reject it, not to apply it.
+_RULE_EXCLUDED = re.compile(
+    r"out of scope|does not apply|do not apply|doesn't apply|not applicable|"
+    r"excluded|leave out|left out|not included|cannot use|can't use|do not use|don't use",
+    re.I,
+)
+
+_CLOSED_OR_UNCERTAIN = re.compile(r"\b(closed|uncertain)\b", re.I)
+_PROGRAM_WORD = re.compile(r"\b(program|incentive|rebate|credit)\b", re.I)
+_NET_COST = re.compile(r"net cost", re.I)
+_LEFT_OUT_OF_NET = re.compile(
+    r"left out|leave out|excluded|listed separately|not included|not counted|"
+    r"do not count|not part of",
+    re.I,
+)
+
+# The user is asking the agent to skip a structural review or to certify the roof.
+_SKIP_ENGINEER = re.compile(
+    r"skip the engineer|skip the structural|skip (?:a |the )?professional review|"
+    r"don'?t need (?:an |a )?engineer|do not need (?:an |a )?engineer|"
+    r"without (?:an |a )?engineer|confirm the roof can hold|roof can hold the panels",
+    re.I,
+)
+_CERTIFIES_ROOF = re.compile(
+    r"roof can hold|roof can carry|confirmed the roof|"
+    r"structure (?:is|can) (?:adequate|sound|carry)|"
+    r"panels? (?:will|can) be (?:supported|carried)",
+    re.I,
+)
+_DECLINES_SKIP = re.compile(
+    r"\bdeclin\w*|cannot skip|can'?t skip|will not confirm|cannot confirm|"
+    r"must not skip|do not certify|cannot certify",
+    re.I,
+)
+
+_LABELS = {"FACT", "ESTIMATE", "ASSUMPTION", "RECOMMENDATION"}
+
+
+def _claim_has_number(text: str, value_low: Any) -> bool:
+    """True when the claim states a figure, either in its range or in its words."""
+    return value_low is not None or bool(_HAS_DIGIT.search(text or ""))
+
+
+def _claim_has_id(source_url: Any, calc_id: Any, assumption_id: Any) -> bool:
+    """True when the claim points at a source, a calculation, or an assumption id."""
+    return bool(source_url or calc_id or assumption_id)
+
+
+def _non_nyc_rule_issues(section_id: str, text: str) -> list[str]:
+    """
+    Flag a claim that applies a rule from outside NYC.
+
+    A sentence that says the outside rule does not apply is allowed. NYSERDA and
+    federal programs do not match the pattern, so they stay in the plan.
+    """
+    if _NON_NYC_RULE.search(text) and not _RULE_EXCLUDED.search(text):
+        return [f"Non-NYC rule in section {section_id}: {text[:80]}"]
+    return []
+
+
+def _closed_in_net_cost_issue(section_id: str, text: str) -> str | None:
+    """
+    Flag a section 7 claim that counts a closed or uncertain program in net cost.
+
+    Saying the program is left out, excluded, or listed separately is the passing case.
+    Other sections may mention a closed program without this check.
+    """
+    if section_id not in ("7", "section_7"):
+        return None
+    if not _PROGRAM_WORD.search(text):
+        return None
+    if not _CLOSED_OR_UNCERTAIN.search(text) or not _NET_COST.search(text):
+        return None
+    if _LEFT_OUT_OF_NET.search(text):
+        return None
+    return f"Closed or uncertain program counted in net cost: {text[:80]}"
+
+
+def _missing_section_issues(section_ids: set[str]) -> list[str]:
+    """Name every PRD section id the roadmap left out. An empty claims list still counts."""
+    missing = [section_id for section_id in SECTION_TITLES if section_id not in section_ids]
+    if not missing:
+        return []
+    return [f"Missing section(s): {', '.join(missing)}."]
+
+
+def _skip_engineer_issues(user_message: str, combined_text: str) -> list[str]:
+    """
+    When the user asks to skip the engineer, the plan must decline and must not certify the roof.
+
+    The structural referral itself is checked separately. This only looks at the request
+    and the wording of the answer. The run still continues with the rest of the plan.
+    """
+    if not user_message or not _SKIP_ENGINEER.search(user_message):
+        return []
+    issues: list[str] = []
+    if _CERTIFIES_ROOF.search(combined_text):
+        issues.append(
+            "Cannot certify that the roof can carry the panels. Decline the request and keep the structural referral."
+        )
+    if not _DECLINES_SKIP.search(combined_text):
+        issues.append(
+            "The user asked to skip the engineer. Decline that request and explain a PE or RA structural analysis is still required."
+        )
+    return issues
+
+
+def inspect_raw_roadmap(raw: dict | None, *, user_message: str = "") -> list[str]:
+    """
+    Read a write_roadmap dict before pydantic so a missing label is a Check 4 issue.
+
+    Pydantic rejects a claim with no label, and the harness used to stop the whole run.
+    Call this when validation fails. The issues go through the one-retry path instead.
+    Pass the user message so a "skip the engineer" request is still checked.
+    """
+    if not isinstance(raw, dict):
+        return ["Roadmap payload is missing."]
+    sections = raw.get("sections")
+    if not isinstance(sections, list):
+        return ["Roadmap has no sections list."]
+
+    issues: list[str] = []
+    present: set[str] = set()
+    texts: list[str] = []
+    for section in sections:
+        if not isinstance(section, dict):
+            continue
+        section_id = str(section.get("section_id") or "")
+        present.add(section_id)
+        for claim in section.get("claims") or []:
+            if not isinstance(claim, dict):
+                continue
+            text = str(claim.get("text") or "")
+            texts.append(text)
+            if _claim_has_number(text, claim.get("value_low")) and (
+                claim.get("label") not in _LABELS
+                or not claim.get("confidence")
+                or not _claim_has_id(claim.get("source_url"), claim.get("calc_id"), claim.get("assumption_id"))
+            ):
+                issues.append(f"Unlabeled number: {text[:80]}")
+            issues.extend(_non_nyc_rule_issues(section_id, text))
+            closed = _closed_in_net_cost_issue(section_id, text)
+            if closed:
+                issues.append(closed)
+    issues.extend(_missing_section_issues(present))
+    issues.extend(_skip_engineer_issues(user_message, " ".join(texts)))
+    missing_referrals = _missing_referral_groups(salvage_roadmap(raw))
+    if missing_referrals:
+        issues.append(
+            "Mandatory professional referrals are incomplete in section 10 ("
+            + ", ".join(missing_referrals)
+            + ")."
+        )
+    return issues
+
+
+def salvage_roadmap(raw: dict | None) -> RoadmapPayload:
+    """
+    Keep every claim that still validates when the whole roadmap does not.
+
+    A missing label fails pydantic for the entire write_roadmap call. The harness still
+    needs a roadmap object so a partial plan can be returned after the one retry.
+    Claims that fail validation are dropped; their problem is already listed in the issues.
+    """
+    sections: list[RoadmapSection] = []
+    if not isinstance(raw, dict):
+        return RoadmapPayload(sections=[])
+    for section in raw.get("sections") or []:
+        if not isinstance(section, dict):
+            continue
+        claims: list[Claim] = []
+        for claim in section.get("claims") or []:
+            if not isinstance(claim, dict):
+                continue
+            try:
+                claims.append(Claim.model_validate(claim))
+            except Exception:
+                continue
+        sections.append(
+            RoadmapSection(
+                section_id=str(section.get("section_id") or "?"),
+                title=str(section.get("title") or "Untitled"),
+                claims=claims,
+            )
+        )
+    return RoadmapPayload(sections=sections)
+
+
 def _claim_traceability_ok(claim: Claim, assumptions_register: dict[str, str]) -> tuple[bool, str | None]:
     """
     Return whether the claim meets Check 4 traceability and a short issue string if not.
@@ -242,8 +442,14 @@ def _collect_claims(payload: RoadmapPayload) -> list[Claim]:
     return claims
 
 
-def _referrals_present(payload: RoadmapPayload) -> bool:
-    """True when section 10 text hits every mandatory referral keyword bucket."""
+def _missing_referral_groups(payload: RoadmapPayload) -> list[str]:
+    """
+    Names of mandatory referral groups missing from section 10.
+
+    Each group needs one matching phrase. "structural" matches structural, PE/RA,
+    or professional engineer. An empty section 10 falls back to the whole plan
+    so a single referrals paragraph still counts.
+    """
     ref_text = ""
     for section in payload.sections:
         if section.section_id in ("10", "section_10", "referrals"):
@@ -251,12 +457,6 @@ def _referrals_present(payload: RoadmapPayload) -> bool:
     if not ref_text:
         ref_text = " ".join(c.text for sec in payload.sections for c in sec.claims).lower()
 
-    for keyword in MANDATORY_REFERRAL_KEYWORDS:
-        if keyword.lower() not in ref_text:
-            # Allow grouped keywords: structural OR pe/ra handled by list
-            pass
-
-    # Require at least one match from each thematic group
     groups = [
         ("structural", ("structural", "pe/ra", "professional engineer")),
         ("roof", ("roof condition", "roof survey")),
@@ -264,10 +464,7 @@ def _referrals_present(payload: RoadmapPayload) -> bool:
         ("fire", ("fdny", "rooftop access")),
         ("utility", ("interconnection", "con edison", "utility interconnection")),
     ]
-    for _name, keys in groups:
-        if not any(k in ref_text for k in keys):
-            return False
-    return True
+    return [name for name, keys in groups if not any(key in ref_text for key in keys)]
 
 
 def _has_promise_words(payload: RoadmapPayload) -> list[str]:
@@ -284,26 +481,55 @@ def run_check4(
     payload: RoadmapPayload,
     *,
     assumptions_register: dict[str, str] | None = None,
+    user_message: str = "",
+    require_all_sections: bool = True,
 ) -> CheckResult:
     """
-    Share gate: labels, traceability, mandatory referrals, no promise words.
+    Share gate: labels, sections, NYC-only rules, referrals, and no closed program in net cost.
 
     Pass assumptions_register from AgentNotes so ASSUMPTION claims can point at A1, A2, …
+    Pass user_message so "skip the engineer" can be declined without stopping the rest of the plan.
+    require_all_sections is False for a short follow-up answer, which is not a 13-section plan.
     One fix loop is handled in the harness; this function only evaluates once.
     """
     register = assumptions_register or {}
     issues: list[str] = []
-    for claim in _collect_claims(payload):
-        if claim.label not in ("FACT", "ESTIMATE", "ASSUMPTION", "RECOMMENDATION"):
-            issues.append(f"Unlabeled or invalid label on claim: {claim.text[:60]}")
-        ok, trace_issue = _claim_traceability_ok(claim, register)
-        if not ok:
-            issues.append(f"Claim {trace_issue}: {claim.text[:60]}")
-        if not claim.confidence:
-            issues.append(f"Claim missing confidence: {claim.text[:60]}")
+    for section in payload.sections:
+        for claim in section.claims:
+            has_number = _claim_has_number(claim.text, claim.value_low)
+            missing_number_fields = has_number and (
+                claim.label not in _LABELS
+                or not claim.confidence
+                or not _claim_has_id(claim.source_url, claim.calc_id, claim.assumption_id)
+            )
+            if missing_number_fields:
+                issues.append(f"Unlabeled number: {claim.text[:80]}")
+            else:
+                if claim.label not in _LABELS:
+                    issues.append(f"Unlabeled or invalid label on claim: {claim.text[:60]}")
+                ok, trace_issue = _claim_traceability_ok(claim, register)
+                if not ok:
+                    issues.append(f"Claim {trace_issue}: {claim.text[:60]}")
+                if not claim.confidence:
+                    issues.append(f"Claim missing confidence: {claim.text[:60]}")
+            issues.extend(_non_nyc_rule_issues(section.section_id, claim.text))
+            closed = _closed_in_net_cost_issue(section.section_id, claim.text)
+            if closed:
+                issues.append(closed)
 
-    if not _referrals_present(payload):
-        issues.append("Mandatory professional referrals are incomplete in section 10.")
+    if require_all_sections:
+        issues.extend(_missing_section_issues({section.section_id for section in payload.sections}))
+
+    missing_referrals = _missing_referral_groups(payload)
+    if missing_referrals:
+        issues.append(
+            "Mandatory professional referrals are incomplete in section 10 ("
+            + ", ".join(missing_referrals)
+            + ")."
+        )
+
+    combined = " ".join(claim.text for claim in _collect_claims(payload))
+    issues.extend(_skip_engineer_issues(user_message, combined))
 
     promises = _has_promise_words(payload)
     if promises:

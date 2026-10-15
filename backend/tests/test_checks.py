@@ -5,7 +5,7 @@ Unit tests for harness checks 1–4 (NY gate, tool limits, provenance, roadmap q
 from __future__ import annotations
 
 from agent.checks import run_check1, run_check2, run_check3, run_check4
-from agent.claims import Claim, RoadmapPayload, RoadmapSection
+from agent.claims import Claim, RoadmapPayload, RoadmapSection, roadmap_with_sections
 from agent.limits import RunLimits
 from tools.base import ToolResult
 from tools.registry import list_tool_names
@@ -59,8 +59,9 @@ def test_check3_hidden_instruction_flag():
     assert "hidden_instruction_pattern" in flags
 
 
-def _good_roadmap() -> RoadmapPayload:
-    referrals = RoadmapSection(
+def _referrals() -> RoadmapSection:
+    """Section 10 with every mandatory referral group Check 4 looks for."""
+    return RoadmapSection(
         section_id="10",
         title="Required professional reviews and permits",
         claims=[
@@ -71,14 +72,20 @@ def _good_roadmap() -> RoadmapPayload:
             Claim(text="Con Edison utility interconnection review.", label="RECOMMENDATION", confidence="high", source_url="session://profile"),
         ],
     )
-    summary = RoadmapSection(
-        section_id="1",
-        title="Summary",
-        claims=[
-            Claim(text="Labeled fact.", label="FACT", confidence="high", source_url="https://example.test/a"),
-        ],
-    )
-    return RoadmapPayload(sections=[summary, referrals])
+
+
+def _good_roadmap() -> RoadmapPayload:
+    """A complete 13-section plan that passes Check 4. Empty sections still count as present."""
+    return roadmap_with_sections([
+        RoadmapSection(
+            section_id="1",
+            title="Summary",
+            claims=[
+                Claim(text="Labeled fact.", label="FACT", confidence="high", source_url="https://example.test/a"),
+            ],
+        ),
+        _referrals(),
+    ])
 
 
 def test_check4_rejects_unlabeled():
@@ -137,7 +144,7 @@ def test_check4_assumption_requires_register_id():
                     )
                 ],
             ),
-            _good_roadmap().sections[1],
+            _good_roadmap().sections[9],
         ]
     )
     assert not run_check4(missing_id, assumptions_register=register)["passed"]
@@ -156,28 +163,26 @@ def test_check4_assumption_requires_register_id():
                     )
                 ],
             ),
-            _good_roadmap().sections[1],
+            _good_roadmap().sections[9],
         ]
     )
     assert not run_check4(unknown_id, assumptions_register=register)["passed"]
 
-    valid = RoadmapPayload(
-        sections=[
-            RoadmapSection(
-                section_id="3",
-                title="Assumptions",
-                claims=[
-                    Claim(
-                        text="Registered without source or calc",
-                        label="ASSUMPTION",
-                        confidence="high",
-                        assumption_id="A1",
-                    )
-                ],
-            ),
-            _good_roadmap().sections[1],
-        ]
-    )
+    valid = roadmap_with_sections([
+        RoadmapSection(
+            section_id="3",
+            title="Assumptions",
+            claims=[
+                Claim(
+                    text="Registered without source or calc",
+                    label="ASSUMPTION",
+                    confidence="high",
+                    assumption_id="A1",
+                )
+            ],
+        ),
+        _referrals(),
+    ])
     assert run_check4(valid, assumptions_register=register)["passed"]
 
 
@@ -198,7 +203,7 @@ def test_check4_fact_and_estimate_still_need_source_or_calc():
                         Claim(text=f"{label} without trace", label=label, confidence="high"),
                     ],
                 ),
-                _good_roadmap().sections[1],
+                _good_roadmap().sections[9],
             ]
         )
         assert not run_check4(payload, assumptions_register=register)["passed"]

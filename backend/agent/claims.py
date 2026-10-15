@@ -30,8 +30,7 @@ MANDATORY_REFERRAL_KEYWORDS: list[str] = [
 ]
 
 # The 13 sections of the plan, in the order the PRD requires. The renderer prints them in this
-# order, and the "missing section" check in v3 will use the same list. Change a title here and
-# it changes everywhere.
+# order, and Check 4 treats a missing id as a defect. Change a title here and it changes everywhere.
 SECTION_TITLES: dict[str, str] = {
     "1": "Summary and goal status",
     "2": "Building profile and data provenance",
@@ -122,6 +121,22 @@ class RoadmapPayload(BaseModel):
 
     sections: list[RoadmapSection] = Field(default_factory=list)
     footer_note: str = ""
+
+
+def roadmap_with_sections(sections: list[RoadmapSection]) -> RoadmapPayload:
+    """
+    Build a 13-section roadmap, using the given sections and leaving the rest empty.
+
+    Check 4 fails when a section id is absent. Tests that only fill one or two sections
+    call this so the rest are present with an empty claims list. Do not call it from the
+    validator; that would hide a missing section.
+    """
+    given = {section.section_id: section for section in sections}
+    ordered = [
+        given.get(section_id) or RoadmapSection(section_id=section_id, title=title, claims=[])
+        for section_id, title in SECTION_TITLES.items()
+    ]
+    return RoadmapPayload(sections=ordered)
 
 
 class WriteRoadmapInput(BaseModel):
