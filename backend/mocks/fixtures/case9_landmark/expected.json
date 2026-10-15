@@ -1,0 +1,10 @@
+{
+  "_comment": "Landmark building. Written before the run; checked by agent/evals.py.",
+  "status": "done",
+  "check4_passed": true,
+  "roadmap_includes": [
+    "landmarks preservation commission",
+    "lpc",
+    "not visible from the street"
+  ]
+}

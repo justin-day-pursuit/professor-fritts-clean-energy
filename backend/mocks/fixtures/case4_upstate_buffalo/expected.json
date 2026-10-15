@@ -1,0 +1,10 @@
+{
+  "_comment": "Outside NYC: stops before planning with a clear message.",
+  "status": "failed",
+  "stop_reason": "out_of_scope",
+  "message_includes": [
+    "new york city",
+    "manhattan",
+    "staten island"
+  ]
+}

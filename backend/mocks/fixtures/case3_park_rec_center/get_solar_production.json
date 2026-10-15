@@ -1,0 +1,5 @@
+{
+  "_comment": "Simulated PVWatts outage for eval case 3. The mock loader raises ToolUnavailableError with this message.",
+  "tool": "get_solar_production",
+  "error": "PVWatts returned HTTP 503 Service Unavailable (simulated outage for eval case 3)."
+}

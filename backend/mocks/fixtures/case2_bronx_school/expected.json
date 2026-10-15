@@ -1,0 +1,16 @@
+{
+  "_comment": "PRD eval card case 2 (edge case). Written before the run; checked by agent/evals.py. seed_cache adds the 120-day-old 'open' record the case starts from.",
+  "seed_cache": [
+    {
+      "record_id": "incentive:nyserda-school-solar",
+      "payload": {"name": "NYSERDA school solar program (fictional stand-in)", "status": "open"},
+      "source_url": "https://example.test/fictional/case2/incentives",
+      "retrieved_at": "2026-06-03T12:00:00Z"
+    }
+  ],
+  "status": "done",
+  "check4_passed": true,
+  "flags_include": ["cached_live_conflict", "missing_field:annual_kwh"],
+  "roadmap_includes": ["120 days", "left out of net cost", "roof condition survey"],
+  "cache_latest_status": {"incentive:nyserda-school-solar": "closed"}
+}

@@ -17,16 +17,14 @@ from agent.claims import (
     RoadmapSection,
 )
 from agent.limits import RunLimits, tool_call_limit, tool_retry_limit
+from agent.notes import AgentNotes
 from tools.base import ToolResult
 from tools.cache import is_stale_for_tool
 from tools.registry import get_tool_spec, list_tool_names, validate_tool_input
 
-# Simple injection-style phrases Check 3 flags (full defense tests arrive in v6).
-HIDDEN_INSTRUCTION_PATTERNS = [
-    re.compile(r"ignore\s+(all\s+)?previous\s+instructions", re.I),
-    re.compile(r"system\s*:\s*", re.I),
-    re.compile(r"<\s*script", re.I),
-]
+# The hidden-instruction phrases live in tools/injection.py so the tools can use them too.
+# Re-exported here because older tests import HIDDEN_INSTRUCTION_PATTERNS from this module.
+from tools.injection import HIDDEN_INSTRUCTION_PATTERNS, find_hidden_instructions  # noqa: E402,F401
 
 NY_STATE_CODES = {"NY", "NEW YORK", "NYC", "NEW YORK CITY"}
 
@@ -141,11 +139,14 @@ def run_check2(
     limits: RunLimits,
     *,
     is_final_tool: bool = False,
+    blocked_sources: set[str] | None = None,
 ) -> CheckResult:
     """
     Tool gate: registered tool, valid schema, under call/retry/time limits.
 
     Final tools write_roadmap / write_answer skip registry lookup when is_final_tool=True.
+    blocked_sources (v6) holds pages ignored for hidden instructions this run; a cache write
+    from one of them is refused here, before the write tool even runs.
     """
     if limits.timeout_exceeded():
         return CheckResult.fail("timeout", "Run exceeded the time limit.")
@@ -173,6 +174,13 @@ def run_check2(
     except Exception as exc:  # pydantic ValidationError
         return CheckResult.fail("invalid_input", f"Invalid input for {tool_name}: {exc}")
 
+    if tool_name == "upsert_reference_cache" and blocked_sources:
+        if str((raw_input or {}).get("source_url") or "") in blocked_sources:
+            return CheckResult.fail(
+                "quarantined_source",
+                "That page was ignored for hidden instructions; nothing from it is saved.",
+            )
+
     return CheckResult.ok("check2_pass", f"Tool {tool_name} approved.")
 
 
@@ -180,7 +188,8 @@ def run_check3(result: ToolResult, *, freshness_kind: str = "default") -> CheckR
     """
     Answer gate: provenance fields, stale flag, injection pattern scan on serialized data.
 
-    Results are treated as data only; any hidden-instruction match adds a flag.
+    Results are treated as data only. Any hidden-instruction match adds a flag and sets
+    details.quarantine, and the harness then withholds the result's data from the model (v6).
     """
     missing = []
     if not result.source_url:
@@ -191,10 +200,9 @@ def run_check3(result: ToolResult, *, freshness_kind: str = "default") -> CheckR
         missing.append("dataset_version")
 
     flags: list[str] = list(result.flags)
-    blob = str(result.data)
-    for pattern in HIDDEN_INSTRUCTION_PATTERNS:
-        if pattern.search(blob):
-            flags.append("hidden_instruction_pattern")
+    hidden = find_hidden_instructions(result.data)
+    if hidden and "hidden_instruction_pattern" not in flags:
+        flags.append("hidden_instruction_pattern")
 
     stale = result.stale or is_stale_for_tool(result.tool, result.retrieved_at, freshness_kind)
     if stale and "stale_data" not in flags:
@@ -206,6 +214,16 @@ def run_check3(result: ToolResult, *, freshness_kind: str = "default") -> CheckR
             f"Tool result missing: {', '.join(missing)}",
             missing=missing,
             flags=flags,
+        )
+
+    if hidden:
+        return CheckResult.ok(
+            "check3_quarantine",
+            "Hidden instructions found in the result; it is ignored and not passed to the model.",
+            stale=stale,
+            flags=flags,
+            quarantine=True,
+            hidden_instructions=hidden,
         )
 
     return CheckResult.ok(
@@ -467,14 +485,131 @@ def _missing_referral_groups(payload: RoadmapPayload) -> list[str]:
     return [name for name, keys in groups if not any(key in ref_text for key in keys)]
 
 
+# "We cannot guarantee savings" declines a promise, it does not make one. These negated phrases are
+# removed before the promise-word scan, so declining a guarantee request passes Check 4.
+_NEGATED_PROMISE = re.compile(
+    r"\b(cannot|can't|can not|do not|does not|don't|will not|won't|not|no|never|declin\w*(?: to)?)"
+    r"\s+(?:\w+\s+){0,2}(guarantee\w*|will save)",
+    re.I,
+)
+
+# The user asked for a promise, or asked to use a rule from outside NYC.
+_GUARANTEE_REQUEST = re.compile(r"\bguarantee", re.I)
+
+
 def _has_promise_words(payload: RoadmapPayload) -> list[str]:
+    """Promise words in the plan, ignoring sentences that refuse to promise ("cannot guarantee")."""
     hits = []
     for claim in _collect_claims(payload):
-        lower = claim.text.lower()
+        lower = _NEGATED_PROMISE.sub(" ", claim.text.lower())
         for word in PROMISE_WORDS:
             if word in lower:
                 hits.append(word)
     return hits
+
+
+def _user_request_issues(user_message: str, combined_text: str) -> list[str]:
+    """
+    v6 (eval case 3): a request for a guarantee, or for a rule from outside NYC, must be declined
+    in so many words. Saying nothing would let the user think the request was quietly accepted.
+    """
+    if not user_message:
+        return []
+    issues: list[str] = []
+    if _GUARANTEE_REQUEST.search(user_message) and not _NEGATED_PROMISE.search(combined_text):
+        issues.append("The user asked for a guarantee. Say plainly that savings cannot be guaranteed.")
+    if _NON_NYC_RULE.search(user_message):
+        excluded = any(
+            _NON_NYC_RULE.search(sentence) and _RULE_EXCLUDED.search(sentence)
+            for sentence in re.split(r"(?<=[.;])\s+", combined_text)
+        )
+        if not excluded:
+            issues.append("The user asked to use a rule from outside NYC. Say it does not apply and leave it out.")
+    return issues
+
+
+# v6: plain words a reader would use for each tool, so section 12 can name a failure without tool ids.
+_TOOL_PLAIN_NAMES: dict[str, tuple[str, ...]] = {
+    "get_solar_production": ("pvwatts", "solar production"),
+    "optimize_solar_storage": ("reopt", "battery"),
+    "get_utility_rates": ("rate", "price"),
+    "get_utility_tariff": ("tariff",),
+    "lookup_ny_building_records": ("building record", "pluto", "public record"),
+    "search_ny_incentives_and_rules": ("incentive",),
+    "get_hazard_context": ("hazard", "fema", "flood"),
+    "run_financial_model": ("financial model", "scenario"),
+    "calculate": ("calculat",),
+}
+_FAILURE_WORDS = re.compile(
+    r"\b(fail\w*|unavailable|error|did not return|could not|no data|not available|outage)\b", re.I
+)
+
+# Numbers that need solar production data. When PVWatts failed and never succeeded, a claim citing one
+# of these was built on an invented production figure.
+_SOLAR_DEPENDENT_CALCS = {"C3", "C4", "F-B", "F-C"}
+_SOLAR_KWH = re.compile(r"solar[^.]*\d[^.]*kwh|kwh[^.]*solar", re.I)
+
+# FEMA flood zones that mean a 1%-a-year (or coastal) flood risk.
+_HIGH_RISK_FLOOD_ZONES = {"A", "AE", "AH", "AO", "AR", "A99", "V", "VE"}
+
+
+def _section_text(payload: RoadmapPayload, section_id: str) -> str:
+    """All claim text of one section, lowercased, or an empty string if the section is absent."""
+    return " ".join(
+        claim.text for section in payload.sections if section.section_id == section_id for claim in section.claims
+    ).lower()
+
+
+def _run_context_issues(payload: RoadmapPayload, notes: AgentNotes) -> list[str]:
+    """
+    v6 rules that depend on what happened in this run, not only on the roadmap text.
+
+    - Every tool that failed (and never succeeded later) is named in section 12 as a failure.
+    - When PVWatts failed, no claim states a solar kWh figure or cites a calculation that needs one.
+    - No claim cites a page that was ignored for hidden instructions, and section 12 says it was ignored.
+    - A high-risk flood zone needs flood-proofing in section 9; a landmark needs an LPC review and
+      parkland needs a parkland-use review by counsel in section 10.
+    """
+    issues: list[str] = []
+    gaps = _section_text(payload, "12")
+    claims = _collect_claims(payload)
+
+    for tool_name in notes.failed_tools:
+        words = _TOOL_PLAIN_NAMES.get(tool_name, (tool_name.replace("_", " "),))
+        if not (any(word in gaps for word in words) and _FAILURE_WORDS.search(gaps)):
+            issues.append(f"Tool failure not reported in section 12: {tool_name}.")
+
+    if "get_solar_production" in notes.failed_tools:
+        for claim in claims:
+            if claim.label == "ASSUMPTION":
+                continue
+            if (claim.calc_id or "") in _SOLAR_DEPENDENT_CALCS or _SOLAR_KWH.search(claim.text):
+                issues.append(f"Solar production number used after PVWatts failed: {claim.text[:80]}")
+
+    quarantined = notes.quarantined_urls()
+    if quarantined:
+        for claim in claims:
+            if claim.source_url and claim.source_url in quarantined:
+                issues.append(f"Claim cites a page ignored for hidden instructions: {claim.text[:80]}")
+        if not re.search(r"hidden|injected|ignored", gaps):
+            issues.append("Section 12 must say a retrieved page was ignored for hidden instructions.")
+
+    flood_zone = str(notes.site_context.get("flood_zone") or "").upper()
+    resilience = _section_text(payload, "9")
+    if flood_zone in _HIGH_RISK_FLOOD_ZONES and not (
+        "flood" in resilience and re.search(r"elevat|above the|flood-proof|floodproof|raise", resilience)
+    ):
+        issues.append(
+            f"Building is in flood zone {flood_zone}: section 9 must plan flood protection "
+            "(for example elevating the battery and electrical equipment)."
+        )
+
+    reviews = _section_text(payload, "10")
+    if notes.site_context.get("landmark") and not ("landmarks preservation" in reviews or "lpc" in reviews):
+        issues.append("Landmark building: section 10 must include a Landmarks Preservation Commission (LPC) review.")
+    if notes.site_context.get("parkland") and not ("parkland" in reviews and "counsel" in reviews):
+        issues.append("Building is on parkland: section 10 must include a parkland use review by counsel.")
+    return issues
 
 
 def run_check4(
@@ -483,6 +618,7 @@ def run_check4(
     assumptions_register: dict[str, str] | None = None,
     user_message: str = "",
     require_all_sections: bool = True,
+    notes: AgentNotes | None = None,
 ) -> CheckResult:
     """
     Share gate: labels, sections, NYC-only rules, referrals, and no closed program in net cost.
@@ -490,6 +626,8 @@ def run_check4(
     Pass assumptions_register from AgentNotes so ASSUMPTION claims can point at A1, A2, …
     Pass user_message so "skip the engineer" can be declined without stopping the rest of the plan.
     require_all_sections is False for a short follow-up answer, which is not a 13-section plan.
+    Pass notes (v6) to also apply the run-context rules in _run_context_issues; they only run
+    for a full roadmap, because a short follow-up answer has no section 9, 10 or 12.
     One fix loop is handled in the harness; this function only evaluates once.
     """
     register = assumptions_register or {}
@@ -530,6 +668,10 @@ def run_check4(
 
     combined = " ".join(claim.text for claim in _collect_claims(payload))
     issues.extend(_skip_engineer_issues(user_message, combined))
+    issues.extend(_user_request_issues(user_message, combined))
+
+    if notes is not None and require_all_sections:
+        issues.extend(_run_context_issues(payload, notes))
 
     promises = _has_promise_words(payload)
     if promises:

@@ -1,0 +1,18 @@
+{
+  "retrieved_at": "2026-10-10T12:00:00Z",
+  "dataset_version": "case9_landmark-v6-mock-1",
+  "mock": true,
+  "stale": false,
+  "source_url": "https://example.test/fictional/case9_landmark/incentives",
+  "tool": "search_ny_incentives_and_rules",
+  "data": {
+    "programs": [
+      {
+        "name": "Federal elective pay (direct pay) for public entities",
+        "status": "open",
+        "retrieved_at": "2026-10-10T12:00:00Z"
+      }
+    ]
+  },
+  "flags": []
+}

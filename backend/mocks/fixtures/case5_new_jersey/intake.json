@@ -1,0 +1,13 @@
+{
+  "_comment": "Fictional New Jersey building - v6 eval case 5: another state, must stop as out of scope.",
+  "building_name": "Riverside Town Hall (fictional, Newark NJ)",
+  "address": "200 Example Avenue",
+  "county": "Essex",
+  "city": "Newark",
+  "state": "NJ",
+  "building_type": "town hall",
+  "floor_area_sqft": 30000,
+  "budget_amount": 500000,
+  "goal": "Cut grid electricity 30% by 2030",
+  "question": "How can our Newark town hall cut grid power 30% by 2030 on $500k?"
+}

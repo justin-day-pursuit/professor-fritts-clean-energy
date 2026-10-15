@@ -11,6 +11,15 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 
+class ToolUnavailableError(RuntimeError):
+    """
+    A tool could not return data (API outage, HTTP error, or a saved fixture that records a failure).
+
+    The harness catches this like any tool exception: the run keeps going, the failure is recorded
+    in the notes, and the roadmap must say what is missing instead of inventing the numbers.
+    """
+
+
 class ToolResult(BaseModel):
     """One tool invocation result as the agent and run log store it."""
 

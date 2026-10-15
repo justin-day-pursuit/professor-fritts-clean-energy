@@ -1,0 +1,11 @@
+{
+  "_comment": "No budget: asks once for it instead of inventing one.",
+  "status": "needs_input",
+  "message_includes": [
+    "capital budget"
+  ],
+  "message_excludes": [
+    "energy goal",
+    "borough"
+  ]
+}

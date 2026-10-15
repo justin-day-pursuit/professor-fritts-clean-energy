@@ -1,0 +1,16 @@
+{
+  "retrieved_at": "2026-10-10T12:00:00Z",
+  "dataset_version": "case7_dsire_conflict-v6-mock-1",
+  "mock": true,
+  "stale": false,
+  "source_url": "https://example.test/fictional/case7_dsire_conflict/reopt",
+  "tool": "optimize_solar_storage",
+  "data": {
+    "battery_kw": 100,
+    "battery_kwh": 800,
+    "critical_load_hours": 8,
+    "critical_load_kw": 100,
+    "notes": "Fictional REopt stand-in sized for 8 hours of critical-load backup."
+  },
+  "flags": []
+}

@@ -164,12 +164,12 @@ def test_notes_register_a9_and_keep_each_scenario():
 # --- prompt and full case 1 -------------------------------------------------------------------
 
 
-def test_prompt_v3_names_the_scenarios_and_phases_0_to_5():
-    """The prompt the harness loads tells the model to use the tool and lists roadmap phases 0-5."""
+def test_prompt_names_the_scenarios_and_phases_0_to_5():
+    """The prompt the harness loads (v3 or later) tells the model to use the tool and lists roadmap phases 0-5."""
     from agent.harness import load_system_prompt
 
     text = load_system_prompt()
-    assert "run_financial_model" in text and "system prompt v3" in text
+    assert "run_financial_model" in text and "## Scenarios (v5)" in text
     phases = text.split("Section 8")[1][:700]
     for phase in range(6):
         assert f"{phase} " in phases

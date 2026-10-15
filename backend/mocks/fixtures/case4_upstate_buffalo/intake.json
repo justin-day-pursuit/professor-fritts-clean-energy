@@ -1,0 +1,13 @@
+{
+  "_comment": "Fictional upstate NY building - v6 eval case 4: outside NYC, must stop as out of scope.",
+  "building_name": "Lakeview Community Library (fictional, Buffalo NY)",
+  "address": "100 Example Street",
+  "borough": "Erie",
+  "city": "Buffalo",
+  "state": "NY",
+  "building_type": "library",
+  "floor_area_sqft": 16000,
+  "budget_amount": 300000,
+  "goal": "Cut grid electricity 30% by 2030",
+  "question": "How can our Buffalo library cut grid power 30% by 2030 on $300k?"
+}

@@ -12,7 +12,7 @@ from pathlib import Path
 
 from django.conf import settings
 
-from tools.base import ToolResult
+from tools.base import ToolResult, ToolUnavailableError
 
 FIXTURES_ROOT = Path(__file__).resolve().parent / "fixtures"
 
@@ -32,11 +32,15 @@ def load_fixture(case: str, tool_name: str) -> ToolResult:
     Read a fixture file and return a ToolResult.
 
     Each fixture must include source_url, retrieved_at, dataset_version, and mock: true.
+    A fixture with a top-level "error" key records a tool outage instead (v6, eval case 3):
+    loading it raises ToolUnavailableError with that message, the same way a failed live call would.
     """
     path = fixture_path(case, tool_name)
     if not path.exists():
         raise FileNotFoundError(f"No mock fixture at {path}")
     raw = json.loads(path.read_text(encoding="utf-8"))
+    if raw.get("error"):
+        raise ToolUnavailableError(str(raw["error"]))
     return ToolResult.model_validate(raw)
 
 

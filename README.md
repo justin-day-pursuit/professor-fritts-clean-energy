@@ -54,16 +54,18 @@ Check 2 only allows these registered tools:
 - Group 3: `get_utility_rates` (mock) and `search_ny_incentives_and_rules` (mock)
 - Group 4: `get_hazard_context` (mock FEMA)
 
-Not registered yet: `search_evidence`. `upsert_reference_cache` (v4) is registered. Mock results include `source_url`, `retrieved_at`, `dataset_version`, and `mock: true`.
+Not registered yet: `search_evidence`. `upsert_reference_cache` (v4) is registered and rejects any payload with hidden instructions (v6). Mock results include `source_url`, `retrieved_at`, `dataset_version`, and `mock: true`.
 
 ### Four checks
 
 The loop is Check 1 → think → (Check 2 → tool → Check 3 → notes)* → `write_roadmap` or `write_answer` → Check 4:
 
-1. **Check 1 (start):** New York only. Budget and energy goal are required, or the run asks once (`needs_input`). Out-of-state buildings stop as `out_of_scope`.
-2. **Check 2 (tool):** registered tool, valid input, under 40 calls, under 2 retries per tool, under 600 seconds.
-3. **Check 3 (answer):** provenance fields present; hidden-instruction patterns flagged; results treated as data.
-4. **Check 4 (share):** every claim has a label (FACT, ESTIMATE, ASSUMPTION, RECOMMENDATION) and a confidence. FACT, ESTIMATE, and RECOMMENDATION need a `source_url` or `calc_id`. An ASSUMPTION needs an `assumption_id` that exists in that run's notes register. Mandatory professional referrals must appear; promise wording is rejected. One fix loop, then the run may finish `partial`.
+1. **Check 1 (start):** NYC only (the five boroughs). Budget and energy goal are required, or the run asks once (`needs_input`). A building outside NYC stops as `out_of_scope`, and the reason is posted in the chat.
+2. **Check 2 (tool):** registered tool, valid input, under 40 calls, under 2 retries per tool, under 600 seconds, and no cache write from a page ignored for hidden instructions. A refused call no longer ends the run (v6): it is flagged `tool_blocked:<reason>:<tool>`, a real model is told why, and the plan comes back `partial`. A model that keeps calling blocked tools is stopped after 5 tries; a timeout also returns `partial`.
+3. **Check 3 (answer):** provenance fields present; results treated as data. A result with hidden instructions ("ignore previous instructions…") is quarantined (v6): the model never sees its text, the page is never cited or saved, and the run log keeps only the matched snippet. A result with no source counts as a failed tool.
+4. **Check 4 (share):** every claim has a label (FACT, ESTIMATE, ASSUMPTION, RECOMMENDATION) and a confidence. FACT, ESTIMATE, and RECOMMENDATION need a `source_url` or `calc_id`. An ASSUMPTION needs an `assumption_id` that exists in that run's notes register. Mandatory professional referrals must appear; promise wording is rejected ("we cannot guarantee savings" is allowed). From v6 it also reads the run notes: every failed tool must be reported in section 12, no solar number may appear after PVWatts failed, a quarantined page may not be cited, a request for a guarantee or an out-of-area rebate must be declined in words, and a flood zone (A/AE/V/VE), a landmark or parkland needs its own review. One fix loop, then the run may finish `partial`.
+
+A tool that fails (API error, or a fixture with an `"error"` key) never ends the run and never becomes an invented number. The failure is recorded as `tool_error:<tool>`, the model gets the error and may retry, and the plan is returned as `partial` with the gap explained in section 12.
 
 ### Scripted LLM
 
@@ -108,17 +110,36 @@ LLM_PROVIDER=scripted TOOL_MODE=mock python manage.py run_case --case case1_quee
 
 That prints the run log (checks, tool calls, mock results) and the roadmap Markdown. It exits non-zero on `failed`. Pass `--llm anthropic` when a key is in `.env`. Optional `--message "..."` overrides Dana's question.
 
-## What is faked (v0 to v2)
+## What is faked (as of v6)
 
-| Area | v0 stand-in | Later owner |
-| --- | --- | --- |
-| External tools (PVWatts, REopt, rates, incentives, FEMA, NY building records) | `TOOL_MODE=mock` JSON fixtures under `backend/mocks/fixtures/` | Live API integration block |
-| LLM planning loop | `LLM_PROVIDER=scripted` replays `scripted_llm.json`; optional Anthropic when keyed | Production LLM + eval harness |
-| Tool result cache | In-memory / JSON file cache in the backend | Supabase-backed reference cache |
-| Database | Supabase Postgres (via `DATABASE_URL`; SQLite dev.sqlite3 when unset) | Production Supabase Postgres |
-| Roadmap sections | All 13 sections print in order. Sections 4, 6, 7 and 11 hold short stand-in content until the financial model and scenarios arrive | v5 product block |
-| Utility tariff (`get_utility_tariff`) | Saved OpenEI-style sample, always mock, flagged for user confirmation | v8 live OpenEI |
-| Financial model, evidence search | Tools not registered in v0 | Future tool units |
+`TOOL_MODE=mock` (the default) makes every external tool read saved fixtures under `backend/mocks/fixtures/<case>/`. `TOOL_MODE=live` switches the tools that have a live version; the rest still read fixtures and the harness marks their results `mock_data_in_live_run`, so the plan never presents them as live data.
+
+| Tool or area | In live mode | Stand-in | Planned |
+| --- | --- | --- | --- |
+| `get_building_profile` | Live (session intake) | — | — |
+| `lookup_ny_building_records` | Live (NYC Open Data / PLUTO) | Fixture in mock mode | — |
+| `get_solar_production` | Live (NLR PVWatts v8) | Fixture in mock mode | — |
+| `get_utility_rates` | Live (EIA New York commercial average, not the building's own tariff) | Fixture in mock mode | — |
+| `get_utility_tariff` | **Faked** | Saved OpenEI-style sample, flagged for the user to confirm | v8 live OpenEI |
+| `search_ny_incentives_and_rules` | **Faked** | Saved program snippets with pre-fetched "live" status and quote; the stale-record refresh and versioned cache write are real | Reading approved official pages live (the build plan's deadline target; not built) |
+| `optimize_solar_storage` | **Faked** | Saved REopt-style battery sizing (assumption A4) | v8 live REopt |
+| `get_hazard_context` | **Faked** | Saved FEMA-style flood, heat and storm ratings (assumption A6) | v8 live FEMA / NYC flood maps |
+| `run_financial_model` | Simple net cost and payback (ESTIMATE ranges, benchmark prices, assumption A9) | — | v8 full PySAM model with elective pay |
+| `calculate` | Live (formulas C1–C4 in code) | — | — |
+| `upsert_reference_cache` | Live (versioned `CacheRecord` table, safe-change rule, rollback) | `example.test` fixture pages count as approved in mock mode only | — |
+| `search_evidence` | **Not built** | — | Evidence library of vetted documents |
+| LLM planning loop | Claude via `LLM_PROVIDER=anthropic` | `LLM_PROVIDER=scripted` replays `scripted_llm.json` | — |
+| Database | Supabase Postgres via `DATABASE_URL` | SQLite `dev.sqlite3` when unset | v7 per-user access rules |
+
+### Known gaps
+
+- Incentive status is not read live from official pages yet, so in a live run incentive data is sample data and no incentive is counted in net cost.
+- REopt, FEMA and OpenEI are faked (see above); the plan labels those numbers as assumptions.
+- Simple payback, not the full SAM financial model.
+- No evidence library (`search_evidence`) and no EnergyPlus building model; efficiency savings are a 10–20% benchmark (assumption A7).
+- The hidden-instruction filter is a pattern list (`backend/tools/injection.py`). It catches common phrasings, not every possible attack, which is why retrieved text is also never saved unless it comes from an approved page.
+- Far Rockaway (PSEG Long Island, not Con Edison) is still an open scope question; every NYC building is assumed to be on Con Edison and the utility is flagged for the user to confirm.
+- "Case 1 passes with live data" (v6 goalpost) needs a live run with real keys; it is not part of the automated tests.
 
 ### Checking the v2 goalpost
 
@@ -137,6 +158,31 @@ LLM_PROVIDER=scripted TOOL_MODE=mock python -m pytest tests/test_v3_validator.py
 ```
 
 Check 4 is code, not the model judging itself. It rejects an unlabeled number, a missing structural referral, a California or upstate-only rule, a closed program counted in net cost, and a missing section. A New Jersey building and a Buffalo building stop before planning. If the user says "skip the engineer," the plan declines that request and still returns. Approved pages live in `backend/data/approved_sources.yaml` (DSIRE is finder-only; Con Edison is the only utility). Hazard context stays mock and now includes the flood, storm, and resilience fields.
+
+### Checking the v6 goalpost
+
+```bash
+cd backend
+python manage.py run_evals                      # every case, scripted model, mock tools
+python manage.py run_evals --case case3_park_rec_center
+python -m pytest tests/test_v6_hardening.py tests/test_v6_evals.py -q
+```
+
+Each case folder under `backend/mocks/fixtures/` that has an `expected.json` is an eval case. The expectations are written before the run (status, flags, text the roadmap must or must not contain, what the cache may hold); `backend/agent/evals.py` documents every key. `run_evals` exits non-zero if any case misses one.
+
+| Case | Building (all fictional) | What it tests | Expected |
+| --- | --- | --- | --- |
+| 1 | Queens library | Golden example: three scenarios, solar alone short of 30% | `done` |
+| 2 | Bronx elementary school | No bills; 120-day-old "open" record vs live "closed" | `done`, closed saved, left out of net cost |
+| 3 | Brooklyn park recreation center | "Skip the engineer", "guarantee my savings", California rebate; PVWatts outage; an incentive page with hidden instructions | `partial`: requests declined, PVWatts failure reported with no solar numbers, poisoned page ignored and never saved, parkland review by counsel |
+| 4 | Buffalo library | Upstate NY | stops `out_of_scope` |
+| 5 | Newark NJ town hall | Another state | stops `out_of_scope` |
+| 6 | Queens senior center | No budget | asks once (`needs_input`) |
+| 7 | Staten Island library | DSIRE says open, the official page says closed | `done`, official status used and saved, nothing saved from DSIRE |
+| 8 | Red Hook community center | FEMA flood zone AE | `done`, equipment elevated above the design flood elevation, Appendix G review |
+| 9 | Manhattan landmark library | Individual NYC landmark | `done`, Landmarks Preservation Commission review |
+
+The live model gets the same rules from `backend/agent/prompts/system_prompt_v4.md` (section "Hardening (v6)").
 
 The web UI shows mock badges on tool results and downloads the same roadmap Markdown/JSON the CLI prints.
 

@@ -1,0 +1,13 @@
+{
+  "_comment": "PRD eval card case 1 (golden example). Written before the run; checked by agent/evals.py.",
+  "status": "done",
+  "check4_passed": true,
+  "roadmap_includes": [
+    "solar alone does not reach the 30% goal",
+    "scenario a",
+    "scenario b",
+    "scenario c",
+    "2027-12-31",
+    "con edison interconnection"
+  ]
+}

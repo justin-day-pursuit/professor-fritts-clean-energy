@@ -1,0 +1,17 @@
+{
+  "retrieved_at": "2026-10-10T12:00:00Z",
+  "dataset_version": "case7_dsire_conflict-v6-mock-1",
+  "mock": true,
+  "stale": false,
+  "source_url": "https://example.test/fictional/case7_dsire_conflict/building-records",
+  "tool": "lookup_ny_building_records",
+  "data": {
+    "address": "56 Example Lane",
+    "borough": "Staten Island",
+    "gross_floor_area_sqft": 15000,
+    "year_built": 1985,
+    "landmark_flag": false,
+    "roof_area_sqft": 5000
+  },
+  "flags": []
+}
