@@ -99,10 +99,21 @@ render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME", "").strip()
 if render_host and render_host not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(render_host)
 
+# Values exposed on the health endpoint and used by CORS/CSRF (read from root .env).
+TOOL_MODE = os.environ.get("TOOL_MODE", "mock")
+LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "anthropic")
+FRONTEND_ORIGIN = os.environ.get(
+    "FRONTEND_ORIGIN",
+    "http://localhost:3000,https://professor-fritts-clean-energy.vercel.app",
+)
+
 _csrf_trusted = os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "")
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_trusted.split(",") if o.strip()]
 if render_host and f"https://{render_host}" not in CSRF_TRUSTED_ORIGINS:
     CSRF_TRUSTED_ORIGINS.append(f"https://{render_host}")
+for origin in [o.strip() for o in FRONTEND_ORIGIN.split(",") if o.strip()]:
+    if origin.startswith("https://") and origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origin)
 
 # Trust reverse proxies (such as Render) terminating SSL and forwarding HTTPS proto.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -166,7 +177,3 @@ STATIC_ROOT = DATA_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Values exposed on the health endpoint (read from root .env).
-TOOL_MODE = os.environ.get("TOOL_MODE", "mock")
-LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "anthropic")
-FRONTEND_ORIGIN = os.environ.get("FRONTEND_ORIGIN", "http://localhost:3000")

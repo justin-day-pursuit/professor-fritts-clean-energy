@@ -14,7 +14,7 @@ from agent.claims import WriteAnswerInput, WriteRoadmapInput
 from agent.llm.base import LLMClient, LLMConfigurationError, LLMStep
 
 # Default model when ANTHROPIC_MODEL is blank — update from Anthropic docs when upgrading.
-DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-20250514"
+DEFAULT_ANTHROPIC_MODEL = "claude-3-5-sonnet-20241022"
 
 
 def _model_id() -> str:

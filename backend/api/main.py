@@ -26,9 +26,14 @@ def create_app() -> FastAPI:
     else:
         allowed_origins = list(origin_setting)
 
+    for origin in ("http://localhost:3000", "https://professor-fritts-clean-energy.vercel.app"):
+        if origin not in allowed_origins:
+            allowed_origins.append(origin)
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=allowed_origins,
+        allow_origin_regex=r"^https://.*\.vercel\.app$",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
