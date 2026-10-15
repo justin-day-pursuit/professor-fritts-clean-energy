@@ -2,9 +2,8 @@
 Eval case 2 (edge case), NYC version: a fictional Bronx elementary school with no bills, an unknown roof
 age, a budget with no year or type, and a saved incentive record that disagrees with the live page.
 
-These run the scripted model on saved fixtures, so they need no network and no API key. The stale-record
-refresh itself (saving the new "closed" version to the cache) arrives with v4; here we check that the
-conflict is detected, shown, and kept out of net cost.
+These run the scripted model on saved fixtures, so they need no network and no API key. The incentives
+tool refreshes a cache row older than 7 days and saves the live "closed" status with a page hash.
 """
 
 from __future__ import annotations
@@ -104,7 +103,10 @@ def test_case2_is_listed_for_the_dev_landing_page(api_client):
 
 
 def test_case2_upsert_cache_called_for_stale_incentive(run_and_payload):
-    """v4: the agent saves the refreshed 'closed' status via upsert_reference_cache."""
+    """The stale open record is refreshed: closed is a new version, and the old open row remains."""
+    from tools.cache import get_reference_cache
+    from tools.ny_rules_rates import quote_page_hash
+
     run, _ = run_and_payload
     events = list(run.events.order_by("seq"))
     upsert_calls = [
@@ -113,6 +115,14 @@ def test_case2_upsert_cache_called_for_stale_incentive(run_and_payload):
     assert len(upsert_calls) >= 1
     upsert_input = upsert_calls[0].payload.get("input", {})
     assert upsert_input.get("payload", {}).get("status") == "closed"
+
+    cache = get_reference_cache()
+    record_id = "incentive:nyserda-school-solar"
+    latest = cache.get_latest(record_id)
+    assert latest is not None
+    assert latest["data"]["status"] == "closed"
+    assert latest["page_hash"] == quote_page_hash("This program is closed to new applications.")
+    assert any(version["data"].get("status") == "open" for version in cache.versions(record_id))
 
 
 def test_case2_cache_rollback_restores_previous():

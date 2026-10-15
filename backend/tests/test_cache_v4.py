@@ -15,8 +15,20 @@ class TestApprovedSources:
     def test_coned_is_approved(self):
         assert is_approved_source("https://www.coned.com/en/save-money/using-solar-energy-at-home")
 
-    def test_example_test_fixture_is_approved(self):
+    def test_example_test_fixture_is_approved_in_mock(self, monkeypatch):
+        from django.conf import settings
+
+        monkeypatch.setattr(settings, "TOOL_MODE", "mock")
         assert is_approved_source("https://example.test/fictional/case2/incentives")
+
+    def test_example_test_is_rejected_in_live_mode(self, monkeypatch):
+        from django.conf import settings
+
+        monkeypatch.setattr(settings, "TOOL_MODE", "live")
+        assert not is_approved_source("https://example.test/fictional/case2/incentives")
+
+    def test_dsire_finder_only_is_not_a_save_source(self):
+        assert not is_approved_source("https://www.dsireusa.org/programs")
 
     def test_random_blog_is_not_approved(self):
         assert not is_approved_source("https://solarreviews.com/best-panels")
@@ -139,6 +151,76 @@ class TestDjangoCacheBackend:
         cache.confirm_pending("test:cp", result["version"])
         assert cache.get("test:cp") == {"status": "open"}
 
+    def test_smaller_amount_saves_immediately(self):
+        """A lower incentive is more cautious, so it does not wait for review."""
+        cache = DjangoCacheBackend()
+        cache.put(
+            "test:amt-down",
+            {"status": "open", "amount": 1000},
+            source_url="https://nyserda.ny.gov/test",
+            retrieved_at="2026-10-01T12:00:00Z",
+        )
+        result = cache.put(
+            "test:amt-down",
+            {"status": "open", "amount": 500},
+            source_url="https://nyserda.ny.gov/test",
+            retrieved_at="2026-10-15T12:00:00Z",
+        )
+        assert result["pending"] is False
+        assert cache.get("test:amt-down")["amount"] == 500
+
+    def test_larger_amount_saves_as_pending(self):
+        """A higher incentive is more favorable and stays pending."""
+        cache = DjangoCacheBackend()
+        cache.put(
+            "test:amt-up",
+            {"status": "open", "amount": 500},
+            source_url="https://nyserda.ny.gov/test",
+            retrieved_at="2026-10-01T12:00:00Z",
+        )
+        result = cache.put(
+            "test:amt-up",
+            {"status": "open", "amount": 1500},
+            source_url="https://nyserda.ny.gov/test",
+            retrieved_at="2026-10-15T12:00:00Z",
+        )
+        assert result["pending"] is True
+        assert cache.get("test:amt-up")["amount"] == 500
+
+    def test_shorter_deadline_saves_immediately(self):
+        cache = DjangoCacheBackend()
+        cache.put(
+            "test:dl-short",
+            {"status": "open", "deadline": "2027-12-31"},
+            source_url="https://nyserda.ny.gov/test",
+            retrieved_at="2026-10-01T12:00:00Z",
+        )
+        result = cache.put(
+            "test:dl-short",
+            {"status": "open", "deadline": "2026-12-31"},
+            source_url="https://nyserda.ny.gov/test",
+            retrieved_at="2026-10-15T12:00:00Z",
+        )
+        assert result["pending"] is False
+        assert cache.get("test:dl-short")["deadline"] == "2026-12-31"
+
+    def test_later_deadline_saves_as_pending(self):
+        cache = DjangoCacheBackend()
+        cache.put(
+            "test:dl-later",
+            {"status": "open", "deadline": "2026-12-31"},
+            source_url="https://nyserda.ny.gov/test",
+            retrieved_at="2026-10-01T12:00:00Z",
+        )
+        result = cache.put(
+            "test:dl-later",
+            {"status": "open", "deadline": "2028-06-30"},
+            source_url="https://nyserda.ny.gov/test",
+            retrieved_at="2026-10-15T12:00:00Z",
+        )
+        assert result["pending"] is True
+        assert cache.get("test:dl-later")["deadline"] == "2026-12-31"
+
 
 @pytest.mark.django_db
 class TestUpsertTool:
@@ -157,6 +239,28 @@ class TestUpsertTool:
 
         result = upsert_reference_cache("test:no-src", {"status": "open"})
         assert "rejected_no_source" in result.flags
+
+    def test_rejects_finder_only_source(self):
+        from tools.upsert_cache import upsert_reference_cache
+
+        result = upsert_reference_cache(
+            "test:dsire",
+            {"status": "open"},
+            source_url="https://www.dsireusa.org/ny",
+        )
+        assert "rejected_finder_only" in result.flags
+
+
+def test_system_prompt_has_v4_rules_and_no_merge_markers():
+    """The prompt the model loads must be one clean file: cache rules and all 13 sections."""
+    from agent.harness import load_system_prompt
+
+    text = load_system_prompt()
+    assert "<<<<<<<" not in text
+    assert ">>>>>>>" not in text
+    assert "cached_live_conflict" in text
+    assert "upsert_reference_cache" in text
+    assert "Every section id has to be present" in text
 
     def test_accepts_approved_source(self):
         from tools.upsert_cache import upsert_reference_cache

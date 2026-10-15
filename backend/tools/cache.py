@@ -143,6 +143,24 @@ class JsonFileReferenceCache(ReferenceCache):
         return list(self._data.get(record_id, []))
 
 
+def _payload_amount(payload: dict[str, Any]) -> float | None:
+    """Dollar figure on a cache row, when the payload has one."""
+    for key in ("amount", "incentive_amount"):
+        value = payload.get(key)
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            continue
+        return float(value)
+    return None
+
+
+def _payload_deadline(payload: dict[str, Any]) -> str:
+    """ISO date string for a program deadline, or empty when the row has none."""
+    value = payload.get("deadline")
+    if isinstance(value, str):
+        return value.strip()
+    return ""
+
+
 class DjangoCacheBackend(ReferenceCache):
     """
     SQLite-backed cache using the CacheRecord Django model (v4+).
@@ -212,11 +230,11 @@ class DjangoCacheBackend(ReferenceCache):
             .order_by("-version")
             .first()
         )
-        prev_status = prev_active.data.get("status", "") if prev_active else ""
-        new_status = payload.get("status", "")
+        prev_payload = prev_active.data if prev_active else {}
+        prev_status = prev_payload.get("status", "") if prev_payload else ""
 
         changed = prev is None or prev.data != payload
-        pending = self._is_favorable_change(prev_status, new_status) if changed else False
+        pending = self._is_favorable_change(prev_payload, payload) if changed else False
 
         dt = parse_iso_datetime(retrieved_at) or datetime.now(timezone.utc)
         row = CacheRecord.objects.create(
@@ -277,6 +295,7 @@ class DjangoCacheBackend(ReferenceCache):
                 "data": r.data,
                 "source_url": r.source_url,
                 "retrieved_at": r.retrieved_at.isoformat(),
+                "page_hash": r.page_hash,
                 "changed": r.changed,
                 "pending": r.pending,
                 "rolled_back": r.rolled_back,
@@ -285,24 +304,33 @@ class DjangoCacheBackend(ReferenceCache):
         ]
 
     @staticmethod
-    def _is_favorable_change(old_status: str, new_status: str) -> bool:
+    def _is_favorable_change(old_payload: dict[str, Any], new_payload: dict[str, Any]) -> bool:
         """
-        The safe-change rule: a change that makes a plan MORE cautious saves
-        automatically. A change that is MORE favorable saves as pending.
+        A change that makes a plan more cautious saves immediately.
+        A change that makes a plan more favorable waits for a person.
 
-        Cautious (auto-save): open→closed, any→expired, amount decreased, deadline shortened.
-        Favorable (pending): closed→open, amount increased, deadline extended.
+        Cautious: open to closed, a smaller amount, or an earlier deadline.
+        Favorable: closed to open, a larger amount, or a later deadline.
+        Status wins over amount and deadline, so closing a program still saves
+        even if the dollar figure went up. The first write has no old row and saves.
         """
-        old = old_status.lower().strip()
-        new = new_status.lower().strip()
-        if not old or not new:
-            return False  # First write or no status field → auto-save
-        # Cautious transitions → auto-save (not favorable)
-        if new in ("closed", "expired", "suspended"):
-            return False
-        # Favorable transitions → pending
-        if old in ("closed", "expired", "suspended") and new in ("open", "active"):
-            return True
+        old_status = str(old_payload.get("status") or "").lower().strip()
+        new_status = str(new_payload.get("status") or "").lower().strip()
+        if old_status and new_status:
+            if new_status in ("closed", "expired", "suspended"):
+                return False
+            if old_status in ("closed", "expired", "suspended") and new_status in ("open", "active"):
+                return True
+
+        old_amount = _payload_amount(old_payload)
+        new_amount = _payload_amount(new_payload)
+        if old_amount is not None and new_amount is not None and new_amount != old_amount:
+            return new_amount > old_amount
+
+        old_deadline = _payload_deadline(old_payload)
+        new_deadline = _payload_deadline(new_payload)
+        if old_deadline and new_deadline and old_deadline != new_deadline:
+            return new_deadline > old_deadline
         return False
 
 

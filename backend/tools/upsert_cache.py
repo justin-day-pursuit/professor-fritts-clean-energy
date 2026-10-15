@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from tools.approved_sources import is_approved_source
+from tools.approved_sources import is_approved_source, is_finder_only
 from tools.base import ToolResult
 from tools.cache import FRESHNESS_DAYS, get_reference_cache
 
@@ -27,14 +27,22 @@ def upsert_reference_cache(
     Save a fresh result to the versioned cache.
 
     Rejects:
-    - Missing or non-approved source_url
-    - User input or model estimates (no source_url)
+    - Missing source_url (user input or a model estimate with nothing to cite)
+    - A finder-only page such as DSIRE
+    - Any other URL that is not on the approved list
     """
     if not source_url:
         return ToolResult(
             tool="upsert_reference_cache",
             data={"error": "source_url is required"},
             flags=["rejected_no_source"],
+        )
+
+    if is_finder_only(source_url):
+        return ToolResult(
+            tool="upsert_reference_cache",
+            data={"error": f"Source {source_url} is finder-only and cannot be saved"},
+            flags=["rejected_finder_only"],
         )
 
     if not is_approved_source(source_url):

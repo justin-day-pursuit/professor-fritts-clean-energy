@@ -49,6 +49,7 @@
         },
         "source_url": "https://example.test/fictional/case2/incentives",
         "retrieved_at": "2026-10-01T12:00:00Z",
+        "page_hash": "7c0c226bb60f4a5c4377c9c869f2607b3eb3acdbe0bab8dfa8ea39f6149ed7bc",
         "freshness_kind": "incentives"
       }
     },
