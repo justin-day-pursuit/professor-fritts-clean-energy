@@ -60,13 +60,17 @@ def _street_name(address: str | None) -> str:
     parts = re.sub(r"[^A-Za-z0-9\- ]", " ", address).upper().split()
     if parts and any(ch.isdigit() for ch in parts[0]):
         parts = parts[1:]
+    # A street suffix ends the street name. Looking for it first keeps streets that start with a place
+    # word ("Queens Boulevard", "New York Avenue") intact. Index 0 is skipped so "St Marks Place" is not cut at "St".
+    for index, part in enumerate(parts):
+        if index >= 1 and (part in suffix or part in set(suffix.values())):
+            return " ".join(parts[:index] + [suffix.get(part, part)])
+    # No suffix ("41-17 Main, Queens"): the street runs until the first place name after at least one street word.
     name: list[str] = []
     for part in parts:
-        if part in stop:
+        if part in stop and name:
             break
-        name.append(suffix.get(part, part))
-        if name[-1] in set(suffix.values()):
-            break
+        name.append(part)
     return " ".join(name)
 
 

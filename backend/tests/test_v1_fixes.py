@@ -466,3 +466,24 @@ def test_mock_fixtures_do_not_share_the_solar_source_url():
     assert solar not in urls
     assert len(set(urls)) == len(urls)
     assert all("pvwatts" not in url for url in urls)
+
+
+@pytest.mark.parametrize(
+    ("address", "street"),
+    [
+        ("41-17 Main Street", "MAIN STREET"),
+        ("41-24 KISSENA BOULEVARD", "KISSENA BOULEVARD"),
+        ("10-20 Queens Boulevard", "QUEENS BOULEVARD"),  # starts with a place word
+        ("55 Flushing Ave", "FLUSHING AVENUE"),  # short suffix is spelled out
+        ("12 New York Avenue", "NEW YORK AVENUE"),
+        ("41-17 Main Street, Flushing, NY, USA", "MAIN STREET"),  # trailing place names are dropped
+        ("41-17 Main, Queens", "MAIN"),  # no suffix: stop at the place name
+        ("25 St Marks Place", "ST MARKS PLACE"),  # a leading "St" is not a suffix
+        ("", ""),
+    ],
+)
+def test_street_name_keeps_streets_that_start_with_a_place_word(address, street):
+    """The street-mismatch check compares street names; streets like Queens Boulevard must not come out empty."""
+    from tools.live_records import _street_name
+
+    assert _street_name(address) == street
