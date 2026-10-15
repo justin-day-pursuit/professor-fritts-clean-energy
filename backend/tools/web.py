@@ -11,7 +11,9 @@ from typing import Any
 
 import httpx
 
-RETRIES = 2
+# One retry keeps the worst case for a hanging service to two timeouts plus a short wait; each tool sets
+# its own timeout (10 to 20 seconds), so a single call gives up well inside a minute.
+RETRIES = 1
 WAIT_SECONDS = 1.0
 
 

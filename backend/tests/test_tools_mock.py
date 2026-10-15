@@ -204,7 +204,7 @@ def _fake_records_get(url, params=None, timeout=None, headers=None):
         response = _fake_httpx_get(url, params=params, timeout=timeout).json()
         response["features"][0]["properties"]["addendum"] = {"pad": {"bbl": "4050430011"}}
         return _FakeResponse(response)
-    assert params["$where"] == "bbl='4050430011.00000000'"
+    assert params["$where"] == "bbl=4050430011"
     return _FakeResponse(
         [
             {
@@ -295,7 +295,7 @@ def test_low_confidence_geocode_is_flagged_as_approximate(monkeypatch):
 
 
 def test_web_requests_retry_after_a_network_error(monkeypatch):
-    """A request that fails twice and then works succeeds on the third try."""
+    """A request that fails once and then works succeeds on the retry."""
     import httpx
 
     from tools import web
@@ -304,14 +304,14 @@ def test_web_requests_retry_after_a_network_error(monkeypatch):
 
     def flaky_get(url, **kwargs):
         calls.append(url)
-        if len(calls) < 3:
+        if len(calls) < 2:
             raise httpx.ConnectError("blip")
         return _FakeResponse({"ok": True})
 
     monkeypatch.setattr("httpx.get", flaky_get)
     monkeypatch.setattr(web.time, "sleep", lambda _s: None)
     assert web.get_with_retry("https://example.test").json() == {"ok": True}
-    assert len(calls) == 3
+    assert len(calls) == 2
 
 
 def test_web_requests_give_up_after_the_retries(monkeypatch):
@@ -366,6 +366,97 @@ def test_case1_live_gives_kwh_and_dollar_ranges_with_sources(monkeypatch):
     assert got["dollars_low"].data["value"] < got["dollars_high"].data["value"]
     assert got["dollars_low"].data["calc_id"] == "C4" and got["dollars_high"].data["calc_id"] == "C4"
     assert got["solar"].source_url and got["rates"].source_url
+
+
+def test_live_solar_accepts_county_when_borough_is_empty(monkeypatch):
+    """The form's "Borough or county" field can arrive as county; the live tools treat it as the borough."""
+    monkeypatch.setattr(settings, "TOOL_MODE", "live")
+    monkeypatch.setenv("NLR_API_KEY", "test-key")
+    monkeypatch.setattr("httpx.get", _fake_httpx_get)
+    profile = {**_queens_profile(), "borough": "", "county": "Queens"}
+    result = execute_tool("get_solar_production", {}, session_profile=profile, fixture_case=CASE)
+    assert result.mock is False
+
+
+def test_live_records_accept_county_when_borough_is_empty(monkeypatch):
+    """Same as solar: a county value is used when the borough is empty, and the record reports it."""
+    monkeypatch.setattr(settings, "TOOL_MODE", "live")
+    monkeypatch.setattr("httpx.get", _fake_records_get)
+    profile = {**_queens_profile(), "borough": "", "county": "Queens"}
+    result = execute_tool("get_building_profile", {}, session_profile=profile, fixture_case=CASE)
+    assert result.data["profile"]["county"] == "Queens"
+    records = execute_tool("lookup_ny_building_records", {}, session_profile=profile, fixture_case=CASE)
+    assert records.data["borough"] == "Queens"
+
+
+@pytest.mark.parametrize("roof", [None, "", "abc", 0, -5])
+def test_live_solar_rejects_a_missing_or_invalid_roof_area(monkeypatch, roof):
+    """Without a system size, a missing, text, zero or negative roof area gives a clear error, not a KeyError."""
+    from tools.live_solar import LiveSolarError
+
+    monkeypatch.setattr(settings, "TOOL_MODE", "live")
+    monkeypatch.setenv("NLR_API_KEY", "test-key")
+    monkeypatch.setattr("httpx.get", _fake_httpx_get)
+    profile = {k: v for k, v in _queens_profile().items() if k != "roof_area_sqft"}
+    if roof is not None:
+        profile["roof_area_sqft"] = roof
+    with pytest.raises(LiveSolarError, match="roof area"):
+        execute_tool("get_solar_production", {}, session_profile=profile, fixture_case=CASE)
+
+
+def test_live_solar_does_not_need_roof_area_when_the_size_is_given(monkeypatch):
+    """An explicit system size skips the roof-area sizing, so a missing roof area is fine."""
+    monkeypatch.setattr(settings, "TOOL_MODE", "live")
+    monkeypatch.setenv("NLR_API_KEY", "test-key")
+    monkeypatch.setattr("httpx.get", _fake_httpx_get)
+    profile = {k: v for k, v in _queens_profile().items() if k != "roof_area_sqft"}
+    result = execute_tool("get_solar_production", {"system_kw": 25}, session_profile=profile, fixture_case=CASE)
+    assert result.data["system_kw_dc"] == 25
+
+
+def test_geocoder_rejects_a_blank_address():
+    """A blank or whitespace address gives a clear error instead of an IndexError."""
+    from tools.geocode import GeocodeError, geocode_nyc_address
+
+    for blank in ("", "   "):
+        with pytest.raises(GeocodeError, match="No address"):
+            geocode_nyc_address(blank, "Queens")
+
+
+@pytest.mark.parametrize(
+    ("address", "label", "fits"),
+    [
+        ("41-17 Main Street", "41-17 MAIN STREET, Flushing, NY, USA", True),
+        ("4117 Main Street", "41-17 MAIN STREET, Flushing, NY, USA", True),  # hyphen ignored
+        ("89-11 Merrick Blvd", "8911 MERRICK BOULEVARD, Jamaica, NY, USA", True),
+        ("Queens Central Library", "89-11 MERRICK BOULEVARD, Jamaica, NY, USA", True),  # named building: no number to compare
+        ("41-17 Main Street", "41-41 MAIN STREET, Flushing, NY, USA", False),
+        ("41-1 Main Street", "41-17 MAIN STREET, Flushing, NY, USA", False),  # a prefix is not a match
+        ("17 Main Street", "117 MAIN STREET, Brooklyn, NY, USA", False),
+    ],
+)
+def test_house_number_check(address, label, fits):
+    """The geocoder's match must start with the address's house number; named buildings pass through."""
+    from tools.geocode import _house_number_fits
+
+    assert _house_number_fits(address, label) is fits
+
+
+def test_live_rates_ignore_months_with_no_price(monkeypatch):
+    """A month with no price yet is skipped; with fewer than 12 priced months the tool stops with a clear error."""
+    from tools.live_rates import LiveRatesError
+
+    monkeypatch.setattr(settings, "TOOL_MODE", "live")
+    monkeypatch.setenv("EIA_API_KEY", "test-key")
+
+    def partial_series(url, params=None, timeout=None):
+        rows = _fake_eia_get(url).json()["response"]["data"]
+        rows.insert(0, {"period": "2026-08", "price": None, "price-units": "cents per kilowatt-hour"})
+        return _FakeResponse({"response": {"data": rows[: params["length"]]}})
+
+    monkeypatch.setattr("httpx.get", partial_series)
+    with pytest.raises(LiveRatesError, match="months with a price"):
+        execute_tool("get_utility_rates", {}, session_profile={}, fixture_case=CASE)
 
 
 @pytest.mark.skipif(os.environ.get("RUN_LIVE_TESTS") != "1", reason="set RUN_LIVE_TESTS=1 to call the real APIs")

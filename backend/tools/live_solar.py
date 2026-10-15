@@ -13,13 +13,13 @@ from typing import Any
 
 from tools.base import ToolResult
 from tools.calculate import CalculateInput, run_calculate
-from tools.geocode import geocode_nyc_address, is_approximate
+from tools.geocode import borough_of, geocode_nyc_address, is_approximate
 from tools.web import get_with_retry
 
 PVWATTS_URL = "https://developer.nlr.gov/api/pvwatts/v8.json"
 PVWATTS_DOCS_URL = "https://developer.nlr.gov/docs/solar/pvwatts/v8/"
 
-TIMEOUT_SECONDS = 30
+TIMEOUT_SECONDS = 20
 
 # Flat-roof defaults: fixed roof-mount array, low tilt, facing south, standard modules, 14% system losses.
 PVWATTS_DEFAULTS: dict[str, Any] = {
@@ -42,7 +42,12 @@ class LiveSolarError(RuntimeError):
 
 def default_system_kw(profile: dict[str, Any]) -> float:
     """Size the array from roof area with the shared C1 and C2 formulas (setback 0.55, 66 sq ft per kW)."""
-    roof = float(profile["roof_area_sqft"])
+    try:
+        roof = float(profile.get("roof_area_sqft"))
+    except (TypeError, ValueError):
+        roof = 0.0
+    if roof <= 0:
+        raise LiveSolarError("The intake profile has no valid roof area to size the solar array.")
     usable = run_calculate(CalculateInput(formula="C1", inputs={"roof_area_sqft": roof})).data["value"]
     return float(run_calculate(CalculateInput(formula="C2", inputs={"usable_roof_sqft": usable})).data["value"])
 
@@ -70,12 +75,14 @@ def fetch_live_solar_production(profile: dict[str, Any], system_kw: float | None
         raise LiveSolarError("NLR_API_KEY is not set; add it to .env to use live solar data.")
     if not profile.get("address"):
         raise LiveSolarError("The intake profile has no address to look up.")
-    if not profile.get("borough"):
+    borough = borough_of(profile)
+    if not borough:
         # Without it the geocoder can match a same-named street in another borough.
         raise LiveSolarError("The intake profile has no borough; ask which borough the building is in.")
-
-    place = geocode_nyc_address(profile["address"], profile.get("borough"))
+    # Size the array first so bad intake values fail before any web call is made.
     kw = float(system_kw) if system_kw else default_system_kw(profile)
+
+    place = geocode_nyc_address(profile["address"], borough)
     payload = run_pvwatts(place["lat"], place["lon"], kw, api_key)
     base_inputs = {"lat": place["lat"], "lon": place["lon"], "system_capacity": kw, **PVWATTS_DEFAULTS}
     # Two extra PVWatts calls with the same inputs but different losses give the low and high end of the kWh range.

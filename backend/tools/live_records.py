@@ -12,13 +12,13 @@ from datetime import datetime, timezone
 from typing import Any
 
 from tools.base import ToolResult
-from tools.geocode import geocode_nyc_address, is_approximate
+from tools.geocode import borough_of, geocode_nyc_address, is_approximate
 from tools.web import get_with_retry
 
 PLUTO_URL = "https://data.cityofnewyork.us/resource/64uk-42ks.json"
 PLUTO_SOURCE_URL = "https://data.cityofnewyork.us/City-Government/Primary-Land-Use-Tax-Lot-Output-PLUTO-/64uk-42ks"
 
-TIMEOUT_SECONDS = 30
+TIMEOUT_SECONDS = 15
 AREA_MISMATCH_RATIO = 0.10  # flag floor areas that differ by more than 10%
 
 
@@ -51,20 +51,21 @@ def fetch_live_building_records(profile: dict[str, Any], address: str | None = N
     address = address or profile.get("address")
     if not address:
         raise LiveRecordsError("No address to look up.")
-    if not profile.get("borough"):
+    borough = borough_of(profile)
+    if not borough:
         raise LiveRecordsError("The intake profile has no borough; ask which borough the building is in.")
 
-    place = geocode_nyc_address(address, profile["borough"])
-    if not place.get("bbl"):
+    place = geocode_nyc_address(address, borough)
+    if not str(place.get("bbl") or "").isdigit():
         raise LiveRecordsError(f"The geocoder returned no tax lot (BBL) for {place['label']!r}.")
 
     headers = {}
     if os.environ.get("SODA_APP_TOKEN", "").strip():
         headers["X-App-Token"] = os.environ["SODA_APP_TOKEN"].strip()
-    # PLUTO stores the lot ID as a decimal string ("4050430011.00000000"), so the ID from the geocoder needs that suffix.
+    # PLUTO's bbl column is a number (it prints as "4050430011.00000000"), so compare it as a number.
     response = get_with_retry(
         PLUTO_URL,
-        params={"$where": f"bbl='{place['bbl']}.00000000'", "$limit": 1},
+        params={"$where": f"bbl={int(place['bbl'])}", "$limit": 1},
         headers=headers,
         timeout=TIMEOUT_SECONDS,
     )
@@ -87,7 +88,7 @@ def fetch_live_building_records(profile: dict[str, Any], address: str | None = N
         tool="lookup_ny_building_records",
         data={
             "address": row.get("address"),
-            "borough": profile["borough"],
+            "borough": borough,
             "bbl": place["bbl"],
             "zipcode": row.get("zipcode"),
             "gross_floor_area_sqft": city_area,

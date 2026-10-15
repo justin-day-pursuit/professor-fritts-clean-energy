@@ -17,7 +17,7 @@ from tools.web import get_with_retry
 EIA_URL = "https://api.eia.gov/v2/electricity/retail-sales/data/"
 EIA_SOURCE_URL = "https://www.eia.gov/electricity/data/browser/"
 
-TIMEOUT_SECONDS = 30
+TIMEOUT_SECONDS = 15
 MONTHS_AVERAGED = 12
 
 
@@ -45,9 +45,10 @@ def fetch_live_utility_rates(profile: dict[str, Any]) -> ToolResult:
     if response.status_code != 200:
         # Never echo the request URL: it carries the API key.
         raise LiveRatesError(f"EIA error (HTTP {response.status_code}).")
-    rows = response.json().get("response", {}).get("data", [])
+    # A partial series can contain months with no price yet; those cannot be averaged.
+    rows = [row for row in response.json().get("response", {}).get("data", []) if row.get("price") is not None]
     if len(rows) < MONTHS_AVERAGED:
-        raise LiveRatesError(f"EIA returned {len(rows)} months of prices; expected {MONTHS_AVERAGED}.")
+        raise LiveRatesError(f"EIA returned {len(rows)} months with a price; expected {MONTHS_AVERAGED}.")
 
     # EIA sends prices as text in cents per kWh. The average is the figure for annual savings (summer months
     # cost more); the lowest and highest month bound the dollar range.
