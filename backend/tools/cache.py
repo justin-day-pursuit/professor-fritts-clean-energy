@@ -53,6 +53,22 @@ def is_stale(retrieved_at: str, kind: str) -> bool:
     return age > timedelta(days=limit_days)
 
 
+# These tools read the user's own intake or do arithmetic, so they have no retrieval date by design.
+TOOLS_WITHOUT_RETRIEVAL_DATE = frozenset({"get_building_profile", "calculate"})
+
+
+def is_stale_for_tool(tool_name: str, retrieved_at: str, kind: str) -> bool:
+    """
+    Staleness for one tool result: is_stale, except tools with no external source are never stale.
+
+    Without this exception an empty retrieved_at counts as "unknown age = stale", so the intake and
+    calculate results were flagged stale_data on every run.
+    """
+    if tool_name in TOOLS_WITHOUT_RETRIEVAL_DATE:
+        return False
+    return is_stale(retrieved_at, kind)
+
+
 class ReferenceCache(ABC):
     """Abstract cache — get, put, and list versions for a record id."""
 

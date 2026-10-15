@@ -23,14 +23,21 @@ from agent.notes import AgentNotes
 from agent.roadmap import render_follow_up_markdown, render_roadmap_json, render_roadmap_markdown
 from core.models import Run, Session
 from core import services
-from tools.cache import is_stale
+from tools.cache import is_stale_for_tool
 from tools.registry import TOOL_SPECS, execute_tool, get_tool_spec
 
 
 def load_system_prompt() -> str:
-    """Read the v0 system prompt markdown shipped with the backend."""
-    path = Path(__file__).resolve().parent / "prompts" / "system_prompt_v0.md"
+    """Read the v1 system prompt markdown shipped with the backend (v0 stays in prompts/ for history)."""
+    path = Path(__file__).resolve().parent / "prompts" / "system_prompt_v1.md"
     return path.read_text(encoding="utf-8")
+
+
+def _tool_error_text(exc: Exception) -> str:
+    """Readable text for a tool failure; a bare KeyError would otherwise show only the missing name."""
+    if isinstance(exc, KeyError):
+        return f"missing required input {exc}"
+    return str(exc) or type(exc).__name__
 
 
 def build_tool_schemas_for_llm() -> list[dict[str, Any]]:
@@ -521,20 +528,48 @@ def run_harness(
             )
         except Exception as exc:
             limits.record_failed_tool_attempt(tool_name)
-            services.append_event(run, seq=seq, kind="error", payload={"message": str(exc)})
+            error_text = _tool_error_text(exc)
+            # With a real model (it supplies a tool_use id), hand the error back as the tool result so it
+            # can fix its input or carry on without the tool. Check 2 still caps repeated failures per tool.
+            # The scripted model has no tool_use id and cannot react, so that case still ends the run.
+            services.append_event(
+                run,
+                seq=seq,
+                kind="error",
+                payload={"message": error_text, "tool": tool_name, "will_retry": bool(step.tool_use_id)},
+            )
+            seq += 1
+            if step.tool_use_id:
+                llm.submit_tool_result(
+                    step.tool_use_id,
+                    json.dumps(
+                        {
+                            "error": error_text,
+                            "tool": tool_name,
+                            "instruction": "The tool did not run. Fix the input and call it again, "
+                            "or continue without it and say in the roadmap what is missing.",
+                        }
+                    ),
+                    notes.summarize_for_llm(),
+                )
+                continue
             return _close_run(
                 run,
-                seq=seq + 1,
+                seq=seq,
                 status=Run.Status.FAILED,
-                output={"error": str(exc)},
+                output={"error": error_text},
                 t0=t0,
                 tool_call_count=limits.tool_call_count,
             )
 
         spec = get_tool_spec(tool_name)
         kind = spec.freshness_kind if spec else "default"
-        stale = is_stale(result.retrieved_at, kind)
+        stale = is_stale_for_tool(tool_name, result.retrieved_at, kind)
         result = result.model_copy(update={"stale": stale or result.stale})
+        # Some tools have no live version yet and still answer from saved files. In a live run, mark their
+        # results so the roadmap can say which parts are not real data.
+        if mode == "live" and result.mock and "mock_data_in_live_run" not in result.flags:
+            result = result.model_copy(update={"flags": [*result.flags, "mock_data_in_live_run"]})
 
         check3 = run_check3(result, freshness_kind=kind)
         seq = _append_check_event(run, seq, "check3", check3)

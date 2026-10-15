@@ -57,6 +57,15 @@ class LLMClient(ABC):
         """
 
 
+class LLMCallError(RuntimeError):
+    """
+    The model call itself failed: wrong model id, bad key, rate limit, outage, or an answer cut off.
+
+    It is a RuntimeError on purpose: the harness already catches RuntimeError around next_step and
+    closes the run with this message instead of crashing the request.
+    """
+
+
 class LLMConfigurationError(Exception):
     """User-facing configuration problem (for example missing API key)."""
 

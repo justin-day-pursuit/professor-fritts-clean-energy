@@ -17,7 +17,7 @@ from agent.claims import (
 )
 from agent.limits import RunLimits, tool_call_limit, tool_retry_limit
 from tools.base import ToolResult
-from tools.cache import is_stale
+from tools.cache import is_stale_for_tool
 from tools.registry import get_tool_spec, list_tool_names, validate_tool_input
 
 # Simple injection-style phrases Check 3 flags (full defense tests arrive in v6).
@@ -158,7 +158,7 @@ def run_check3(result: ToolResult, *, freshness_kind: str = "default") -> CheckR
         if pattern.search(blob):
             flags.append("hidden_instruction_pattern")
 
-    stale = result.stale or is_stale(result.retrieved_at, freshness_kind)
+    stale = result.stale or is_stale_for_tool(result.tool, result.retrieved_at, freshness_kind)
     if stale and "stale_data" not in flags:
         flags.append("stale_data")
 
