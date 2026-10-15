@@ -17,9 +17,21 @@ v1 scope: energy efficiency and solar PV (battery storage only for solar resilie
 - [Product Requirements Document](Building_Renewable_Energy_Planner_PRD_v3.md)
 - [Agent flow diagram](user-flow/Professor_Fritts_Agent_Flow.png) and [description](user-flow/Professor%20Fritts%20Agent%20Flow.md)
 
+## Live Deployments
+
+- **Frontend (Vercel):** [https://professor-fritts-clean-energy.vercel.app](https://professor-fritts-clean-energy.vercel.app)
+  - Hosted on Vercel with Next.js 16 and Vercel Analytics (`@vercel/analytics`).
+  - Configured with `NEXT_PUBLIC_API_BASE_URL=https://professor-fritts-brain-powered.onrender.com`.
+- **Backend (Render):** [https://professor-fritts-brain-powered.onrender.com/](https://professor-fritts-brain-powered.onrender.com/)
+  - Hosted on Render running FastAPI + Django via Uvicorn.
+  - Health check endpoints: `/health` and `/api/health`.
+  - Configured with `FRONTEND_ORIGIN` allowing requests from `https://professor-fritts-clean-energy.vercel.app` (and local `http://localhost:3000`).
+- **Database (Supabase Postgres):**
+  - Connected via `DATABASE_URL` in `.env` on both the Render backend and local environment using the Supabase session pooler (`port 5432`, `sslmode=require`).
+
 ## Setup
 
-1. Copy `.env.example` to `.env` at the project root and paste your Anthropic API key into `ANTHROPIC_API_KEY`. Never commit `.env`.
+1. Copy `.env.example` to `.env` at the project root and paste your Anthropic API key into `ANTHROPIC_API_KEY`. Add your Supabase `DATABASE_URL` if connecting to Postgres (defaults to SQLite if empty). Never commit `.env`.
 2. Install the web app: `cd frontend && npm install`
 3. Install the Python backend tools: `cd backend && python3.12 -m venv .venv`, activate the virtual environment, then `pip install -r requirements.txt`
 
@@ -101,7 +113,7 @@ That prints the run log (checks, tool calls, mock results) and the roadmap Markd
 | External tools (PVWatts, REopt, rates, incentives, FEMA, NY building records) | `TOOL_MODE=mock` JSON fixtures under `backend/mocks/fixtures/` | Live API integration block |
 | LLM planning loop | `LLM_PROVIDER=scripted` replays `scripted_llm.json`; optional Anthropic when keyed | Production LLM + eval harness |
 | Tool result cache | In-memory / JSON file cache in the backend | Supabase-backed reference cache |
-| Database | SQLite via Django (local `.data/`) | Supabase Postgres |
+| Database | Supabase Postgres (via `DATABASE_URL`; SQLite dev.sqlite3 when unset) | Production Supabase Postgres |
 | Roadmap sections | PRD sections 1,2,3,5,6,8,9,10,12,13 only; footer notes missing 4, 7, 11 | v2 / v5 product blocks |
 | Financial model, evidence search | Tools not registered in v0 | Future tool units |
 

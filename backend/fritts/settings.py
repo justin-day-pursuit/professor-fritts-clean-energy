@@ -169,4 +169,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Values exposed on the health endpoint (read from root .env).
 TOOL_MODE = os.environ.get("TOOL_MODE", "mock")
 LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "anthropic")
-FRONTEND_ORIGIN = os.environ.get("FRONTEND_ORIGIN", "http://localhost:3000")
+FRONTEND_ORIGIN = os.environ.get(
+    "FRONTEND_ORIGIN",
+    "http://localhost:3000,https://professor-fritts-clean-energy.vercel.app",
+)
+

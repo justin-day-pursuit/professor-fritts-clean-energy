@@ -24,7 +24,7 @@ services:
       - key: LLM_PROVIDER
         value: "scripted"
       - key: FRONTEND_ORIGIN
-        sync: false
+        value: "https://professor-fritts-clean-energy.vercel.app,http://localhost:3000"
       - key: DATABASE_URL
         sync: false
       - key: ANTHROPIC_API_KEY
