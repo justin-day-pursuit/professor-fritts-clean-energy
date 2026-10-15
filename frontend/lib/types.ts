@@ -121,6 +121,14 @@ export interface IntakeProfile {
   target_year?: number | string;
   critical_loads?: string;
   critical_load_hours?: number | string;
+  /** Usable roof area (sq ft) an engineer or roofer verified. Needed before solar is sized on a roof that is not flat. */
+  verified_usable_roof_sqft?: number | string;
+  /** Solar already on the roof: size in kW DC and what it makes in a year. */
+  existing_solar_kw?: number | string;
+  existing_solar_kwh?: number | string;
+  /** Free text: other renewables and efficiency work the building already has ("none" if none). */
+  existing_renewables?: string;
+  existing_efficiency?: string;
   contact_name?: string;
   building_name?: string;
 }
@@ -158,4 +166,27 @@ export interface ToolResultPayload {
   mock?: boolean;
   stale?: boolean;
   flags?: string[];
+}
+
+/** One building outline on the tax lot, from NYC building footprints. */
+export interface RoofBuilding {
+  area_sqft: number;
+  height_ft: number | null;
+  construction_year: number | null;
+  name: string | null;
+  counted: boolean;
+}
+
+/** GET /api/records/roof-suggestion: a suggested roof area. It is not a measured roof. */
+export interface RoofSuggestion {
+  suggested_roof_area_sqft: number;
+  total_footprint_sqft: number;
+  largest_footprint_sqft: number;
+  building_count: number;
+  buildings: RoofBuilding[];
+  bbl: string;
+  geocoder_match: string | null;
+  source_url: string;
+  retrieved_at: string;
+  note: string;
 }

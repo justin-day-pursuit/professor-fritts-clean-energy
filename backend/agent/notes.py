@@ -12,6 +12,10 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from tools.base import ToolResult
+from tools.roof import number_from_profile, roof_kind, verified_usable_area
+
+# What a user writes when the building has nothing to list in an existing-systems box.
+NO_SYSTEM_WORDS = frozenset({"none", "no", "n/a", "na", "nothing", "not applicable", "0"})
 
 
 class AgentNotes(BaseModel):
@@ -44,6 +48,30 @@ class AgentNotes(BaseModel):
         flag = f"tool_error:{tool_name}"
         if flag not in self.flags:
             self.flags.append(flag)
+
+    def _record_roof_and_existing_systems(self, profile: dict[str, Any]) -> None:
+        """
+        Remember the roof kind and any systems the building already has, for Check 4 and the LLM summary (v6).
+
+        roof_kind is "flat", "non_flat" or "unknown". existing_systems is a short sentence of what the intake
+        lists, and is left out when the user wrote "none" or filled in nothing, so a building with no systems
+        adds no extra requirement.
+        """
+        self.site_context["roof_kind"] = roof_kind(profile.get("roof_type"))
+        verified = verified_usable_area(profile)
+        if verified is not None:
+            self.site_context["verified_usable_roof_sqft"] = verified
+        parts: list[str] = []
+        solar_kw = number_from_profile(profile, "existing_solar_kw")
+        if solar_kw:
+            solar_kwh = number_from_profile(profile, "existing_solar_kwh")
+            parts.append(f"solar {solar_kw:g} kW" + (f" making about {solar_kwh:,.0f} kWh a year" if solar_kwh else ""))
+        for key, label in (("existing_renewables", "renewables"), ("existing_efficiency", "efficiency")):
+            text = str(profile.get(key) or "").strip()
+            if text and text.lower().strip(" .") not in NO_SYSTEM_WORDS:
+                parts.append(f"{label}: {text}")
+        if parts:
+            self.site_context["existing_systems"] = "; ".join(parts)
 
     def record_quarantine(self, tool_name: str, source_url: str, reason: str, name: str = "") -> None:
         """Remember a page that was ignored for hidden instructions (once per address)."""
@@ -85,6 +113,7 @@ class AgentNotes(BaseModel):
             # "park recreation center" is a park building. "parking garage" is not.
             if "parkland" in building_type or re.search(r"\bpark\b", building_type):
                 self.site_context["parkland"] = True
+            self._record_roof_and_existing_systems(result.data.get("profile", {}))
             # A7 (v2): until a building model exists (phase 2), efficiency savings are a benchmark range.
             self.assumptions.setdefault(
                 "A7",

@@ -14,10 +14,16 @@
     "land_use_code": "8",
     "landmark_flag": true,
     "differs_from_intake": [],
-    "geocoder_match": "425 6 AVENUE, New York, NY, USA"
+    "geocoder_match": "425 6 AVENUE, New York, NY, USA",
+    "footprint_total_sqft": 7019,
+    "footprint_building_count": 1,
+    "footprint_buildings_sqft": [
+      7019
+    ],
+    "footprints_error": null
   },
   "source_url": "https://data.cityofnewyork.us/City-Government/Primary-Land-Use-Tax-Lot-Output-PLUTO-/64uk-42ks",
-  "retrieved_at": "2026-10-15T20:49:00Z",
+  "retrieved_at": "2026-10-15T21:41:41Z",
   "dataset_version": "pluto-26v2",
   "mock": false,
   "stale": false,

@@ -84,6 +84,27 @@ def _round_pair(low: float, high: float, digits: int = 0) -> list[float]:
     return [round(low, digits), round(high, digits)]
 
 
+def _budget_note(strain: str, gap: list[float] | None, reaches_goal: bool) -> str:
+    """
+    One plain sentence about the budget for this scenario, quoted in the plan.
+
+    When the package costs more than the budget, it says by how much and whether it reaches the goal, and
+    that extending the budget is a choice for the user.
+    """
+    if gap is None:
+        return "No budget was given, so budget strain was not assessed."
+    if strain == "within budget":
+        return "The estimated cost fits within the budget."
+    low, high = gap
+    amount = f"${low:,.0f}-${high:,.0f}" if low > 0 else f"up to ${high:,.0f}"
+    if reaches_goal:
+        return (
+            f"Reaches the goal, but the estimated cost is {amount} more than your budget. Reaching the goal may take "
+            "more than the amount set aside; compare that gap with the savings before deciding whether to extend it."
+        )
+    return f"The estimated cost is {amount} more than your budget, and it does not reach the goal at the low end."
+
+
 def model_package(package: Package, site: Site) -> dict:
     """
     Compute cost, savings, payback, budget strain and outage hours for one package.
@@ -111,9 +132,16 @@ def model_package(package: Package, site: Site) -> dict:
     efficiency_kwh = [site.annual_use_kwh * pct / 100.0 for pct in eff["savings_pct"]]
     scale = (package.solar_kw_dc / site.full_array_kw_dc) if site.full_array_kw_dc else 0.0
     solar_kwh = [site.full_array_kwh_low * scale, site.full_array_kwh_high * scale]
+    # Solar can only replace power the building still uses after efficiency. Anything beyond that is surplus
+    # that flows to the grid (v6): it is shown to the user as potential but never counted as a bill saving,
+    # because export credits depend on net-metering rules this model does not check. This keeps every
+    # reduction at or below 100% of annual use, so a plan never claims to cut more than the building uses.
+    use_after_efficiency = [max(site.annual_use_kwh - efficiency_kwh[i], 0.0) for i in (0, 1)]
+    solar_used_kwh = [min(solar_kwh[i], use_after_efficiency[i]) for i in (0, 1)]
+    surplus_kwh = [solar_kwh[i] - solar_used_kwh[i] for i in (0, 1)]
     # Solar and efficiency overlap slightly in real life (smaller load, same panels); adding them
     # slightly overstates the total, which is why every output stays a range with low confidence.
-    reduction_kwh = [efficiency_kwh[i] + solar_kwh[i] for i in (0, 1)]
+    reduction_kwh = [efficiency_kwh[i] + solar_used_kwh[i] for i in (0, 1)]
     reduction_pct = [100.0 * r / site.annual_use_kwh if site.annual_use_kwh else 0.0 for r in reduction_kwh]
     share_of_goal_pct = [100.0 * (p / 100.0) / site.goal_fraction for p in reduction_pct]
 
@@ -139,6 +167,16 @@ def model_package(package: Package, site: Site) -> dict:
     else:
         strain_ratio, strain = None, "no budget given"
 
+    # --- budget gap: how much more than the budget the package costs (v6) ---
+    # A plan that reaches the goal can still need more money than the user set aside. The gap says so in
+    # dollars, so the user can weigh extending the budget against the savings instead of discarding the option.
+    reaches_goal = reduction_pct[0] >= site.goal_fraction * 100.0
+    if site.budget_usd > 0:
+        gap = [max(upfront[0] - site.budget_usd, 0.0), max(upfront[1] - site.budget_usd, 0.0)]
+    else:
+        gap = None
+    budget_note = _budget_note(strain, gap, reaches_goal)
+
     # --- outage hours: usable battery energy divided by the critical load ---
     if package.battery_kwh > 0 and site.critical_load_kw > 0:
         usable = [package.battery_kwh * f for f in BATTERY_USABLE_FRACTION]
@@ -159,7 +197,11 @@ def model_package(package: Package, site: Site) -> dict:
         "reduction_kwh": _round_pair(*reduction_kwh),
         "reduction_pct_of_use": _round_pair(*reduction_pct, 1),
         "share_of_goal_pct": _round_pair(*share_of_goal_pct, 0),
-        "reaches_goal": reduction_pct[0] >= site.goal_fraction * 100.0,
+        "reaches_goal": reaches_goal,
+        "surplus_solar_kwh": _round_pair(*surplus_kwh),
+        "surplus_not_counted_in_savings": surplus_kwh[1] > 0,
+        "budget_gap_usd": _round_pair(*gap) if gap else None,
+        "budget_note": budget_note,
         "annual_savings_usd": _round_pair(*savings),
         "payback_years": _round_pair(*payback, 1) if payback else None,
         "budget_strain": strain,

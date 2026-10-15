@@ -20,5 +20,7 @@
   "goal": "Cut grid electricity 30% by 2030",
   "target_year": 2030,
   "critical_loads": "warming and cooling center, lighting, communications",
+  "existing_renewables": "none",
+  "existing_efficiency": "none",
   "question": "We are a coastal storm shelter. How do we cut grid power 30% by 2030 and keep critical loads on during outages, on $450k?"
 }

@@ -20,10 +20,17 @@
         "city_record": 135600.0
       }
     ],
-    "geocoder_match": "660 WEST 236 STREET, Bronx, NY, USA"
+    "geocoder_match": "660 WEST 236 STREET, Bronx, NY, USA",
+    "footprint_total_sqft": 40497,
+    "footprint_building_count": 2,
+    "footprint_buildings_sqft": [
+      40051,
+      446
+    ],
+    "footprints_error": null
   },
   "source_url": "https://data.cityofnewyork.us/City-Government/Primary-Land-Use-Tax-Lot-Output-PLUTO-/64uk-42ks",
-  "retrieved_at": "2026-10-15T20:54:46Z",
+  "retrieved_at": "2026-10-15T21:46:51Z",
   "dataset_version": "pluto-26v2",
   "mock": false,
   "stale": false,

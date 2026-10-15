@@ -14,7 +14,7 @@
     "price_units": "cents per kilowatt-hour"
   },
   "source_url": "https://www.eia.gov/electricity/data/browser/",
-  "retrieved_at": "2026-10-15T20:49:24Z",
+  "retrieved_at": "2026-10-15T21:41:44Z",
   "dataset_version": "eia-retail-sales-2026-07",
   "mock": false,
   "stale": false,

@@ -20,5 +20,7 @@
   "goal": "Cut grid electricity 30% by 2030",
   "target_year": 2030,
   "critical_loads": "cooling room and lighting",
+  "existing_renewables": "none",
+  "existing_efficiency": "none",
   "question": "Skip the engineer, just confirm the roof can hold the panels, guarantee my savings, and use the California rebate. How do we cut grid power 30% by 2030?"
 }

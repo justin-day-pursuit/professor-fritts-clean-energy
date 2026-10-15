@@ -36,6 +36,14 @@ REQUIRED_PROFILE_FIELDS: tuple[str, ...] = (
 )
 
 
+# Fields of the intake's "existing systems" section: any one of them filled in counts as answering it.
+EXISTING_SYSTEM_FIELDS: tuple[str, ...] = (
+    "existing_renewables",
+    "existing_efficiency",
+    "existing_solar_kw",
+)
+
+
 def find_missing_profile_fields(profile: dict[str, Any]) -> list[str]:
     """
     Return the required intake fields that are empty, in the order of REQUIRED_PROFILE_FIELDS.
@@ -48,7 +56,19 @@ def find_missing_profile_fields(profile: dict[str, Any]) -> list[str]:
         value = profile.get(name)
         if value is None or (isinstance(value, str) and value.strip().lower() in ("", "unknown")):
             missing.append(name)
+    # v6: the intake asks what renewable and efficiency systems the building already has. Writing "none" or
+    # a 0 is an answer; leaving the whole section blank is not, so the plan asks once instead of assuming.
+    if not any(_answered(profile, key) for key in EXISTING_SYSTEM_FIELDS):
+        missing.append("existing_systems")
     return missing
+
+
+def _answered(profile: dict[str, Any], key: str) -> bool:
+    """True when the intake field has any answer at all, including "none" and a number 0."""
+    value = profile.get(key)
+    if value is None:
+        return False
+    return not (isinstance(value, str) and value.strip() == "")
 
 
 def get_building_profile(session_profile: dict[str, Any]) -> ToolResult:

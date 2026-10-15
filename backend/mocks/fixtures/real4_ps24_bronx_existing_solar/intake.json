@@ -1,5 +1,5 @@
 {
-  "_comment": "Real building: P.S. 24 (X024), BBL 2059170140. Public: LL84 2024 grid kWh (226,605) and on-site solar generated (457,512 kWh), floor area and year built. The intake has no field for existing solar, so it is stated in the question. Not public (stated choices): budget, roof area (floor area / 3 floors), critical loads.",
+  "_comment": "Real building: P.S. 24 (X024), BBL 2059170140. Public: LL84 2024 grid kWh (226,605) and on-site solar generated (457,512 kWh), floor area and year built. The intake has no field for existing solar, so it is stated in the question. Not public (stated choices): budget, roof area (floor area / 3 floors), critical loads. Roof area is the form's 'Suggest from city records' answer (sum of building outlines on the tax lot, from NYC building footprints), not a measured roof. Existing solar: 457,512 kWh made in 2024 is from LL84; the 380 kW size is an ESTIMATE (about 1,200 kWh per kW), not public data.",
   "city": "New York",
   "state": "NY",
   "utility": "Con Edison",
@@ -12,11 +12,15 @@
   "floor_area_sqft": 115325,
   "year_built": 1953,
   "roof_type": "flat",
-  "roof_area_sqft": 38000,
+  "roof_area_sqft": 40500,
   "annual_kwh": 226605,
   "budget_amount": 400000,
   "budget_year": 2027,
   "budget_type": "capital",
   "critical_loads": "emergency lighting and communications",
-  "question": "Our roof already has solar that made about 457,000 kWh last year, and we bought 226,605 kWh from the grid. How do we cut grid power another 30% by 2030 on $400k?"
+  "question": "How do we cut our grid power another 30% by 2030 on a $400k capital budget?",
+  "existing_solar_kw": 380,
+  "existing_solar_kwh": 457512,
+  "existing_renewables": "none",
+  "existing_efficiency": "none"
 }

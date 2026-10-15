@@ -1,5 +1,5 @@
 {
-  "_comment": "Real building: Red Hook Recreation Center (NYC Parks), BBL 3005820001. Public: LL84 2024 kWh and floor area; PLUTO says individual landmark (Red Hook Play Center, LP-2241, 2008) and year built 1936 (LL84 says 1920). Basement flooded in Hurricane Sandy (2012). Not public (stated choices): budget, roof area (PLUTO floor area, 1 floor), critical loads. roof_replaced_year left blank on purpose.",
+  "_comment": "Real building: Red Hook Recreation Center (NYC Parks), BBL 3005820001. Public: LL84 2024 kWh and floor area; PLUTO says individual landmark (Red Hook Play Center, LP-2241, 2008) and year built 1936 (LL84 says 1920). Basement flooded in Hurricane Sandy (2012). Not public (stated choices): budget, roof area (PLUTO floor area, 1 floor), critical loads. roof_replaced_year left blank on purpose. Roof area is the form's 'Suggest from city records' answer (sum of building outlines on the tax lot, from NYC building footprints), not a measured roof. The lot holds four outlines (27,000 + 4,370 + 825 + 667 sq ft); the main rec center is the 27,000 sq ft one. Existing-systems section left blank on purpose, to test that the plan asks once.",
   "city": "New York",
   "state": "NY",
   "utility": "Con Edison",
@@ -12,7 +12,7 @@
   "floor_area_sqft": 27069,
   "year_built": 1936,
   "roof_type": "flat",
-  "roof_area_sqft": 21600,
+  "roof_area_sqft": 32860,
   "annual_kwh": 375066,
   "budget_amount": 750000,
   "budget_year": 2027,

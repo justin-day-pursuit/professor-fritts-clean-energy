@@ -20,10 +20,18 @@
         "city_record": 17620.0
       }
     ],
-    "geocoder_match": "421 LINCOLN AVENUE, Staten Island, NY, USA"
+    "geocoder_match": "421 LINCOLN AVENUE, Staten Island, NY, USA",
+    "footprint_total_sqft": 34363,
+    "footprint_building_count": 3,
+    "footprint_buildings_sqft": [
+      19757,
+      13319,
+      1287
+    ],
+    "footprints_error": null
   },
   "source_url": "https://data.cityofnewyork.us/City-Government/Primary-Land-Use-Tax-Lot-Output-PLUTO-/64uk-42ks",
-  "retrieved_at": "2026-10-15T20:53:05Z",
+  "retrieved_at": "2026-10-15T21:45:01Z",
   "dataset_version": "pluto-26v2",
   "mock": false,
   "stale": false,

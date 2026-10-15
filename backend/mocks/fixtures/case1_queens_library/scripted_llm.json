@@ -1,5 +1,5 @@
 {
-  "_comment": "Deterministic LLM replay for case1 \u2014 tool calls then write_roadmap.",
+  "_comment": "Deterministic LLM replay for case1 — tool calls then write_roadmap.",
   "steps": [
     {
       "type": "think",
@@ -44,6 +44,30 @@
         "assumption_ids": [
           "A2"
         ]
+      }
+    },
+    {
+      "type": "tool",
+      "name": "calculate",
+      "input": {
+        "formula": "C2",
+        "inputs": {
+          "usable_roof_sqft": 3300
+        },
+        "assumption_ids": [
+          "A3"
+        ]
+      }
+    },
+    {
+      "type": "tool",
+      "name": "calculate",
+      "input": {
+        "formula": "C3",
+        "inputs": {
+          "annual_solar_kwh": 60000,
+          "annual_use_kwh": 310000
+        }
       }
     },
     {
@@ -135,7 +159,7 @@
               "title": "Summary and goal status",
               "claims": [
                 {
-                  "text": "Mock rooftop solar (~60,000 kWh/yr) offsets about 19% of 310,000 kWh annual use \u2014 solar alone does not reach the 30% goal.",
+                  "text": "Mock rooftop solar (~60,000 kWh/yr) offsets about 19% of 310,000 kWh annual use — solar alone does not reach the 30% goal.",
                   "label": "ESTIMATE",
                   "confidence": "medium",
                   "calc_id": "C3",
@@ -241,7 +265,7 @@
               "title": "Solar assessment with calculations",
               "claims": [
                 {
-                  "text": "C1 usable roof \u2248 3,300 sq ft (6,000 \u00d7 0.55).",
+                  "text": "C1 usable roof ≈ 3,300 sq ft (6,000 × 0.55).",
                   "label": "ESTIMATE",
                   "confidence": "medium",
                   "calc_id": "C1",
@@ -251,7 +275,7 @@
                   "units": "sq ft"
                 },
                 {
-                  "text": "C2 array \u2248 50 kW DC (3,300 \u00f7 66).",
+                  "text": "C2 array ≈ 50 kW DC (3,300 ÷ 66).",
                   "label": "ESTIMATE",
                   "confidence": "medium",
                   "calc_id": "C2",
@@ -261,7 +285,7 @@
                   "units": "kW DC"
                 },
                 {
-                  "text": "C4 annual bill savings from solar energy \u2248 USD 13,000/yr at USD 0.22/kWh.",
+                  "text": "C4 annual bill savings from solar energy ≈ USD 13,000/yr at USD 0.22/kWh.",
                   "label": "ESTIMATE",
                   "confidence": "medium",
                   "calc_id": "C4",
@@ -278,7 +302,7 @@
               "title": "Scenario comparison table",
               "claims": [
                 {
-                  "text": "Scenario A (Efficiency only) cuts grid use 10.0\u201320.0 % of annual use = 33\u201367 % of the 30% goal; it does not reach the 30% goal at the low end.",
+                  "text": "Scenario A (Efficiency only) cuts grid use 10.0–20.0 % of annual use = 33–67 % of the 30% goal; it does not reach the 30% goal at the low end.",
                   "label": "ESTIMATE",
                   "confidence": "low",
                   "calc_id": "F-A",
@@ -287,7 +311,7 @@
                   "units": "% of annual use"
                 },
                 {
-                  "text": "Scenario A upfront cost 72,000\u2013144,000 USD; net cost 72,000\u2013144,000 USD (no incentive counted, see section 7); budget strain: within budget.",
+                  "text": "Scenario A upfront cost 72,000–144,000 USD; net cost 72,000–144,000 USD (no incentive counted, see section 7); budget strain: within budget.",
                   "label": "ESTIMATE",
                   "confidence": "low",
                   "calc_id": "F-A",
@@ -296,7 +320,7 @@
                   "units": "USD"
                 },
                 {
-                  "text": "Scenario A simple payback 4.8\u201323.2 years on savings of 6,200\u201314,880 USD/yr. Simple payback, not the full SAM model.",
+                  "text": "Scenario A simple payback 4.8–23.2 years on savings of 6,200–14,880 USD/yr. Simple payback, not the full SAM model.",
                   "label": "ESTIMATE",
                   "confidence": "low",
                   "calc_id": "F-A",
@@ -305,7 +329,7 @@
                   "units": "years"
                 },
                 {
-                  "text": "Scenario A outage backup 0.0\u20130.0 hours for critical loads. No battery, so solar shuts off in an outage.",
+                  "text": "Scenario A outage backup 0.0–0.0 hours for critical loads. No battery, so solar shuts off in an outage.",
                   "label": "ESTIMATE",
                   "confidence": "low",
                   "calc_id": "F-A",
@@ -314,7 +338,7 @@
                   "units": "hours"
                 },
                 {
-                  "text": "Scenario B (Efficiency + solar within budget) cuts grid use 27.7\u201341.3 % of annual use = 92\u2013138 % of the 30% goal; it does not reach the 30% goal at the low end.",
+                  "text": "Scenario B (Efficiency + solar within budget) cuts grid use 27.7–41.3 % of annual use = 92–138 % of the 30% goal; it does not reach the 30% goal at the low end.",
                   "label": "ESTIMATE",
                   "confidence": "low",
                   "calc_id": "F-B",
@@ -323,7 +347,7 @@
                   "units": "% of annual use"
                 },
                 {
-                  "text": "Scenario B upfront cost 222,000\u2013369,000 USD; net cost 222,000\u2013369,000 USD (no incentive counted, see section 7); budget strain: within budget.",
+                  "text": "Scenario B upfront cost 222,000–369,000 USD; net cost 222,000–369,000 USD (no incentive counted, see section 7); budget strain: within budget.",
                   "label": "ESTIMATE",
                   "confidence": "low",
                   "calc_id": "F-B",
@@ -332,7 +356,7 @@
                   "units": "USD"
                 },
                 {
-                  "text": "Scenario B simple payback 7.2\u201321.5 years on savings of 17,200\u201330,720 USD/yr. Simple payback, not the full SAM model.",
+                  "text": "Scenario B simple payback 7.2–21.5 years on savings of 17,200–30,720 USD/yr. Simple payback, not the full SAM model.",
                   "label": "ESTIMATE",
                   "confidence": "low",
                   "calc_id": "F-B",
@@ -341,7 +365,7 @@
                   "units": "years"
                 },
                 {
-                  "text": "Scenario B outage backup 0.0\u20130.0 hours for critical loads. No battery, so solar shuts off in an outage.",
+                  "text": "Scenario B outage backup 0.0–0.0 hours for critical loads. No battery, so solar shuts off in an outage.",
                   "label": "ESTIMATE",
                   "confidence": "low",
                   "calc_id": "F-B",
@@ -350,7 +374,7 @@
                   "units": "hours"
                 },
                 {
-                  "text": "Scenario C (Full path to the goal (deep efficiency + full solar + backup battery)) cuts grid use 32.7\u201346.3 % of annual use = 109\u2013154 % of the 30% goal; it reaches the goal even at the low end.",
+                  "text": "Scenario C (Full path to the goal (deep efficiency + full solar + backup battery)) cuts grid use 32.7–46.3 % of annual use = 109–154 % of the 30% goal; it reaches the goal even at the low end.",
                   "label": "ESTIMATE",
                   "confidence": "low",
                   "calc_id": "F-C",
@@ -359,7 +383,7 @@
                   "units": "% of annual use"
                 },
                 {
-                  "text": "Scenario C upfront cost 906,000\u20131,473,000 USD; net cost 906,000\u20131,473,000 USD (no incentive counted, see section 7); budget strain: over budget.",
+                  "text": "Scenario C upfront cost 906,000–1,473,000 USD; net cost 906,000–1,473,000 USD (no incentive counted, see section 7); budget strain: over budget.",
                   "label": "ESTIMATE",
                   "confidence": "low",
                   "calc_id": "F-C",
@@ -368,7 +392,7 @@
                   "units": "USD"
                 },
                 {
-                  "text": "Scenario C simple payback 26.3\u201372.6 years on savings of 20,300\u201334,440 USD/yr. Simple payback, not the full SAM model.",
+                  "text": "Scenario C simple payback 26.3–72.6 years on savings of 20,300–34,440 USD/yr. Simple payback, not the full SAM model.",
                   "label": "ESTIMATE",
                   "confidence": "low",
                   "calc_id": "F-C",
@@ -377,7 +401,7 @@
                   "units": "years"
                 },
                 {
-                  "text": "Scenario C outage backup 6.8\u20138.0 hours for critical loads.",
+                  "text": "Scenario C outage backup 6.8–8.0 hours for critical loads.",
                   "label": "ESTIMATE",
                   "confidence": "low",
                   "calc_id": "F-C",
@@ -386,7 +410,7 @@
                   "units": "hours"
                 },
                 {
-                  "text": "Rooftop solar alone covers only 17.7\u201321.3% of annual use and does not reach the 30% goal.",
+                  "text": "Rooftop solar alone covers only 17.7–21.3% of annual use and does not reach the 30% goal.",
                   "label": "ESTIMATE",
                   "confidence": "medium",
                   "calc_id": "C3",
@@ -470,7 +494,7 @@
               "title": "Resilience and reliability plan",
               "claims": [
                 {
-                  "text": "Scenario C battery of 960 kWh supports about 6.8\u20138.0 hours of the 120 kW critical cooling-center load.",
+                  "text": "Scenario C battery of 960 kWh supports about 6.8–8.0 hours of the 120 kW critical cooling-center load.",
                   "label": "ESTIMATE",
                   "confidence": "low",
                   "calc_id": "F-C",

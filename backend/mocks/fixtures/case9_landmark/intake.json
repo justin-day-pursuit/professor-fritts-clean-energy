@@ -20,5 +20,7 @@
   "goal": "Cut grid electricity 30% by 2030",
   "target_year": 2030,
   "critical_loads": "reading room cooling and lighting",
+  "existing_renewables": "none",
+  "existing_efficiency": "none",
   "question": "Our library is a designated landmark. How can we cut grid power 30% by 2030 on $300k?"
 }

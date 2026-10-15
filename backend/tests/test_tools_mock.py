@@ -204,6 +204,14 @@ def _fake_records_get(url, params=None, timeout=None, headers=None):
         response = _fake_httpx_get(url, params=params, timeout=timeout).json()
         response["features"][0]["properties"]["addendum"] = {"pad": {"bbl": "4050430011"}}
         return _FakeResponse(response)
+    if "5zhs-2jue" in url:
+        # One building outline of about 100 ft x 60 ft (6,000 sq ft, like Dana's roof) at the Flushing library's location.
+        lon, lat, dlon, dlat = -73.8288, 40.7577, 100 / 276_300, 60 / 364_567
+        ring = [[lon, lat], [lon + dlon, lat], [lon + dlon, lat + dlat], [lon, lat + dlat], [lon, lat]]
+        return _FakeResponse(
+            [{"base_bbl": "4050430011", "last_status_type": "Constructed", "height_roof": "40",
+              "construction_year": "1996", "the_geom": {"type": "MultiPolygon", "coordinates": [[ring]]}}]
+        )
     assert params["$where"] == "bbl=4050430011"
     return _FakeResponse(
         [

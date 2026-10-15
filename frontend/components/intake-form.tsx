@@ -16,9 +16,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { NYC_BOROUGHS, missingRequiredFields } from "@/lib/profile-utils";
-import type { IntakeProfile } from "@/lib/types";
-import type { ReactNode } from "react";
+import { getRoofSuggestion } from "@/lib/api";
+import { NYC_BOROUGHS, ROOF_TYPES, isNotFlat, missingRequiredFields } from "@/lib/profile-utils";
+import type { IntakeProfile, RoofSuggestion } from "@/lib/types";
+import { useState, type ReactNode } from "react";
 
 export interface IntakeFormProps {
   profile: IntakeProfile;
@@ -61,6 +62,34 @@ export function IntakeForm({
     onChange({ ...profile, [key]: value });
   };
   const missing = missingRequiredFields(profile);
+
+  // The roof suggestion from city footprints. It fills the roof area box with a suggestion the user can
+  // edit; it is never applied on its own, and the note under the box says it is not a measured roof.
+  const [suggestion, setSuggestion] = useState<RoofSuggestion | null>(null);
+  const [suggestionError, setSuggestionError] = useState<string | null>(null);
+  const [suggesting, setSuggesting] = useState(false);
+
+  async function suggestRoofArea() {
+    setSuggesting(true);
+    setSuggestionError(null);
+    try {
+      const result = await getRoofSuggestion(
+        String(profile.address ?? ""),
+        String(profile.borough ?? profile.county ?? ""),
+      );
+      setSuggestion(result);
+      set("roof_area_sqft", String(result.suggested_roof_area_sqft));
+    } catch (err) {
+      setSuggestion(null);
+      setSuggestionError(
+        err instanceof Error && err.message
+          ? `${err.message} Type the roof area instead.`
+          : "Could not look up the roof. Type the roof area instead.",
+      );
+    } finally {
+      setSuggesting(false);
+    }
+  }
 
   return (
     <Card className="h-full flex flex-col min-h-0">
@@ -142,12 +171,23 @@ export function IntakeForm({
           </Field>
         </div>
         <div className="grid grid-cols-3 gap-2">
+          {/* A pick-list, because the planner treats a roof that is not flat differently (see the note below). */}
           <Field id="roof_type" label="Roof type">
-            <Input
-              id="roof_type"
-              value={profile.roof_type ?? ""}
-              onChange={(e) => set("roof_type", e.target.value)}
-            />
+            <Select
+              value={ROOF_TYPES.find((r) => r.value === profile.roof_type)?.value ?? null}
+              onValueChange={(v) => set("roof_type", v ?? "")}
+            >
+              <SelectTrigger id="roof_type" className="w-full">
+                <SelectValue placeholder="Choose" />
+              </SelectTrigger>
+              <SelectContent>
+                {ROOF_TYPES.map((r) => (
+                  <SelectItem key={r.value} value={r.value}>
+                    {r.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
           <Field id="roof_area_sqft" label="Roof area (sq ft)" required>
             <Input
@@ -166,6 +206,53 @@ export function IntakeForm({
             />
           </Field>
         </div>
+        <div className="grid gap-1.5">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={busy || suggesting || !profile.address || !(profile.borough || profile.county)}
+            onClick={suggestRoofArea}
+          >
+            {suggesting ? "Looking up city records…" : "Not sure? Suggest roof area from city records"}
+          </Button>
+          {suggestionError && <p className="text-xs text-destructive">{suggestionError}</p>}
+          {suggestion && (
+            <p className="text-xs text-muted-foreground">
+              Suggested {suggestion.suggested_roof_area_sqft.toLocaleString()} sq ft from{" "}
+              {suggestion.building_count} building outline{suggestion.building_count === 1 ? "" : "s"} (
+              {suggestion.buildings
+                .filter((b) => b.counted)
+                .map((b) => b.area_sqft.toLocaleString())
+                .join(" + ")}{" "}
+              sq ft) on this tax lot.{" "}
+              <a className="underline" href={suggestion.source_url} target="_blank" rel="noreferrer">
+                NYC building footprints
+              </a>
+              . {suggestion.note}
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Whatever the roof area, have an engineer or roofer verify it before any design or purchase.
+          </p>
+        </div>
+        {isNotFlat(profile.roof_type) && (
+          <div className="grid gap-1.5 rounded-md border border-amber-500/60 p-2">
+            <p className="text-xs">
+              Solar is not sized for a pitched, mixed or other roof from the flat-roof defaults. Have an
+              engineer or roofer verify the usable roof area (size, pitch, direction, structure, shading), then enter
+              it here and re-plan.
+            </p>
+            <Field id="verified_usable_roof_sqft" label="Usable roof area verified by an engineer or roofer (sq ft)">
+              <Input
+                id="verified_usable_roof_sqft"
+                inputMode="numeric"
+                value={profile.verified_usable_roof_sqft ?? ""}
+                onChange={(e) => set("verified_usable_roof_sqft", e.target.value)}
+              />
+            </Field>
+          </div>
+        )}
         <Field id="utility" label="Utility">
           <Input
             id="utility"
@@ -245,6 +332,47 @@ export function IntakeForm({
             onChange={(e) => set("critical_load_hours", e.target.value)}
           />
         </Field>
+        {/* Systems the building already has, so the plan builds on them and does not start from nothing. */}
+        <div className="grid gap-2 border-t pt-3">
+          <p className="text-sm font-medium">Existing renewable and efficiency systems</p>
+          <p className="text-xs text-muted-foreground">
+            Tell us what the building already has. Write &quot;none&quot; if there is nothing to list.
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <Field id="existing_solar_kw" label="Solar already on the roof (kW)">
+              <Input
+                id="existing_solar_kw"
+                inputMode="decimal"
+                value={profile.existing_solar_kw ?? ""}
+                onChange={(e) => set("existing_solar_kw", e.target.value)}
+              />
+            </Field>
+            <Field id="existing_solar_kwh" label="It makes (kWh per year)">
+              <Input
+                id="existing_solar_kwh"
+                inputMode="numeric"
+                value={profile.existing_solar_kwh ?? ""}
+                onChange={(e) => set("existing_solar_kwh", e.target.value)}
+              />
+            </Field>
+          </div>
+          <Field id="existing_renewables" label="Other renewable sources (battery, geothermal, heat pumps…)">
+            <Textarea
+              id="existing_renewables"
+              rows={2}
+              value={profile.existing_renewables ?? ""}
+              onChange={(e) => set("existing_renewables", e.target.value)}
+            />
+          </Field>
+          <Field id="existing_efficiency" label="Energy efficiency work already done (LED, controls, HVAC, windows…)">
+            <Textarea
+              id="existing_efficiency"
+              rows={2}
+              value={profile.existing_efficiency ?? ""}
+              onChange={(e) => set("existing_efficiency", e.target.value)}
+            />
+          </Field>
+        </div>
       </CardContent>
     </Card>
   );

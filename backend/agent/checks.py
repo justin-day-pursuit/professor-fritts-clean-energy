@@ -540,7 +540,7 @@ def _user_request_issues(user_message: str, combined_text: str) -> list[str]:
 
 # v6: plain words a reader would use for each tool, so section 12 can name a failure without tool ids.
 _TOOL_PLAIN_NAMES: dict[str, tuple[str, ...]] = {
-    "get_solar_production": ("pvwatts", "solar production"),
+    "get_solar_production": ("pvwatts", "solar production", "solar sizing", "solar output", "solar"),
     "optimize_solar_storage": ("reopt", "battery"),
     "get_utility_rates": ("rate", "price"),
     "get_utility_tariff": ("tariff",),
@@ -551,8 +551,23 @@ _TOOL_PLAIN_NAMES: dict[str, tuple[str, ...]] = {
     "calculate": ("calculat",),
 }
 _FAILURE_WORDS = re.compile(
-    r"\b(fail\w*|unavailable|error|did not return|could not|no data|not available|outage)\b", re.I
+    r"\b(fail\w*|unavailable|error|did not return|could not|no data|not available|outage"
+    r"|not sized|cannot be sized|not estimated|not costed|pending verification|no free roof)\b",
+    re.I,
 )
+
+# v6 wording the run-context rules look for. Each is matched against lowercase claim text.
+_VERIFY_ROOF = re.compile(
+    r"verif\w*[^.]{0,100}(?:roof|usable|area)|(?:roof|usable|area)[^.]{0,100}verif\w*", re.I
+)
+_EXISTING_WORDS = re.compile(r"\b(existing|already|current(?:ly)?|in place|installed)\b", re.I)
+_BUDGET_GAP_WORDS = re.compile(
+    r"more than (?:your|the) budget|over budget|exceeds? (?:your |the )?budget|budget gap|funding gap"
+    r"|above (?:your|the) budget|over (?:your|the) budget",
+    re.I,
+)
+# "Scenario B", "Scenarios A and B", "Scenarios A, B and C": the capture holds the letters and joiners.
+_SCENARIO_LIST = re.compile(r"\bscenarios?\s+([abc](?:\s*(?:,|and|&|or|/)\s*[abc]\b)*)\b", re.I)
 
 # Numbers that need solar production data. When PVWatts failed and never succeeded, a claim citing one
 # of these was built on an invented production figure.
@@ -603,8 +618,21 @@ def _section_claims(payload: RoadmapPayload, section_id: str) -> list[str]:
     ]
 
 
+def _states_users_existing_solar(claim: Claim) -> bool:
+    """
+    True when the claim only repeats solar the user told us they already have.
+
+    The user's own numbers (for example "the existing array makes 457,512 kWh a year", cited to the intake)
+    are not invented production figures, so the no-solar-numbers rules leave them alone. Both things must
+    hold: the claim cites the intake and it speaks of an existing or already-installed system.
+    """
+    return bool(claim.source_url and claim.source_url.startswith("session://") and _EXISTING_WORDS.search(claim.text))
+
+
 def _invented_solar_figure(claim: Claim) -> bool:
     """True when this claim states a solar-production number or a cost that needs one."""
+    if _states_users_existing_solar(claim):
+        return False
     if (claim.calc_id or "") in _SOLAR_DEPENDENT_CALCS or _SOLAR_KWH.search(claim.text):
         return True
     if _SCENARIO_BC_DEFERRED.search(claim.text):
@@ -642,6 +670,10 @@ def _run_context_issues(payload: RoadmapPayload, notes: AgentNotes) -> list[str]
             if _invented_solar_figure(claim):
                 issues.append(f"Solar production number used after PVWatts failed: {claim.text[:80]}")
 
+    issues.extend(_roof_and_existing_issues(payload, notes, claims))
+    issues.extend(_budget_gap_issues(payload, notes))
+    issues.extend(_calc_id_issues(claims, notes))
+
     quarantined = notes.quarantined_urls()
     if quarantined:
         for claim in claims:
@@ -670,7 +702,108 @@ def _run_context_issues(payload: RoadmapPayload, notes: AgentNotes) -> list[str]
         issues.append("Landmark building: section 10 must include a Landmarks Preservation Commission (LPC) review.")
     if notes.site_context.get("parkland") and not ("parkland" in reviews and "counsel" in reviews):
         issues.append("Building is on parkland: section 10 must include a parkland use review by counsel.")
+    # On city parkland the Landmarks Commission advises the owning agency instead of issuing a permit.
+    if (
+        notes.site_context.get("parkland")
+        and notes.site_context.get("landmark")
+        and ("landmarks preservation" in reviews or "lpc" in reviews)
+        and "advisory" not in reviews
+    ):
+        issues.append(
+            "The building is a landmark on city parkland: the LPC gives an advisory report to the owning agency, "
+            "not a permit. Say so in section 10."
+        )
     return issues
+
+
+def _roof_and_existing_issues(payload: RoadmapPayload, notes: AgentNotes, claims: list[Claim]) -> list[str]:
+    """
+    v6 rules for the roof and for systems the building already has.
+
+    - A roof that is not flat: the plan tells the user to have an engineer or roofer verify the usable roof
+      area (section 5 or 10). Until a verified area is in the intake, no claim may state a solar kWh figure or
+      cost scenario B or C, because the flat-roof sizing does not apply.
+    - Existing renewable or efficiency systems the user listed: section 2 or 4 must say they were taken
+      into account, so the plan is not written as if the building started from nothing.
+    """
+    issues: list[str] = []
+    roof_kind_now = notes.site_context.get("roof_kind")
+    if roof_kind_now == "non_flat":
+        where = [text for sid in ("5", "10") for text in _section_claims(payload, sid)]
+        if not any(_VERIFY_ROOF.search(text) for text in where):
+            issues.append(
+                "The roof is not flat: section 5 or 10 must tell the user to have an engineer or roofer verify "
+                "the usable roof area before any solar is designed."
+            )
+        if not notes.site_context.get("verified_usable_roof_sqft"):
+            for claim in claims:
+                if _invented_solar_figure(claim) and "get_solar_production" not in notes.failed_tools:
+                    issues.append(f"Solar number used for a roof that is not flat and not verified: {claim.text[:80]}")
+    if notes.site_context.get("existing_systems"):
+        where = " ".join(_section_claims(payload, "2") + _section_claims(payload, "4"))
+        if not _EXISTING_WORDS.search(where):
+            issues.append(
+                "The intake lists existing systems (" + str(notes.site_context["existing_systems"])[:80]
+                + "): section 2 or 4 must say how they were taken into account."
+            )
+    return issues
+
+
+def _budget_gap_issues(payload: RoadmapPayload, notes: AgentNotes) -> list[str]:
+    """
+    v6: when any scenario costs more than the budget, section 6 or 7 must say so in plain words.
+
+    Reaching the goal can take more than the money set aside. The plan states the gap instead of hiding the
+    scenario, and leaves the choice to extend the budget with the user.
+    """
+    over = [
+        cid
+        for cid, data in notes.calculations.items()
+        if cid.startswith("F-") and (data.get("budget_gap_usd") or [0, 0])[1] > 0
+    ]
+    if not over:
+        return []
+    text = " ".join(_section_claims(payload, "6") + _section_claims(payload, "7"))
+    if _BUDGET_GAP_WORDS.search(text):
+        return []
+    return [
+        "Scenario(s) " + ", ".join(sorted(over)) + " cost more than the budget: section 6 or 7 must state how much "
+        "more than the budget they cost (the tool's budget_note), so the user can weigh extending it."
+    ]
+
+
+def _calc_id_issues(claims: list[Claim], notes: AgentNotes) -> list[str]:
+    """
+    v6: a cited calculation must be one this run actually produced, and a scenario claim must cite its own.
+
+    A claim about "Scenario B" that cites F-A would send a reader to the wrong numbers. A calc_id that no
+    tool returned in this run (a made-up C5, or F-D) cannot be traced at all.
+    """
+    issues: list[str] = []
+    have = set(notes.calculations)
+    for claim in claims:
+        cid = (claim.calc_id or "").strip()
+        if not cid:
+            continue
+        if cid not in have:
+            issues.append(f"Claim cites calculation {cid}, which was not run in this analysis: {claim.text[:60]}")
+            continue
+        letters = _scenario_letters(claim.text)
+        if cid.startswith("F-") and letters and cid[-1] not in letters:
+            issues.append(f"Claim is about scenario {'/'.join(sorted(letters))} but cites {cid}: {claim.text[:60]}")
+    return issues
+
+
+def _scenario_letters(text: str) -> set[str]:
+    """
+    Every scenario letter a claim names, so "Scenarios A and B" gives {A, B} and "Scenario C" gives {C}.
+
+    The cited F-x only has to be one of them: a sentence about A and B may cite either.
+    """
+    letters: set[str] = set()
+    for match in _SCENARIO_LIST.finditer(text):
+        letters.update(letter.upper() for letter in re.findall(r"[abc]", match.group(1), re.I))
+    return letters
 
 
 def run_check4(
