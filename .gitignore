@@ -1,19 +1,55 @@
-# Secrets - never commit real keys
-.env
-.env.*
-!.env.example
+# Node — JavaScript dependencies and package-manager debug logs
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# Python
+# Next.js — build output and generated TypeScript env stub
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# Python — bytecode, virtual environments, test/lint caches, packaging artifacts
 __pycache__/
 *.py[cod]
 .venv/
 venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+.coverage
+htmlcov/
 
-# Node
-node_modules/
+# Django — local database, uploaded media, collected static, machine-specific settings
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+local_settings.py
 
-# OS / editor
+# Project data — local backend storage (not for git)
+backend/.data/
+
+# Vercel — deployment metadata from the CLI
+.vercel
+
+# Environment — real secrets stay local; the example file is tracked
+.env
+.env.*
+!.env.example
+
+# OS / editor — junk and personal IDE folders
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
+*.swp
+*~
+
+# Orchestrate — local agent logs, handoffs, and state (not product source)
+.cursor/

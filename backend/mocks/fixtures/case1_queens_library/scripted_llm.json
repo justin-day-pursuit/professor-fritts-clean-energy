@@ -1,0 +1,274 @@
+{
+  "_comment": "Deterministic LLM replay for case1 \u2014 tool calls then write_roadmap.",
+  "steps": [
+    {
+      "type": "think",
+      "message": "Reviewing Dana's Queens library question and intake."
+    },
+    {
+      "type": "tool",
+      "name": "get_building_profile",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "lookup_ny_building_records",
+      "input": {
+        "address": "41-17 Main Street"
+      }
+    },
+    {
+      "type": "tool",
+      "name": "get_solar_production",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "get_utility_rates",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "calculate",
+      "input": {
+        "formula": "C1",
+        "inputs": {
+          "roof_area_sqft": 6000,
+          "setback_factor": 0.55
+        },
+        "assumption_ids": [
+          "A2"
+        ]
+      }
+    },
+    {
+      "type": "tool",
+      "name": "calculate",
+      "input": {
+        "formula": "C4",
+        "inputs": {
+          "annual_solar_kwh": 60000,
+          "avg_rate_usd_per_kwh": 0.22
+        },
+        "assumption_ids": [
+          "A3"
+        ]
+      }
+    },
+    {
+      "type": "final",
+      "name": "write_roadmap",
+      "input": {
+        "roadmap": {
+          "sections": [
+            {
+              "section_id": "1",
+              "title": "Summary and goal status",
+              "claims": [
+                {
+                  "text": "Mock rooftop solar (~60,000 kWh/yr) offsets about 19% of 310,000 kWh annual use \u2014 solar alone does not reach the 30% goal.",
+                  "label": "ESTIMATE",
+                  "confidence": "medium",
+                  "calc_id": "C3",
+                  "source_url": "https://example.test/fictional/pvwatts-v0"
+                },
+                {
+                  "text": "Capital budget USD 400,000 (2026) from intake.",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "Efficiency and storage paths should be combined to approach the 30% by 2030 target.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "session://profile"
+                }
+              ]
+            },
+            {
+              "section_id": "2",
+              "title": "Building profile and data provenance",
+              "claims": [
+                {
+                  "text": "18,000 sq ft library on a 6,000 sq ft flat roof (replaced 2019) in Queens, NY.",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "Twelve months of bills total 310,000 kWh on Con Edison SC-9 I (fictional mock tariff).",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "https://example.test/fictional/utility-rates-v0"
+                }
+              ]
+            },
+            {
+              "section_id": "3",
+              "title": "Assumptions register",
+              "claims": [
+                {
+                  "text": "Usable roof fraction 0.55 for setbacks and mechanical zones.",
+                  "label": "ASSUMPTION",
+                  "confidence": "medium",
+                  "assumption_id": "A2"
+                },
+                {
+                  "text": "About 66 sq ft per kW for flat commercial array layout.",
+                  "label": "ASSUMPTION",
+                  "confidence": "medium",
+                  "assumption_id": "A3"
+                }
+              ]
+            },
+            {
+              "section_id": "5",
+              "title": "Solar assessment with calculations",
+              "claims": [
+                {
+                  "text": "C1 usable roof \u2248 3,300 sq ft (6,000 \u00d7 0.55).",
+                  "label": "ESTIMATE",
+                  "confidence": "medium",
+                  "calc_id": "C1",
+                  "source_url": "internal://calculate"
+                },
+                {
+                  "text": "C2 array \u2248 50 kW DC (3,300 \u00f7 66).",
+                  "label": "ESTIMATE",
+                  "confidence": "medium",
+                  "calc_id": "C2",
+                  "source_url": "internal://calculate"
+                },
+                {
+                  "text": "C4 annual bill savings from solar energy \u2248 USD 13,000/yr at USD 0.22/kWh.",
+                  "label": "ESTIMATE",
+                  "confidence": "medium",
+                  "calc_id": "C4",
+                  "source_url": "internal://calculate"
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "6",
+              "title": "Scenario sketch",
+              "stand_in_note": "v0 stand-in; costed comparison arrives in v5",
+              "claims": [
+                {
+                  "text": "Scenario A: LED and controls efficiency only (qualitative).",
+                  "label": "RECOMMENDATION",
+                  "confidence": "low",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "Scenario B: Efficiency plus rooftop solar within USD 400k capital (qualitative).",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "Scenario C: Solar, efficiency, and backup storage for 8-hour cooling center (qualitative).",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "https://example.test/fictional/reopt-v0"
+                }
+              ]
+            },
+            {
+              "section_id": "8",
+              "title": "Priority roadmap",
+              "claims": [
+                {
+                  "text": "Benchmark monthly use and verify tariff against uploaded bills.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "Commission roof condition survey before structural solar design.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "session://profile"
+                }
+              ]
+            },
+            {
+              "section_id": "9",
+              "title": "Backup power note",
+              "claims": [
+                {
+                  "text": "Mock REopt suggests ~960 kWh battery for 8 hours of critical cooling-center loads.",
+                  "label": "ESTIMATE",
+                  "confidence": "medium",
+                  "source_url": "https://example.test/fictional/reopt-v0"
+                }
+              ]
+            },
+            {
+              "section_id": "10",
+              "title": "Required professional reviews and permits",
+              "claims": [
+                {
+                  "text": "Licensed Professional Engineer or Registered Architect structural analysis for rooftop solar loads.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "Roof condition survey by a qualified roofing contractor.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "NYC licensed electrician for interconnection and service upgrades.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "FDNY rooftop access review for equipment layout in NYC.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "Con Edison utility interconnection review and application.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "session://profile"
+                }
+              ]
+            },
+            {
+              "section_id": "12",
+              "title": "Gaps, conflicts and confidence summary",
+              "claims": [
+                {
+                  "text": "Solar-only offset (~19%) is below the 30% goal; efficiency and storage are needed.",
+                  "label": "ESTIMATE",
+                  "confidence": "medium",
+                  "calc_id": "C3",
+                  "source_url": "https://example.test/fictional/pvwatts-v0"
+                }
+              ]
+            },
+            {
+              "section_id": "13",
+              "title": "Sources",
+              "claims": [
+                {
+                  "text": "Session intake, fictional PVWatts/REopt/utility mocks (v0), and internal calculate tool.",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "https://example.test/fictional/pvwatts-v0"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "source_url": "https://example.test/fictional/pvwatts-v0",
+  "retrieved_at": "2025-10-01T12:00:00Z",
+  "dataset_version": "case1-v0-mock-1",
+  "mock": true,
+  "tool": "get_solar_production",
+  "data": {
+    "system_kw_dc": 50,
+    "annual_ac_kwh": 60000,
+    "capacity_factor": 0.137,
+    "notes": "Fictional PVWatts stand-in for ~50 kW array in Queens."
+  },
+  "stale": false,
+  "flags": []
+}
