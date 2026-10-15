@@ -52,7 +52,7 @@ function claimsFromRun(run: RunResponse): Claim[] {
   return roadmap.sections.flatMap((s) => s.claims ?? []);
 }
 
-export default function Home() {
+export default function PlannerPage() {
   const [profile, setProfile] = useState<IntakeProfile>(emptyProfile());
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [documents, setDocuments] = useState<DocumentResponse[]>([]);

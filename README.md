@@ -14,8 +14,8 @@ v1 scope: energy efficiency and solar PV (battery storage only for solar resilie
 
 ## Docs
 
-- [Product Requirements Document](Building_Renewable_Energy_Planner_PRD_v3.md)
-- [Agent flow diagram](user-flow/Professor_Fritts_Agent_Flow.png) and [description](user-flow/Professor%20Fritts%20Agent%20Flow.md)
+- [Product Requirements Document](documentation/Building_Renewable_Energy_Planner_PRD_v3.md)
+- [Agent flow diagram](documentation/user-flow/Professor_Fritts_Agent_Flow.png) and [description](documentation/user-flow/Professor%20Fritts%20Agent%20Flow.md)
 
 ## Live Deployments
 
