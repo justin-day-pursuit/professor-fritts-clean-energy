@@ -54,7 +54,7 @@ Check 2 only allows these registered tools:
 - Group 3: `get_utility_rates` (mock) and `search_ny_incentives_and_rules` (mock)
 - Group 4: `get_hazard_context` (mock FEMA)
 
-Not registered yet: `search_evidence`, `upsert_reference_cache`. Mock results include `source_url`, `retrieved_at`, `dataset_version`, and `mock: true`.
+Not registered yet: `search_evidence`. `upsert_reference_cache` (v4) is registered. Mock results include `source_url`, `retrieved_at`, `dataset_version`, and `mock: true`.
 
 ### Four checks
 
