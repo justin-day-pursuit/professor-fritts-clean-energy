@@ -1,15 +1,20 @@
 """
-Utility rates and NY incentives search tools (group 3) — mock OpenEI and program lists in v0.
+Utility rates and NY incentives search tools (group 3) — live EIA price in v1, mock program lists.
 """
 
 from __future__ import annotations
 
-from mocks.mock_mode import require_mock_or_fixture
+from typing import Any
+
+from mocks.mock_mode import get_tool_mode, require_mock_or_fixture
 from tools.base import ToolResult
+from tools.live_rates import fetch_live_utility_rates
 
 
-def get_utility_rates(case: str) -> ToolResult:
-    """Return saved commercial tariff data for the eval case."""
+def get_utility_rates(case: str, profile: dict[str, Any] | None = None) -> ToolResult:
+    """Return the live EIA price in live mode, or the saved tariff in mock mode."""
+    if get_tool_mode() == "live":
+        return fetch_live_utility_rates(profile or {})
     return require_mock_or_fixture(case, "get_utility_rates")
 
 

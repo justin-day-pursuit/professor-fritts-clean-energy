@@ -37,6 +37,12 @@ class CalculateToolInput(BaseModel):
     assumption_ids: list[str] = Field(default_factory=list)
 
 
+class SolarProductionInput(BaseModel):
+    """Optional array size in kW DC; left out, the tool sizes it from the roof area."""
+
+    system_kw: float | None = Field(default=None, gt=0)
+
+
 class ToolSpec(BaseModel):
     """Metadata the LLM and Check 2 use to validate a call."""
 
@@ -57,15 +63,15 @@ TOOL_SPECS: dict[str, ToolSpec] = {
     ),
     "lookup_ny_building_records": ToolSpec(
         name="lookup_ny_building_records",
-        description="Look up public building records in New York (mock in v0).",
+        description="Look up public building records in New York (live NYC Open Data in live mode, saved records in mock mode).",
         input_model=LookupBuildingInput,
         freshness_kind="building_records",
         group=1,
     ),
     "get_solar_production": ToolSpec(
         name="get_solar_production",
-        description="Estimate rooftop solar production (mock PVWatts in v0).",
-        input_model=EmptyInput,
+        description="Estimate rooftop solar production (live PVWatts in live mode, saved PVWatts in mock mode).",
+        input_model=SolarProductionInput,
         freshness_kind="solar_production",
         group=2,
     ),
@@ -85,7 +91,7 @@ TOOL_SPECS: dict[str, ToolSpec] = {
     ),
     "get_utility_rates": ToolSpec(
         name="get_utility_rates",
-        description="Commercial electric tariff for the site (mock in v0).",
+        description="Commercial electricity price for the site (live EIA New York average in live mode, saved tariff in mock mode).",
         input_model=EmptyInput,
         freshness_kind="utility_rates",
         group=3,
@@ -141,9 +147,9 @@ def execute_tool(
         return get_building_profile(session_profile)
     if name == "lookup_ny_building_records":
         addr = getattr(validated, "address", None)
-        return lookup_ny_building_records(fixture_case, address=addr)
+        return lookup_ny_building_records(fixture_case, address=addr, profile=session_profile)
     if name == "get_solar_production":
-        return get_solar_production(fixture_case)
+        return get_solar_production(fixture_case, session_profile, getattr(validated, "system_kw", None))
     if name == "optimize_solar_storage":
         return optimize_solar_storage(fixture_case)
     if name == "calculate":
@@ -154,7 +160,7 @@ def execute_tool(
         )
         return run_calculate(calc_in)
     if name == "get_utility_rates":
-        return get_utility_rates(fixture_case)
+        return get_utility_rates(fixture_case, session_profile)
     if name == "search_ny_incentives_and_rules":
         return search_ny_incentives_and_rules(fixture_case)
     if name == "get_hazard_context":

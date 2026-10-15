@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { missingRequiredFields } from "@/lib/profile-utils";
 import type { IntakeProfile } from "@/lib/types";
 import type { ReactNode } from "react";
 
@@ -30,15 +31,20 @@ export interface IntakeFormProps {
 function Field({
   id,
   label,
+  required,
   children,
 }: {
   id: string;
   label: string;
+  required?: boolean;
   children: ReactNode;
 }) {
   return (
     <div className="grid gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
+      <Label htmlFor={id}>
+        {label}
+        {required && <span aria-hidden="true"> *</span>}
+      </Label>
       {children}
     </div>
   );
@@ -54,6 +60,7 @@ export function IntakeForm({
   const set = (key: keyof IntakeProfile, value: string) => {
     onChange({ ...profile, [key]: value });
   };
+  const missing = missingRequiredFields(profile);
 
   return (
     <Card className="h-full flex flex-col min-h-0">
@@ -63,13 +70,22 @@ export function IntakeForm({
           <Button type="button" size="sm" variant="secondary" disabled={busy} onClick={onLoadDana}>
             Load Dana&apos;s example
           </Button>
-          <Button type="button" size="sm" variant="outline" disabled={busy} onClick={onUpdateAndReplan}>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={busy || missing.length > 0}
+            onClick={onUpdateAndReplan}
+          >
             Update intake and re-plan
           </Button>
         </div>
+        {missing.length > 0 && (
+          <p className="pt-1 text-xs text-muted-foreground">Still needed: {missing.join(", ")}</p>
+        )}
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto space-y-3 text-sm pb-4">
-        <Field id="address" label="Address">
+        <Field id="address" label="Address" required>
           <Input
             id="address"
             value={profile.address ?? ""}
@@ -77,7 +93,7 @@ export function IntakeForm({
           />
         </Field>
         <div className="grid grid-cols-2 gap-2">
-          <Field id="borough" label="Borough or county">
+          <Field id="borough" label="Borough or county" required>
             <Input
               id="borough"
               value={profile.borough ?? profile.county ?? ""}
@@ -121,7 +137,7 @@ export function IntakeForm({
               onChange={(e) => set("roof_type", e.target.value)}
             />
           </Field>
-          <Field id="roof_area_sqft" label="Roof area (sq ft)">
+          <Field id="roof_area_sqft" label="Roof area (sq ft)" required>
             <Input
               id="roof_area_sqft"
               inputMode="numeric"

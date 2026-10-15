@@ -1,5 +1,5 @@
 """
-Load saved tool JSON when TOOL_MODE=mock; refuse live external calls in v0.
+Load saved tool JSON for tools that run from fixtures (TOOL_MODE=mock, or live tools not built yet).
 
 Fixture files live under mocks/fixtures/<case>/<tool_name>.json and mirror ToolResult fields.
 """
@@ -15,10 +15,6 @@ from django.conf import settings
 from tools.base import ToolResult
 
 FIXTURES_ROOT = Path(__file__).resolve().parent / "fixtures"
-
-
-class LiveModeNotAvailableError(RuntimeError):
-    """Raised when TOOL_MODE=live — real APIs arrive in v1, not v0."""
 
 
 def get_tool_mode() -> str:
@@ -46,13 +42,9 @@ def load_fixture(case: str, tool_name: str) -> ToolResult:
 
 def require_mock_or_fixture(case: str, tool_name: str) -> ToolResult:
     """
-    Return fixture data in mock mode, or raise if live mode was requested.
+    Return the saved fixture for a tool that has no live version yet.
 
-    This is the single gate so v0 never hits real energy APIs by accident.
+    In live mode these tools still answer from fixtures; the result keeps mock: true,
+    so the run log and the roadmap can tell which numbers are not real data.
     """
-    mode = get_tool_mode()
-    if mode == "live":
-        raise LiveModeNotAvailableError(
-            "Live tool mode is not available in v0. Set TOOL_MODE=mock in .env."
-        )
     return load_fixture(case, tool_name)

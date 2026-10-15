@@ -53,6 +53,34 @@ export function apiToProfile(data: Record<string, unknown>): IntakeProfile {
   return profile;
 }
 
+/**
+ * Roof area as the backend will see it: a number above zero, or "" when the box is empty, text
+ * (profileToApi drops non-numeric values), zero or negative. Keeps text like "abc" from passing
+ * the send guard and then arriving with no roof area at all.
+ */
+function validRoofArea(profile: IntakeProfile): number | "" {
+  const n = coerceNumber(profile.roof_area_sqft);
+  return n !== undefined && n > 0 ? n : "";
+}
+
+/**
+ * Fields the live tools cannot work without: the solar lookup needs the address and borough
+ * to find the building and the roof area to size the array. To require another field, add a
+ * row here and a "*" on its label in intake-form.tsx.
+ */
+const REQUIRED_FIELDS: { label: string; value: (p: IntakeProfile) => unknown }[] = [
+  { label: "Address", value: (p) => p.address },
+  { label: "Borough or county", value: (p) => p.borough || p.county },
+  { label: "Roof area (a number above 0)", value: validRoofArea },
+];
+
+/** Labels of required intake fields that are still empty; an empty list means the form can be sent. */
+export function missingRequiredFields(profile: IntakeProfile): string[] {
+  return REQUIRED_FIELDS.filter(({ value }) => String(value(profile) ?? "").trim() === "").map(
+    ({ label }) => label,
+  );
+}
+
 export function emptyProfile(): IntakeProfile {
   return { state: "NY", budget_type: "capital" };
 }

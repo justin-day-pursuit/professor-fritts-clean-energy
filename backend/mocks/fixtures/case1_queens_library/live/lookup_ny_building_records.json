@@ -1,0 +1,38 @@
+{
+  "tool": "lookup_ny_building_records",
+  "data": {
+    "address": "41-24 KISSENA BOULEVARD",
+    "borough": "Queens",
+    "bbl": "4050430011",
+    "zipcode": "11355",
+    "gross_floor_area_sqft": 75000.0,
+    "lot_area_sqft": 18000.0,
+    "num_floors": 3.0,
+    "year_built": 1996,
+    "building_class": "P8",
+    "land_use_code": "8",
+    "landmark_flag": false,
+    "differs_from_intake": [
+      {
+        "field": "floor_area_sqft",
+        "intake": 18000.0,
+        "city_record": 75000.0
+      },
+      {
+        "field": "year_built",
+        "intake": 1968,
+        "city_record": 1996
+      }
+    ],
+    "geocoder_match": "41-17 MAIN STREET, Flushing, NY, USA"
+  },
+  "source_url": "https://data.cityofnewyork.us/City-Government/Primary-Land-Use-Tax-Lot-Output-PLUTO-/64uk-42ks",
+  "retrieved_at": "2026-10-14T22:23:21Z",
+  "dataset_version": "pluto-26v2",
+  "mock": false,
+  "stale": false,
+  "flags": [
+    "intake_mismatch:floor_area_sqft",
+    "intake_mismatch:year_built"
+  ]
+}
