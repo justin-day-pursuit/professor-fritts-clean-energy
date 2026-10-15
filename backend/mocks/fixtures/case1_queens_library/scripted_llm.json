@@ -1,5 +1,5 @@
 {
-  "_comment": "Deterministic LLM replay for case1 — tool calls then write_roadmap.",
+  "_comment": "Deterministic LLM replay for case1 \u2014 tool calls then write_roadmap.",
   "steps": [
     {
       "type": "think",
@@ -61,6 +61,70 @@
       }
     },
     {
+      "type": "tool",
+      "name": "optimize_solar_storage",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "search_ny_incentives_and_rules",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "run_financial_model",
+      "input": {
+        "floor_area_sqft": 18000,
+        "annual_use_kwh": 310000,
+        "budget_usd": 400000,
+        "full_array_kw_dc": 50,
+        "annual_solar_kwh_low": 55000,
+        "annual_solar_kwh_high": 66000,
+        "price_low_usd_per_kwh": 0.2,
+        "price_high_usd_per_kwh": 0.24,
+        "critical_load_kw": 120,
+        "federal_credit_open": false,
+        "scenario_id": "A",
+        "battery_kwh": 0
+      }
+    },
+    {
+      "type": "tool",
+      "name": "run_financial_model",
+      "input": {
+        "floor_area_sqft": 18000,
+        "annual_use_kwh": 310000,
+        "budget_usd": 400000,
+        "full_array_kw_dc": 50,
+        "annual_solar_kwh_low": 55000,
+        "annual_solar_kwh_high": 66000,
+        "price_low_usd_per_kwh": 0.2,
+        "price_high_usd_per_kwh": 0.24,
+        "critical_load_kw": 120,
+        "federal_credit_open": false,
+        "scenario_id": "B",
+        "battery_kwh": 0
+      }
+    },
+    {
+      "type": "tool",
+      "name": "run_financial_model",
+      "input": {
+        "floor_area_sqft": 18000,
+        "annual_use_kwh": 310000,
+        "budget_usd": 400000,
+        "full_array_kw_dc": 50,
+        "annual_solar_kwh_low": 55000,
+        "annual_solar_kwh_high": 66000,
+        "price_low_usd_per_kwh": 0.2,
+        "price_high_usd_per_kwh": 0.24,
+        "critical_load_kw": 120,
+        "federal_credit_open": false,
+        "scenario_id": "C",
+        "battery_kwh": 960
+      }
+    },
+    {
       "type": "final",
       "name": "write_roadmap",
       "input": {
@@ -71,7 +135,7 @@
               "title": "Summary and goal status",
               "claims": [
                 {
-                  "text": "Mock rooftop solar (~60,000 kWh/yr) offsets about 19% of 310,000 kWh annual use — solar alone does not reach the 30% goal.",
+                  "text": "Mock rooftop solar (~60,000 kWh/yr) offsets about 19% of 310,000 kWh annual use \u2014 solar alone does not reach the 30% goal.",
                   "label": "ESTIMATE",
                   "confidence": "medium",
                   "calc_id": "C3",
@@ -177,7 +241,7 @@
               "title": "Solar assessment with calculations",
               "claims": [
                 {
-                  "text": "C1 usable roof ≈ 3,300 sq ft (6,000 × 0.55).",
+                  "text": "C1 usable roof \u2248 3,300 sq ft (6,000 \u00d7 0.55).",
                   "label": "ESTIMATE",
                   "confidence": "medium",
                   "calc_id": "C1",
@@ -187,7 +251,7 @@
                   "units": "sq ft"
                 },
                 {
-                  "text": "C2 array ≈ 50 kW DC (3,300 ÷ 66).",
+                  "text": "C2 array \u2248 50 kW DC (3,300 \u00f7 66).",
                   "label": "ESTIMATE",
                   "confidence": "medium",
                   "calc_id": "C2",
@@ -197,7 +261,7 @@
                   "units": "kW DC"
                 },
                 {
-                  "text": "C4 annual bill savings from solar energy ≈ USD 13,000/yr at USD 0.22/kWh.",
+                  "text": "C4 annual bill savings from solar energy \u2248 USD 13,000/yr at USD 0.22/kWh.",
                   "label": "ESTIMATE",
                   "confidence": "medium",
                   "calc_id": "C4",
@@ -211,26 +275,124 @@
             },
             {
               "section_id": "6",
-              "title": "Scenario sketch",
-              "stand_in_note": "v0 stand-in; costed comparison arrives in v5",
+              "title": "Scenario comparison table",
               "claims": [
                 {
-                  "text": "Scenario A: LED and controls efficiency only (qualitative).",
-                  "label": "RECOMMENDATION",
+                  "text": "Scenario A (Efficiency only) cuts grid use 10.0\u201320.0 % of annual use = 33\u201367 % of the 30% goal; it does not reach the 30% goal at the low end.",
+                  "label": "ESTIMATE",
                   "confidence": "low",
-                  "source_url": "session://profile"
+                  "calc_id": "F-A",
+                  "value_low": 10.0,
+                  "value_high": 20.0,
+                  "units": "% of annual use"
                 },
                 {
-                  "text": "Scenario B: Efficiency plus rooftop solar within USD 400k capital (qualitative).",
-                  "label": "RECOMMENDATION",
-                  "confidence": "medium",
-                  "source_url": "session://profile"
+                  "text": "Scenario A upfront cost 72,000\u2013144,000 USD; net cost 72,000\u2013144,000 USD (no incentive counted, see section 7); budget strain: within budget.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "calc_id": "F-A",
+                  "value_low": 72000.0,
+                  "value_high": 144000.0,
+                  "units": "USD"
                 },
                 {
-                  "text": "Scenario C: Solar, efficiency, and backup storage for 8-hour cooling center (qualitative).",
-                  "label": "RECOMMENDATION",
+                  "text": "Scenario A simple payback 4.8\u201323.2 years on savings of 6,200\u201314,880 USD/yr. Simple payback, not the full SAM model.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "calc_id": "F-A",
+                  "value_low": 4.8,
+                  "value_high": 23.2,
+                  "units": "years"
+                },
+                {
+                  "text": "Scenario A outage backup 0.0\u20130.0 hours for critical loads. No battery, so solar shuts off in an outage.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "calc_id": "F-A",
+                  "value_low": 0.0,
+                  "value_high": 0.0,
+                  "units": "hours"
+                },
+                {
+                  "text": "Scenario B (Efficiency + solar within budget) cuts grid use 27.7\u201341.3 % of annual use = 92\u2013138 % of the 30% goal; it does not reach the 30% goal at the low end.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "calc_id": "F-B",
+                  "value_low": 27.7,
+                  "value_high": 41.3,
+                  "units": "% of annual use"
+                },
+                {
+                  "text": "Scenario B upfront cost 222,000\u2013369,000 USD; net cost 222,000\u2013369,000 USD (no incentive counted, see section 7); budget strain: within budget.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "calc_id": "F-B",
+                  "value_low": 222000.0,
+                  "value_high": 369000.0,
+                  "units": "USD"
+                },
+                {
+                  "text": "Scenario B simple payback 7.2\u201321.5 years on savings of 17,200\u201330,720 USD/yr. Simple payback, not the full SAM model.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "calc_id": "F-B",
+                  "value_low": 7.2,
+                  "value_high": 21.5,
+                  "units": "years"
+                },
+                {
+                  "text": "Scenario B outage backup 0.0\u20130.0 hours for critical loads. No battery, so solar shuts off in an outage.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "calc_id": "F-B",
+                  "value_low": 0.0,
+                  "value_high": 0.0,
+                  "units": "hours"
+                },
+                {
+                  "text": "Scenario C (Full path to the goal (deep efficiency + full solar + backup battery)) cuts grid use 32.7\u201346.3 % of annual use = 109\u2013154 % of the 30% goal; it reaches the goal even at the low end.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "calc_id": "F-C",
+                  "value_low": 32.7,
+                  "value_high": 46.3,
+                  "units": "% of annual use"
+                },
+                {
+                  "text": "Scenario C upfront cost 906,000\u20131,473,000 USD; net cost 906,000\u20131,473,000 USD (no incentive counted, see section 7); budget strain: over budget.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "calc_id": "F-C",
+                  "value_low": 906000.0,
+                  "value_high": 1473000.0,
+                  "units": "USD"
+                },
+                {
+                  "text": "Scenario C simple payback 26.3\u201372.6 years on savings of 20,300\u201334,440 USD/yr. Simple payback, not the full SAM model.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "calc_id": "F-C",
+                  "value_low": 26.3,
+                  "value_high": 72.6,
+                  "units": "years"
+                },
+                {
+                  "text": "Scenario C outage backup 6.8\u20138.0 hours for critical loads.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "calc_id": "F-C",
+                  "value_low": 6.8,
+                  "value_high": 8.0,
+                  "units": "hours"
+                },
+                {
+                  "text": "Rooftop solar alone covers only 17.7\u201321.3% of annual use and does not reach the 30% goal.",
+                  "label": "ESTIMATE",
                   "confidence": "medium",
-                  "source_url": "https://example.test/fictional/reopt-v0"
+                  "calc_id": "C3",
+                  "value_low": 17.7,
+                  "value_high": 21.3,
+                  "units": "% of annual use"
                 }
               ]
             },
@@ -254,10 +416,10 @@
                   "source_url": "https://example.test/fictional/pvwatts-v0"
                 },
                 {
-                  "text": "Net cost after incentives is not calculated yet; the financial model arrives in v5.",
-                  "label": "RECOMMENDATION",
+                  "text": "Net cost counts no incentive: the saved incentive data is sample data (A5), so every program is left out until verified live. Costs use benchmark prices (A9).",
+                  "label": "ASSUMPTION",
                   "confidence": "low",
-                  "source_url": "session://profile"
+                  "assumption_id": "A9"
                 }
               ]
             },
@@ -266,31 +428,67 @@
               "title": "Priority roadmap",
               "claims": [
                 {
-                  "text": "Benchmark monthly use and verify tariff against uploaded bills.",
+                  "text": "Phase 0, confirm data and budget: upload twelve months of bills, confirm the tariff and the budget year and type.",
                   "label": "RECOMMENDATION",
                   "confidence": "high",
                   "source_url": "session://profile"
                 },
                 {
-                  "text": "Commission roof condition survey before structural solar design.",
+                  "text": "Phase 1, professional reviews: structural PE/RA analysis and a roof condition survey before any solar design.",
                   "label": "RECOMMENDATION",
                   "confidence": "high",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "Phase 2, efficiency measures: LED and controls first (Scenario A), the cheapest and fastest payback.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "Phase 3, permits and interconnection: licensed electrician, FDNY rooftop access review and the Con Edison interconnection application.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "Phase 4, solar installation: the roof array sized in Scenario B once reviews pass.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "Phase 5, battery, commissioning and verification: add storage if funding allows (Scenario C) and verify savings against bills.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
                   "source_url": "session://profile"
                 }
               ]
             },
             {
               "section_id": "9",
-              "title": "Backup power note",
+              "title": "Resilience and reliability plan",
               "claims": [
                 {
-                  "text": "Mock REopt suggests ~960 kWh battery for 8 hours of critical cooling-center loads.",
+                  "text": "Scenario C battery of 960 kWh supports about 6.8\u20138.0 hours of the 120 kW critical cooling-center load.",
                   "label": "ESTIMATE",
+                  "confidence": "low",
+                  "calc_id": "F-C",
+                  "value_low": 6.8,
+                  "value_high": 8.0,
+                  "units": "hours"
+                },
+                {
+                  "text": "Battery sizing is sample REopt data, not a live optimization.",
+                  "label": "ASSUMPTION",
+                  "confidence": "low",
+                  "assumption_id": "A4"
+                },
+                {
+                  "text": "Scenarios A and B give no backup power: solar panels shut off in an outage without a battery.",
+                  "label": "RECOMMENDATION",
                   "confidence": "medium",
-                  "source_url": "https://example.test/fictional/reopt-v0",
-                  "value_low": 960,
-                  "value_high": 960,
-                  "units": "kWh"
+                  "calc_id": "F-A"
                 }
               ]
             },
@@ -353,11 +551,13 @@
               "title": "Gaps, conflicts and confidence summary",
               "claims": [
                 {
-                  "text": "Solar-only offset (~19%) is below the 30% goal; efficiency and storage are needed.",
+                  "text": "Solar-only offset (~18-21%) is below the 30% goal; efficiency is needed, and only Scenario C reaches it at the low end.",
                   "label": "ESTIMATE",
                   "confidence": "medium",
                   "calc_id": "C3",
-                  "source_url": "https://example.test/fictional/pvwatts-v0"
+                  "value_low": 17.7,
+                  "value_high": 21.3,
+                  "units": "% of annual use"
                 }
               ]
             },

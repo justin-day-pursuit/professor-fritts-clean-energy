@@ -50,11 +50,11 @@ The backend runs a planning session from the command line. In v0, `TOOL_MODE=moc
 Check 2 only allows these registered tools:
 
 - Group 1: `get_building_profile` (session intake) and `lookup_ny_building_records` (mock)
-- Group 2: `get_solar_production` (mock PVWatts), `optimize_solar_storage` (mock REopt), and `calculate` (named formulas C1–C4 in code)
+- Group 2: `get_solar_production` (mock PVWatts), `optimize_solar_storage` (mock REopt, now with the critical load in kW), `calculate` (named formulas C1–C4 in code) and `run_financial_model` (v5: simple net cost and payback for scenarios A, B and C, all ESTIMATE ranges; no incentive counts unless the program is confirmed open)
 - Group 3: `get_utility_rates` (mock) and `search_ny_incentives_and_rules` (mock)
 - Group 4: `get_hazard_context` (mock FEMA)
 
-Not registered in v0: `run_financial_model`, `search_evidence`, `upsert_reference_cache`. Mock results include `source_url`, `retrieved_at`, `dataset_version`, and `mock: true`.
+Not registered yet: `search_evidence`. `upsert_reference_cache` (v4) is registered. Mock results include `source_url`, `retrieved_at`, `dataset_version`, and `mock: true`.
 
 ### Four checks
 

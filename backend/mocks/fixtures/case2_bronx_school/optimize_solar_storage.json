@@ -1,0 +1,16 @@
+{
+  "source_url": "https://example.test/fictional/case2/reopt",
+  "retrieved_at": "2026-10-01T12:00:00Z",
+  "dataset_version": "case2-v5-mock-1",
+  "mock": true,
+  "tool": "optimize_solar_storage",
+  "data": {
+    "battery_kw": 50,
+    "battery_kwh": 400,
+    "critical_load_hours": 8,
+    "critical_load_kw": 50,
+    "notes": "Fictional REopt stand-in for a Bronx school. The intake gave no critical loads, so this assumes a small emergency-shelter load of 50 kW for 8 hours."
+  },
+  "stale": false,
+  "flags": []
+}

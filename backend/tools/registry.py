@@ -1,8 +1,9 @@
 """
 Central registry of tools the agent may call, with Pydantic input schemas.
 
-Not registered (listed here for the roadmap only):
-  run_financial_model, search_evidence
+Registered from v5: run_financial_model (simple payback, scenarios A/B/C).
+Not registered yet (listed here for the roadmap only):
+  search_evidence
 """
 
 from __future__ import annotations
@@ -11,6 +12,7 @@ from typing import Any, Callable
 
 from pydantic import BaseModel, Field
 
+from agent.scenarios import FinancialModelInput, run_financial_model
 from tools.base import ToolResult
 from tools.building_records import get_building_profile, lookup_ny_building_records
 from tools.calculate import CalculateInput, describe_formulas, run_calculate
@@ -46,6 +48,9 @@ class SolarProductionInput(BaseModel):
 
     system_kw: float | None = Field(default=None, gt=0)
 
+
+# run_financial_model takes the scenario sizing inputs defined next to the scenarios themselves.
+FinancialModelToolInput = FinancialModelInput
 
 class UpsertCacheInput(BaseModel):
     """Arguments for the upsert_reference_cache write tool."""
@@ -98,7 +103,10 @@ TOOL_SPECS: dict[str, ToolSpec] = {
     ),
     "optimize_solar_storage": ToolSpec(
         name="optimize_solar_storage",
-        description="Size battery for critical loads (mock REopt in v0).",
+        description=(
+            "Size a battery for the critical loads (saved REopt sample data until v8). Returns battery_kwh, "
+            "battery_kw and critical_load_kw; pass those to run_financial_model for scenario C."
+        ),
         input_model=EmptyInput,
         freshness_kind="solar_production",
         group=2,
@@ -107,6 +115,18 @@ TOOL_SPECS: dict[str, ToolSpec] = {
         name="calculate",
         description="Run one deterministic formula on explicit numbers. " + describe_formulas(),
         input_model=CalculateToolInput,
+        freshness_kind="default",
+        group=2,
+    ),
+    "run_financial_model": ToolSpec(
+        name="run_financial_model",
+        description=(
+            "Simple net cost, payback, budget strain and outage hours for ONE scenario: A (efficiency only), "
+            "B (efficiency + solar within budget) or C (deep efficiency + full solar + battery). Call it once per "
+            "scenario with the SAME site inputs. The tool does the sizing and arithmetic; cite its calc_id "
+            "(F-A, F-B, F-C). All outputs are ESTIMATE ranges; this is a simple payback, not the full SAM model."
+        ),
+        input_model=FinancialModelToolInput,
         freshness_kind="default",
         group=2,
     ),
@@ -205,6 +225,8 @@ def execute_tool(
             assumption_ids=list(validated.assumption_ids),
         )
         return run_calculate(calc_in)
+    if name == "run_financial_model":
+        return run_financial_model(validated)
     if name == "get_utility_rates":
         return get_utility_rates(fixture_case, session_profile)
     if name == "get_utility_tariff":

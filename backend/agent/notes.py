@@ -67,7 +67,7 @@ class AgentNotes(BaseModel):
 
         # Check 4 only accepts an ASSUMPTION whose id is already in this register.
         # Tools fill the ids below so the model does not have to invent them.
-        # A1 loss band, A2 setback, A3 sq ft per kW, A4 mock battery, A5 mock incentives, A6 mock hazards, A7 efficiency benchmark and A8 benchmark use when bills are missing (both set when the profile is read).
+        # A1 loss band, A2 setback, A3 sq ft per kW, A4 mock battery, A5 mock incentives, A6 mock hazards, A7 efficiency benchmark and A8 benchmark use when bills are missing (both set when the profile is read), A9 benchmark prices (set when run_financial_model runs).
         if tool_name == "get_solar_production" and "range_assumption" in result.data:
             self.assumptions.setdefault("A1", str(result.data["range_assumption"]))
 
@@ -91,6 +91,12 @@ class AgentNotes(BaseModel):
             for aid in result.data.get("assumption_ids") or []:
                 key = str(aid)
                 self.assumptions.setdefault(key, f"Used in calculation {cid}")
+
+        # v5: the scenario model. Each scenario is kept under its calc_id (F-A, F-B, F-C) and the
+        # shared price-benchmark sentence becomes assumption A9, so the plan can cite both.
+        if tool_name == "run_financial_model" and "calc_id" in result.data:
+            self.calculations[result.data["calc_id"]] = result.data
+            self.assumptions.setdefault("A9", str(result.data.get("assumption_text", "Benchmark prices")))
 
         if tool_name == "optimize_solar_storage" and result.mock:
             notes_desc = result.data.get("notes") or "Sample battery sizing for 8-hour backup; critical loads are not metered"
@@ -132,6 +138,9 @@ class AgentNotes(BaseModel):
                 shown = ", ".join(f"{run['value']} {run['units']}" for run in runs)
                 bits.append(f"{cid} [{shown}]")
             lines.append("Calculations recorded: " + "; ".join(bits))
+        scenario_ids = sorted(k for k in self.calculations if k.startswith("F-"))
+        if scenario_ids:
+            lines.append("Scenarios modeled: " + ", ".join(scenario_ids))
         if self.assumptions:
             lines.append("Assumptions: " + "; ".join(f"{k}: {v}" for k, v in self.assumptions.items()))
         if self.flags:
