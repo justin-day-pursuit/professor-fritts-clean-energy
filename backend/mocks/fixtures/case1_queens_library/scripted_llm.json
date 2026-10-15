@@ -1,5 +1,5 @@
 {
-  "_comment": "Deterministic LLM replay for case1 \u2014 tool calls then write_roadmap.",
+  "_comment": "Deterministic LLM replay for case1 — tool calls then write_roadmap.",
   "steps": [
     {
       "type": "think",
@@ -29,6 +29,11 @@
     },
     {
       "type": "tool",
+      "name": "get_utility_tariff",
+      "input": {}
+    },
+    {
+      "type": "tool",
       "name": "calculate",
       "input": {
         "formula": "C1",
@@ -37,6 +42,7 @@
           "setback_factor": 0.55
         },
         "assumption_ids": [
+          "A1",
           "A2"
         ]
       }
@@ -66,17 +72,23 @@
               "title": "Summary and goal status",
               "claims": [
                 {
-                  "text": "Mock rooftop solar (~60,000 kWh/yr) offsets about 19% of 310,000 kWh annual use \u2014 solar alone does not reach the 30% goal.",
+                  "text": "Mock rooftop solar (~60,000 kWh/yr) offsets about 19% of 310,000 kWh annual use — solar alone does not reach the 30% goal.",
                   "label": "ESTIMATE",
                   "confidence": "medium",
                   "calc_id": "C3",
-                  "source_url": "https://example.test/fictional/pvwatts-v0"
+                  "source_url": "https://example.test/fictional/pvwatts-v0",
+                  "value_low": 19,
+                  "value_high": 19,
+                  "units": "% of annual use"
                 },
                 {
                   "text": "Capital budget USD 400,000 (2026) from intake.",
                   "label": "FACT",
                   "confidence": "high",
-                  "source_url": "session://profile"
+                  "source_url": "session://profile",
+                  "value_low": 400000,
+                  "value_high": 400000,
+                  "units": "USD"
                 },
                 {
                   "text": "Efficiency and storage paths should be combined to approach the 30% by 2030 target.",
@@ -109,6 +121,15 @@
               "title": "Assumptions register",
               "claims": [
                 {
+                  "text": "Efficiency measures (LED and controls) cut electricity use 10-20% based on published benchmarks, not a building model.",
+                  "label": "ASSUMPTION",
+                  "confidence": "low",
+                  "assumption_id": "A1",
+                  "value_low": 10,
+                  "value_high": 20,
+                  "units": "% of annual use"
+                },
+                {
                   "text": "Usable roof fraction 0.55 for setbacks and mechanical zones.",
                   "label": "ASSUMPTION",
                   "confidence": "medium",
@@ -123,29 +144,68 @@
               ]
             },
             {
+              "section_id": "4",
+              "title": "Baseline and efficiency opportunities",
+              "claims": [
+                {
+                  "text": "Baseline is 310,000 kWh/yr from twelve months of bills.",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "session://profile",
+                  "value_low": 310000,
+                  "value_high": 310000,
+                  "units": "kWh/yr"
+                },
+                {
+                  "text": "Start with LED lighting and controls; savings use benchmark percentages until a building model exists (phase 2).",
+                  "label": "RECOMMENDATION",
+                  "confidence": "low",
+                  "source_url": "session://profile"
+                },
+                {
+                  "text": "Benchmark efficiency savings of 10-20% of annual use, see A1.",
+                  "label": "ASSUMPTION",
+                  "confidence": "low",
+                  "assumption_id": "A1",
+                  "value_low": 10,
+                  "value_high": 20,
+                  "units": "% of annual use"
+                }
+              ]
+            },
+            {
               "section_id": "5",
               "title": "Solar assessment with calculations",
               "claims": [
                 {
-                  "text": "C1 usable roof \u2248 3,300 sq ft (6,000 \u00d7 0.55).",
+                  "text": "C1 usable roof ≈ 3,300 sq ft (6,000 × 0.55).",
                   "label": "ESTIMATE",
                   "confidence": "medium",
                   "calc_id": "C1",
-                  "source_url": "internal://calculate"
+                  "source_url": "internal://calculate",
+                  "value_low": 3300,
+                  "value_high": 3300,
+                  "units": "sq ft"
                 },
                 {
-                  "text": "C2 array \u2248 50 kW DC (3,300 \u00f7 66).",
+                  "text": "C2 array ≈ 50 kW DC (3,300 ÷ 66).",
                   "label": "ESTIMATE",
                   "confidence": "medium",
                   "calc_id": "C2",
-                  "source_url": "internal://calculate"
+                  "source_url": "internal://calculate",
+                  "value_low": 50,
+                  "value_high": 50,
+                  "units": "kW DC"
                 },
                 {
-                  "text": "C4 annual bill savings from solar energy \u2248 USD 13,000/yr at USD 0.22/kWh.",
+                  "text": "C4 annual bill savings from solar energy ≈ USD 13,000/yr at USD 0.22/kWh.",
                   "label": "ESTIMATE",
                   "confidence": "medium",
                   "calc_id": "C4",
-                  "source_url": "internal://calculate"
+                  "source_url": "internal://calculate",
+                  "value_low": 13000,
+                  "value_high": 13000,
+                  "units": "USD/yr"
                 }
               ],
               "stand_in_note": null
@@ -176,6 +236,33 @@
               ]
             },
             {
+              "section_id": "7",
+              "title": "Cost, financing and incentives",
+              "claims": [
+                {
+                  "text": "Con Edison SC-9 Rate I, effective 2025-07-01, energy charge range. Confirm the tariff against a recent bill.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://example.test/fictional/openei-tariff-v2",
+                  "value_low": 0.2,
+                  "value_high": 0.24,
+                  "units": "USD/kWh"
+                },
+                {
+                  "text": "Federal commercial ITC is listed open with a placed-in-service deadline of 2027-12-31 (retrieved 2025-10-01, saved sample data).",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://example.test/fictional/pvwatts-v0"
+                },
+                {
+                  "text": "Net cost after incentives is not calculated yet; the financial model arrives in v5.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "low",
+                  "source_url": "session://profile"
+                }
+              ]
+            },
+            {
               "section_id": "8",
               "title": "Priority roadmap",
               "claims": [
@@ -201,7 +288,10 @@
                   "text": "Mock REopt suggests ~960 kWh battery for 8 hours of critical cooling-center loads.",
                   "label": "ESTIMATE",
                   "confidence": "medium",
-                  "source_url": "https://example.test/fictional/reopt-v0"
+                  "source_url": "https://example.test/fictional/reopt-v0",
+                  "value_low": 960,
+                  "value_high": 960,
+                  "units": "kWh"
                 }
               ]
             },
@@ -238,6 +328,24 @@
                   "label": "RECOMMENDATION",
                   "confidence": "high",
                   "source_url": "session://profile"
+                }
+              ]
+            },
+            {
+              "section_id": "11",
+              "title": "Path to net-zero and learning resources",
+              "claims": [
+                {
+                  "text": "Rooftop solar plus efficiency may not reach net-zero on this roof; plan off-site renewable procurement for the remainder.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "low",
+                  "calc_id": "C3"
+                },
+                {
+                  "text": "Learn more from NYSERDA and the NYC Accelerator guidance pages (to be confirmed as approved sources in v3).",
+                  "label": "RECOMMENDATION",
+                  "confidence": "low",
+                  "source_url": "https://example.test/fictional/pvwatts-v0"
                 }
               ]
             },
