@@ -116,6 +116,13 @@ def finish_run(
         run.output = output
     if flags is not None:
         run.flags = flags
+    # v6: add the run's token use and estimated cost (from its "usage" events) to the run flags, so one number
+    # per run is on the run itself. Runs without a model call (scripted, or stopped at Check 1) have none.
+    from agent.llm.pricing import sum_usage
+
+    usage_events = [event.payload for event in run.events.filter(kind="usage")]
+    if usage_events:
+        run.flags = {**(run.flags or {}), "usage": sum_usage(usage_events)}
     if tool_call_count is not None:
         run.tool_call_count = tool_call_count
     if elapsed_seconds is not None:

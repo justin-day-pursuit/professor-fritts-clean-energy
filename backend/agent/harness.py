@@ -367,6 +367,10 @@ def run_harness(
                 tool_call_count=limits.tool_call_count,
             )
         except RuntimeError as exc:
+            # A reply cut off at the token limit was still billed, so its usage is saved before the error.
+            failed_usage = llm.take_usage()
+            if failed_usage:
+                seq = _append_check_event(run, seq, "usage", failed_usage)
             services.append_event(run, seq=seq, kind="error", payload={"message": str(exc)})
             if roadmap_payload is not None:
                 check4 = {"passed": False, "message": str(exc)}
@@ -392,6 +396,11 @@ def run_harness(
             )
 
         fix_context = None
+        # v6: save what this model call used (tokens and estimated dollars) so spend is visible without the
+        # Anthropic console. The scripted model has none, so nothing is added for it.
+        usage = llm.take_usage()
+        if usage:
+            seq = _append_check_event(run, seq, "usage", usage)
 
         if step.kind == "exhausted":
             if roadmap_payload is not None:
