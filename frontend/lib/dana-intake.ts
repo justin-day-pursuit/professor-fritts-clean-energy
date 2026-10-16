@@ -25,7 +25,8 @@ export const DANA_INTAKE: IntakeProfile = {
   goal: "Cut grid electricity 30% by 2030",
   target_year: 2030,
   critical_loads: "Cooling center loads during outages",
-  critical_load_hours: 8,
+  backup_hours_wanted: 8,
+  goal_percent: 30,
   existing_renewables: "none",
   existing_efficiency: "none",
 };

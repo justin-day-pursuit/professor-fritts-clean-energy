@@ -17,7 +17,21 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { getRoofSuggestion } from "@/lib/api";
-import { NYC_BOROUGHS, ROOF_TYPES, isNotFlat, missingRequiredFields } from "@/lib/profile-utils";
+import {
+  COOLING_TYPES,
+  DEFAULT_GOAL_PERCENT,
+  GOAL_PRESETS,
+  GOAL_TYPES,
+  HEATING_FUELS,
+  LIGHTING_TYPES,
+  NYC_BOROUGHS,
+  OWNER_AGENCIES,
+  ROOF_CONDITIONS,
+  ROOF_TYPES,
+  YES_NO,
+  isNotFlat,
+  missingRequiredFields,
+} from "@/lib/profile-utils";
 import type { IntakeProfile, ReplayCase, RoofSuggestion } from "@/lib/types";
 import { useState, type ReactNode } from "react";
 
@@ -56,6 +70,48 @@ function Field({
   );
 }
 
+/**
+ * A labeled pick-list for the optional questions. Each option list ends with "Don't know", so nobody has to
+ * guess; the plan treats that the same as a blank answer.
+ */
+function PickField({
+  id,
+  label,
+  value,
+  options,
+  placeholder = "Choose one",
+  onPick,
+}: {
+  id: string;
+  label: string;
+  value: string | undefined;
+  options: readonly { value: string; label: string }[];
+  placeholder?: string;
+  onPick: (value: string) => void;
+}) {
+  return (
+    <Field id={id} label={label}>
+      <Select
+        value={options.find((o) => o.value === value)?.value ?? null}
+        onValueChange={(v) => onPick(v ?? "")}
+      >
+        <SelectTrigger id={id} className="w-full">
+          <SelectValue placeholder={placeholder}>
+            {(v: string | null) => options.find((o) => o.value === v)?.label ?? placeholder}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((o) => (
+            <SelectItem key={o.value} value={o.value}>
+              {o.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </Field>
+  );
+}
+
 export function IntakeForm({
   profile,
   onChange,
@@ -70,6 +126,17 @@ export function IntakeForm({
     onChange({ ...profile, [key]: value });
   };
   const missing = missingRequiredFields(profile);
+  // The goal slider: a blank or unusable number shows the default position, and the hint turns the percent into kWh.
+  const typedGoal = Number(profile.goal_percent);
+  const goalPercent =
+    Number.isFinite(typedGoal) && typedGoal >= 5 && typedGoal <= 100 ? typedGoal : DEFAULT_GOAL_PERCENT;
+  const annualKwh = Number(String(profile.annual_kwh ?? "").replace(/,/g, ""));
+  const goalHint =
+    Number.isFinite(annualKwh) && annualKwh > 0
+      ? `${goalPercent}% of your ${Math.round(annualKwh).toLocaleString()} kWh a year is about ${Math.round(
+          (annualKwh * goalPercent) / 100,
+        ).toLocaleString()} kWh a year.`
+      : "Enter annual kWh (or upload bills) to see what this means in kWh.";
   // The saved demo picked in the replay menu. Pressing Replay sends it to the page, which plays it back.
   const [replayChoice, setReplayChoice] = useState<string | null>(null);
   const chosenReplay = replayCases.find((c) => c.id === replayChoice) ?? null;
@@ -343,38 +410,110 @@ export function IntakeForm({
             </Select>
           </Field>
         </div>
-        <Field id="goal" label="Energy goal">
-          <Textarea
-            id="goal"
-            rows={2}
-            value={profile.goal ?? ""}
-            onChange={(e) => set("goal", e.target.value)}
+        {/* The goal: a percent cut in grid electricity. The model uses this number directly. */}
+        <div className="grid gap-2 border-t pt-3">
+          <p className="text-sm font-medium">Your goal</p>
+          <PickField
+            id="goal_type"
+            label="What is the goal?"
+            value={profile.goal_type ?? "percent_reduction"}
+            options={GOAL_TYPES}
+            onPick={(v) => set("goal_type", v)}
           />
-        </Field>
-        <Field id="target_year" label="Target year">
-          <Input
-            id="target_year"
-            inputMode="numeric"
-            value={profile.target_year ?? ""}
-            onChange={(e) => set("target_year", e.target.value)}
-          />
-        </Field>
-        <Field id="critical_loads" label="Critical loads">
-          <Textarea
-            id="critical_loads"
-            rows={2}
-            value={profile.critical_loads ?? ""}
-            onChange={(e) => set("critical_loads", e.target.value)}
-          />
-        </Field>
-        <Field id="critical_load_hours" label="Critical load hours">
-          <Input
-            id="critical_load_hours"
-            inputMode="numeric"
-            value={profile.critical_load_hours ?? ""}
-            onChange={(e) => set("critical_load_hours", e.target.value)}
-          />
-        </Field>
+          {(profile.goal_type ?? "percent_reduction") !== "percent_reduction" && (
+            <p className="text-xs text-muted-foreground">
+              Only a percent cut in grid electricity is calculated. Other goals are noted in the plan but not
+              modeled.
+            </p>
+          )}
+          <Field id="goal_percent" label={`Cut grid electricity by ${goalPercent}%`}>
+            <div className="grid gap-2">
+              <div className="flex items-center gap-2">
+                <input
+                  id="goal_percent"
+                  type="range"
+                  min={5}
+                  max={100}
+                  step={5}
+                  value={goalPercent}
+                  onChange={(e) => onChange({ ...profile, goal_percent: Number(e.target.value) })}
+                  className="flex-1"
+                  aria-label="Goal percent"
+                />
+                <Input
+                  aria-label="Goal percent number"
+                  className="w-20"
+                  inputMode="numeric"
+                  value={profile.goal_percent ?? ""}
+                  onChange={(e) => set("goal_percent", e.target.value)}
+                />
+              </div>
+              <div className="flex gap-1">
+                {GOAL_PRESETS.map((n) => (
+                  <Button
+                    key={n}
+                    type="button"
+                    size="sm"
+                    variant={goalPercent === n ? "default" : "outline"}
+                    onClick={() => onChange({ ...profile, goal_percent: n })}
+                  >
+                    {n}%
+                  </Button>
+                ))}
+              </div>
+              {goalHint && <p className="text-xs text-muted-foreground">{goalHint}</p>}
+            </div>
+          </Field>
+          <Field id="target_year" label="Target year">
+            <Input
+              id="target_year"
+              inputMode="numeric"
+              value={profile.target_year ?? ""}
+              onChange={(e) => set("target_year", e.target.value)}
+            />
+          </Field>
+          <Field id="goal" label="Anything else about the goal (optional)">
+            <Textarea
+              id="goal"
+              rows={2}
+              value={profile.goal ?? ""}
+              onChange={(e) => set("goal", e.target.value)}
+            />
+          </Field>
+        </div>
+        {/* Backup power: the battery is sized from these two numbers. Blank ones are estimated and labeled in the plan. */}
+        <div className="grid gap-2 border-t pt-3">
+          <p className="text-sm font-medium">Backup power</p>
+          <Field id="critical_loads" label="Critical loads">
+            <Textarea
+              id="critical_loads"
+              rows={2}
+              value={profile.critical_loads ?? ""}
+              onChange={(e) => set("critical_loads", e.target.value)}
+            />
+          </Field>
+          <div className="grid grid-cols-2 gap-2">
+            <Field id="critical_load_kw" label="Critical load (kW)">
+              <Input
+                id="critical_load_kw"
+                inputMode="decimal"
+                value={profile.critical_load_kw ?? ""}
+                onChange={(e) => set("critical_load_kw", e.target.value)}
+              />
+            </Field>
+            <Field id="backup_hours_wanted" label="Hours of backup wanted">
+              <Input
+                id="backup_hours_wanted"
+                inputMode="numeric"
+                value={profile.backup_hours_wanted ?? ""}
+                onChange={(e) => set("backup_hours_wanted", e.target.value)}
+              />
+            </Field>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Leave these blank and the plan estimates them and says so.
+          </p>
+        </div>
         {/* Systems the building already has, so the plan builds on them and does not start from nothing. */}
         <div className="grid gap-2 border-t pt-3">
           <p className="text-sm font-medium">Existing renewable and efficiency systems</p>
@@ -415,6 +554,64 @@ export function IntakeForm({
               onChange={(e) => set("existing_efficiency", e.target.value)}
             />
           </Field>
+        </div>
+        {/* Optional questions that sharpen the plan. Skipping any is fine: "Don't know" counts as blank. */}
+        <div className="grid gap-2 border-t pt-3">
+          <p className="text-sm font-medium">More about the building (optional)</p>
+          <PickField
+            id="owner_agency"
+            label="Who owns the building?"
+            value={profile.owner_agency}
+            options={OWNER_AGENCIES}
+            onPick={(v) => set("owner_agency", v)}
+          />
+          <PickField
+            id="roof_condition"
+            label="Roof condition"
+            value={profile.roof_condition}
+            options={ROOF_CONDITIONS}
+            onPick={(v) => set("roof_condition", v)}
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <PickField
+              id="lighting_type"
+              label="Lighting"
+              value={profile.lighting_type}
+              options={LIGHTING_TYPES}
+              onPick={(v) => set("lighting_type", v)}
+            />
+            <Field id="lighting_retrofit_year" label="Lighting last upgraded (year)">
+              <Input
+                id="lighting_retrofit_year"
+                inputMode="numeric"
+                value={profile.lighting_retrofit_year ?? ""}
+                onChange={(e) => set("lighting_retrofit_year", e.target.value)}
+              />
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <PickField
+              id="heating_fuel"
+              label="Heating fuel"
+              value={profile.heating_fuel}
+              options={HEATING_FUELS}
+              onPick={(v) => set("heating_fuel", v)}
+            />
+            <PickField
+              id="cooling_type"
+              label="Cooling"
+              value={profile.cooling_type}
+              options={COOLING_TYPES}
+              onPick={(v) => set("cooling_type", v)}
+            />
+          </div>
+          <PickField
+            id="has_building_controls"
+            label="Building automation or controls?"
+            value={profile.has_building_controls}
+            options={YES_NO}
+            onPick={(v) => set("has_building_controls", v)}
+          />
         </div>
       </CardContent>
     </Card>
