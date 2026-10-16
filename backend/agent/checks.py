@@ -79,7 +79,7 @@ def _has_budget(profile: dict[str, Any]) -> bool:
 
 
 def _has_goal(profile: dict[str, Any]) -> bool:
-    goal = profile.get("goal") or profile.get("energy_goal")
+    goal = profile.get("goal") or profile.get("energy_goal") or profile.get("goal_percent")
     return bool(str(goal or "").strip())
 
 

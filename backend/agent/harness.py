@@ -20,6 +20,7 @@ from agent.limits import MAX_CONSECUTIVE_THINK_STEPS, RunLimits
 from agent.llm.base import LLMConfigurationError, LLMStep
 from agent.llm.factory import get_llm_client
 from agent.notes import AgentNotes
+from agent.profile_prep import effective_profile
 from agent.roadmap import render_follow_up_markdown, render_roadmap_json, render_roadmap_markdown
 from core.models import Run, Session
 from core import services
@@ -277,7 +278,14 @@ def run_harness(
     seq = 0
     t0 = time.monotonic()
 
-    check1 = run_check1(session.profile or {}, user_message)
+    # The profile the agent runs on: the user's intake, tidied, with annual use filled from uploaded bills.
+    # The stored session profile is left untouched.
+    run_profile = effective_profile(
+        session.profile,
+        list(session.documents.values_list("parsed_summary", flat=True)),
+    )
+
+    check1 = run_check1(run_profile, user_message)
     seq = _append_check_event(run, seq, "check1", check1)
 
     if not check1.get("passed"):
@@ -702,7 +710,7 @@ def run_harness(
             result = execute_tool(
                 tool_name,
                 tool_input,
-                session_profile=session.profile or {},
+                session_profile=run_profile,
                 fixture_case=session.fixture_case,
             )
         except Exception as exc:

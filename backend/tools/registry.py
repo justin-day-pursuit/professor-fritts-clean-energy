@@ -220,6 +220,15 @@ def _check_roof_formula(formula: str, inputs: dict[str, Any], profile: dict[str,
             )
 
 
+def _goal_fraction_from_profile(profile: dict[str, Any]) -> float | None:
+    """The intake's goal percent (5 to 100) as a fraction, or None when it is blank or not a usable number."""
+    try:
+        pct = float(profile.get("goal_percent"))
+    except (TypeError, ValueError):
+        return None
+    return pct / 100.0 if 0 < pct <= 100 else None
+
+
 def execute_tool(
     name: str,
     raw_input: dict[str, Any],
@@ -251,6 +260,10 @@ def execute_tool(
         )
         return run_calculate(calc_in)
     if name == "run_financial_model":
+        # The user's own goal percent decides the goal, not whatever number the model passes.
+        goal_pct = _goal_fraction_from_profile(session_profile)
+        if goal_pct is not None:
+            validated = validated.model_copy(update={"goal_fraction": goal_pct})
         return run_financial_model(validated)
     if name == "get_utility_rates":
         return get_utility_rates(fixture_case, session_profile)

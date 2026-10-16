@@ -44,6 +44,33 @@ EXISTING_SYSTEM_FIELDS: tuple[str, ...] = (
 )
 
 
+# Optional intake fields that sharpen the plan. A blank one is listed under optional_missing (so the plan can say what
+# it did not know) but it never blocks a run or adds a missing_field flag. "unknown" counts as blank.
+OPTIONAL_PROFILE_FIELDS: tuple[str, ...] = (
+    "owner_agency",
+    "roof_condition",
+    "lighting_type",
+    "lighting_retrofit_year",
+    "heating_fuel",
+    "cooling_type",
+    "has_building_controls",
+    "goal_type",
+    "goal_percent",
+    "critical_load_kw",
+    "backup_hours_wanted",
+)
+
+
+def find_missing_optional_fields(profile: dict[str, Any]) -> list[str]:
+    """Return the optional intake fields that are blank, in the order of OPTIONAL_PROFILE_FIELDS."""
+    return [
+        name
+        for name in OPTIONAL_PROFILE_FIELDS
+        if profile.get(name) is None
+        or (isinstance(profile.get(name), str) and profile[name].strip().lower() in ("", "unknown"))
+    ]
+
+
 def find_missing_profile_fields(profile: dict[str, Any]) -> list[str]:
     """
     Return the required intake fields that are empty, in the order of REQUIRED_PROFILE_FIELDS.
@@ -82,12 +109,16 @@ def get_building_profile(session_profile: dict[str, Any]) -> ToolResult:
     missing = find_missing_profile_fields(session_profile)
     return ToolResult(
         tool="get_building_profile",
-        data={"profile": session_profile, "missing_fields": missing},
+        data={
+            "profile": session_profile,
+            "missing_fields": missing,
+            "optional_missing": find_missing_optional_fields(session_profile),
+        },
         source_url="session://profile",
         retrieved_at="",
         dataset_version="session-v0",
         mock=False,
-        flags=[f"missing_field:{name}" for name in missing],
+        flags=[f"missing_field:{name}" for name in missing] + list(session_profile.get("profile_flags") or []),
     )
 
 
