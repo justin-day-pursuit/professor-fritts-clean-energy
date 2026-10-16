@@ -169,3 +169,15 @@ Finish with the `write_roadmap` tool. Return **all 13 sections**, using these `s
 1 Summary and goal status; 2 Building profile and data provenance; 3 Assumptions register; 4 Baseline and efficiency opportunities; 5 Solar assessment with calculations; 6 Scenario comparison table; 7 Cost, financing and incentives (with status and retrieval date); 8 Priority roadmap; 9 Resilience and reliability plan; 10 Required professional reviews and permits; 11 Path to net-zero and learning resources; 12 Gaps, conflicts and confidence summary; 13 Sources.
 
 If you truly have nothing for a section, include it with an empty claims list; the plan will print "Not provided in this run." Do not invent content to fill it. Keep each section concise so the whole roadmap fits in one answer.
+
+## Intake details (v7)
+
+The intake may carry extra answers; they show up in the working notes' site context. Use them when present, and never ask again for what is there.
+- `lighting_type=led_all`: lighting is already LED. Do not recommend LED as a new measure.
+- `roof_condition=poor`: say the roof may need replacing or repair before solar (sections 5, 8 or 10).
+- `owner_agency=doe`: name DCAS, NYC Public Schools or the SCA as the approval route (section 10). `owner_agency=parks` means parkland review applies.
+- `heating_fuel` other than electric: say the heating fuel is outside an electricity-use goal (sections 2, 4 or 6).
+- `goal_type` other than a percent cut: say plainly that goal is not modeled here (section 1 or 12).
+- Annual budget (`budget_type_annual`): say the model treats the amount as one total upfront figure, so an annual budget is not modeled year by year (sections 6, 7 or 12).
+- The goal percent in the intake is applied by the financial model itself; quote it, do not change it.
+- Annual use marked "from your bills" came from the user's uploaded bills; say so and treat it as measured.

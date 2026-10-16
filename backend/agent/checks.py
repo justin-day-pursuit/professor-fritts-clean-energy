@@ -671,6 +671,7 @@ def _run_context_issues(payload: RoadmapPayload, notes: AgentNotes) -> list[str]
                 issues.append(f"Solar production number used after PVWatts failed: {claim.text[:80]}")
 
     issues.extend(_roof_and_existing_issues(payload, notes, claims))
+    issues.extend(_intake_detail_issues(payload, notes, claims))
     issues.extend(_budget_gap_issues(payload, notes))
     issues.extend(_calc_id_issues(claims, notes))
 
@@ -746,6 +747,66 @@ def _roof_and_existing_issues(payload: RoadmapPayload, notes: AgentNotes, claims
                 "The intake lists existing systems (" + str(notes.site_context["existing_systems"])[:80]
                 + "): section 2 or 4 must say how they were taken into account."
             )
+    return issues
+
+
+_SCHOOL_OWNER_WORDS = re.compile(r"\bDCAS\b|public schools|\bSCA\b|school construction authority", re.I)
+_REROOF_WORDS = re.compile(
+    r"re-?roof\w*|roof[^.]{0,40}(?:replac|repair)\w*|(?:replac|repair)\w*[^.]{0,20}roof", re.I
+)
+_FUEL_WORDS = re.compile(r"natural gas|\boil\b|\bsteam\b|non-electric|heating fuel|\bfuel\b|gas[- ]fired", re.I)
+_NOT_MODELED_WORDS = re.compile(r"not modeled|does not model|did not model|not calculated|not covered|outside (?:the|this) model", re.I)
+_ANNUAL_BUDGET_WORDS = re.compile(r"annual|per year|each year|every year|yearly", re.I)
+_UPFRONT_WORDS = re.compile(r"total|upfront|up-front|one-time|lump", re.I)
+_LED_WORD = re.compile(r"\bLED\b")
+_LED_ALREADY = re.compile(
+    r"\b(?:already|existing|installed|have|has|in place|beyond|no further|nothing more|not a new)\b", re.I
+)
+
+
+def _intake_detail_issues(payload: RoadmapPayload, notes: AgentNotes, claims: list[Claim]) -> list[str]:
+    """
+    v7 rules for the optional intake answers (owner, roof condition, lighting, heating fuel, goal type, budget type).
+
+    Each rule only fires when the user answered that question, so a skipped question adds no requirement:
+    - all-LED lighting: LED cannot be recommended as a new measure.
+    - a poor roof: re-roofing is mentioned (sections 5, 8 or 10) because solar should not go on a failing roof.
+    - school owner (DOE): the plan names DCAS, NYC Public Schools or the SCA as the route (section 10).
+    - heating fuel that is not electricity: the plan says the fuel is outside an electricity goal (sections 2, 4 or 6).
+    - a goal that is not a percent cut: the plan says that goal is not modeled (section 1 or 12).
+    - an annual budget: the plan says the model treats the amount as one total (sections 6, 7 or 12).
+    """
+    issues: list[str] = []
+    site = notes.site_context
+    if site.get("lighting_type") == "led_all":
+        for claim in claims:
+            if (
+                claim.label == "RECOMMENDATION"
+                and _LED_WORD.search(claim.text)
+                and not _LED_ALREADY.search(claim.text)
+            ):
+                issues.append(f"LED lighting recommended as a new measure, but the user says all lighting is LED: {claim.text[:80]}")
+    if site.get("roof_condition") == "poor":
+        where = [t for sid in ("5", "8", "10") for t in _section_claims(payload, sid)]
+        if not any(_REROOF_WORDS.search(t) for t in where):
+            issues.append("The user rates the roof poor: section 5, 8 or 10 must say the roof may need replacing or repair before solar.")
+    if site.get("owner_agency") == "doe":
+        if not any(_SCHOOL_OWNER_WORDS.search(t) for t in _section_claims(payload, "10")):
+            issues.append("The building is a DOE school: section 10 must name DCAS, NYC Public Schools or the SCA as the approval route.")
+    fuel = site.get("heating_fuel")
+    if fuel and fuel != "electric":
+        where = [t for sid in ("2", "4", "6") for t in _section_claims(payload, sid)]
+        if not any(_FUEL_WORDS.search(t) for t in where):
+            issues.append("Heating is not electric: section 2, 4 or 6 must say the heating fuel is outside an electricity-use goal.")
+    goal_type = site.get("goal_type")
+    if goal_type and goal_type != "percent_reduction":
+        where = [t for sid in ("1", "12") for t in _section_claims(payload, sid)]
+        if not any(_NOT_MODELED_WORDS.search(t) for t in where):
+            issues.append("The goal is not a percent cut in electricity: section 1 or 12 must say that goal is not modeled.")
+    if site.get("budget_type_annual"):
+        where = [t for sid in ("6", "7", "12") for t in _section_claims(payload, sid)]
+        if not any(_ANNUAL_BUDGET_WORDS.search(t) and _UPFRONT_WORDS.search(t) for t in where):
+            issues.append("The budget is annual: section 6, 7 or 12 must say the model treats the amount as one total upfront figure.")
     return issues
 
 

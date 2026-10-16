@@ -61,6 +61,7 @@ class AgentNotes(BaseModel):
         verified = verified_usable_area(profile)
         if verified is not None:
             self.site_context["verified_usable_roof_sqft"] = verified
+        self._record_intake_details(profile)
         parts: list[str] = []
         solar_kw = number_from_profile(profile, "existing_solar_kw")
         if solar_kw:
@@ -72,6 +73,27 @@ class AgentNotes(BaseModel):
                 parts.append(f"{label}: {text}")
         if parts:
             self.site_context["existing_systems"] = "; ".join(parts)
+
+    def _record_intake_details(self, profile: dict[str, Any]) -> None:
+        """
+        Remember the optional intake answers that change what the plan must say (Check 4 reads them).
+
+        Only answers that matter are kept: "unknown" and blank are skipped, so a user who skipped these
+        questions adds no new requirement.
+        """
+
+        def answer(key: str) -> str:
+            value = str(profile.get(key) or "").strip().lower()
+            return "" if value in ("", "unknown") else value
+
+        owner = answer("owner_agency")
+        if owner:
+            self.site_context["owner_agency"] = owner
+            if owner == "parks":
+                self.site_context["parkland"] = True
+        for key in ("roof_condition", "lighting_type", "heating_fuel", "goal_type"):
+            if answer(key):
+                self.site_context[key] = answer(key)
 
     def record_quarantine(self, tool_name: str, source_url: str, reason: str, name: str = "") -> None:
         """Remember a page that was ignored for hidden instructions (once per address)."""
@@ -122,6 +144,7 @@ class AgentNotes(BaseModel):
             # The user chose annual funding, but the model treats the amount as one upfront total. Say so.
             if str(result.data.get("profile", {}).get("budget_type") or "").strip().lower() in ("annual", "per year", "yearly"):
                 self.flags.append("budget_type_annual_not_modeled")
+                self.site_context["budget_type_annual"] = True
             # A8 (case 2): no bills means the baseline is a benchmark, which must be labeled as a guess.
             if "annual_kwh" in (result.data.get("missing_fields") or []):
                 floor_area = result.data.get("profile", {}).get("floor_area_sqft")

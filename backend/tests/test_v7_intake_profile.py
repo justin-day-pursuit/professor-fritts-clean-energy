@@ -120,7 +120,8 @@ def test_nothing_to_size_from_is_unavailable_not_invented():
 
 
 def test_mock_mode_still_returns_the_saved_sample():
-    result = optimize_solar_storage("case1_queens_library", {"critical_load_kw": 5})
+    with forced_tool_mode("mock"):
+        result = optimize_solar_storage("case1_queens_library", {"critical_load_kw": 5})
     assert result.mock is True
     assert result.data["battery_kwh"] == 960
 
@@ -129,3 +130,76 @@ def test_live_mode_uses_the_profile():
     with forced_tool_mode("live"):
         result = optimize_solar_storage("case1_queens_library", {"critical_load_kw": 10, "backup_hours_wanted": 4})
     assert result.data["battery_kwh"] == round(10 * 4 / 0.85)
+
+
+# ---- Check 4 rules for the optional intake answers ----
+
+from agent.notes import AgentNotes
+from tests.test_v6_roof_and_budget import _claim, _issues, _plan
+
+
+def _site(**site):
+    """Notes whose site context holds the given answers, as if the profile had been read."""
+    notes = AgentNotes()
+    notes.site_context.update(site)
+    return notes
+
+
+def test_skipped_questions_add_no_requirement():
+    assert _issues(_plan(), _site()) == []
+
+
+def test_notes_keep_real_answers_and_skip_unknown():
+    notes = AgentNotes()
+    notes._record_intake_details({"owner_agency": "doe", "roof_condition": "unknown", "heating_fuel": "oil"})
+    assert notes.site_context == {"owner_agency": "doe", "heating_fuel": "oil"}
+
+
+def test_parks_owner_marks_parkland():
+    notes = AgentNotes()
+    notes._record_intake_details({"owner_agency": "parks"})
+    assert notes.site_context["parkland"] is True
+
+
+def test_led_cannot_be_recommended_when_all_lighting_is_led():
+    notes = _site(lighting_type="led_all")
+    bad = _plan(s8=[_claim("Replace lighting with LED fixtures in phase 1.")])
+    assert any("LED lighting recommended" in i for i in _issues(bad, notes))
+    ok = _plan(s8=[_claim("Lighting is already LED, so no lighting upgrade is planned.")])
+    assert not any("LED lighting recommended" in i for i in _issues(ok, notes))
+
+
+def test_poor_roof_requires_a_reroof_mention():
+    notes = _site(roof_condition="poor")
+    assert any("roof poor" in i for i in _issues(_plan(), notes))
+    ok = _plan(s5=[_claim("The roof may need replacement before solar goes on.")])
+    assert not any("roof poor" in i for i in _issues(ok, notes))
+
+
+def test_doe_owner_requires_the_school_route():
+    notes = _site(owner_agency="doe")
+    assert any("DOE school" in i for i in _issues(_plan(), notes))
+    ok = _plan(s10=[_claim("Start with DCAS and NYC Public Schools.")])
+    assert not any("DOE school" in i for i in _issues(ok, notes))
+
+
+def test_non_electric_heating_must_be_called_out():
+    notes = _site(heating_fuel="natural_gas")
+    assert any("Heating is not electric" in i for i in _issues(_plan(), notes))
+    ok = _plan(s4=[_claim("Heating runs on natural gas, which an electricity goal does not cover.")])
+    assert not any("Heating is not electric" in i for i in _issues(ok, notes))
+    assert _issues(_plan(), _site(heating_fuel="electric")) == []
+
+
+def test_non_percent_goal_must_say_not_modeled():
+    notes = _site(goal_type="resilience")
+    assert any("not modeled" in i for i in _issues(_plan(), notes))
+    ok = _plan(s1=[_claim("Your resilience goal is not modeled here, only a percent cut in electricity.")])
+    assert not any("goal is not a percent" in i for i in _issues(ok, notes))
+
+
+def test_annual_budget_limit_must_be_stated():
+    notes = _site(budget_type_annual=True)
+    assert any("budget is annual" in i for i in _issues(_plan(), notes))
+    ok = _plan(s7=[_claim("Your budget is annual, but the model treats the amount as one total upfront figure.")])
+    assert not any("budget is annual" in i for i in _issues(ok, notes))
