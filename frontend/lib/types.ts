@@ -190,3 +190,24 @@ export interface RoofSuggestion {
   retrieved_at: string;
   note: string;
 }
+
+/** One saved demo the planner can replay (GET /api/replay/cases). kind says whether it is Claude's own recorded run or our script. */
+export interface ReplayCase {
+  id: string;
+  label: string;
+  tag: string;
+  kind: "recorded" | "scripted" | string;
+  question: string;
+}
+
+export interface ReplayCaseListResponse {
+  cases: ReplayCase[];
+}
+
+/** POST /api/replay/{case}: the session, the plan message and the whole run, returned at once so the page can play it back. */
+export interface ReplayResponse {
+  session: SessionResponse;
+  message: MessageResponse | null;
+  run: RunResponse;
+  case: ReplayCase;
+}

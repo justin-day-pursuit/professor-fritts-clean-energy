@@ -18,7 +18,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { getRoofSuggestion } from "@/lib/api";
 import { NYC_BOROUGHS, ROOF_TYPES, isNotFlat, missingRequiredFields } from "@/lib/profile-utils";
-import type { IntakeProfile, RoofSuggestion } from "@/lib/types";
+import type { IntakeProfile, ReplayCase, RoofSuggestion } from "@/lib/types";
 import { useState, type ReactNode } from "react";
 
 export interface IntakeFormProps {
@@ -27,6 +27,11 @@ export interface IntakeFormProps {
   onLoadDana: () => void;
   onUpdateAndReplan: () => void;
   busy: boolean;
+  /** Saved demos for the replay menu; leave empty to hide it. Replays never call Claude. */
+  replayCases?: ReplayCase[];
+  onReplay?: (caseId: string) => void;
+  /** True while a replay is on screen: re-planning is switched off so no new (paid) run can start from here. */
+  replayLocked?: boolean;
 }
 
 function Field({
@@ -57,11 +62,17 @@ export function IntakeForm({
   onLoadDana,
   onUpdateAndReplan,
   busy,
+  replayCases = [],
+  onReplay,
+  replayLocked = false,
 }: IntakeFormProps) {
   const set = (key: keyof IntakeProfile, value: string) => {
     onChange({ ...profile, [key]: value });
   };
   const missing = missingRequiredFields(profile);
+  // The saved demo picked in the replay menu. Pressing Replay sends it to the page, which plays it back.
+  const [replayChoice, setReplayChoice] = useState<string | null>(null);
+  const chosenReplay = replayCases.find((c) => c.id === replayChoice) ?? null;
 
   // The roof suggestion from city footprints. It fills the roof area box with a suggestion the user can
   // edit; it is never applied on its own, and the note under the box says it is not a measured roof.
@@ -103,12 +114,44 @@ export function IntakeForm({
             type="button"
             size="sm"
             variant="outline"
-            disabled={busy || missing.length > 0}
+            disabled={busy || missing.length > 0 || replayLocked}
             onClick={onUpdateAndReplan}
           >
             Update intake and re-plan
           </Button>
         </div>
+        {/* Replay menu: plays a saved run back with no Claude call, so it costs nothing. */}
+        {replayCases.length > 0 && onReplay && (
+          <div className="grid gap-1 pt-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={replayChoice} onValueChange={(v) => setReplayChoice(v ?? null)}>
+                <SelectTrigger className="h-8 w-64 text-xs" aria-label="Choose a saved demo to replay">
+                  <SelectValue placeholder="Replay a saved demo…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {replayCases.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.label} ({c.kind === "recorded" ? "recording" : "script"})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                size="sm"
+                disabled={busy || !chosenReplay}
+                onClick={() => chosenReplay && onReplay(chosenReplay.id)}
+              >
+                Replay
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {chosenReplay
+                ? chosenReplay.tag
+                : "Plays a saved run back step by step. No Claude call, no cost."}
+            </p>
+          </div>
+        )}
         {missing.length > 0 && (
           <p className="pt-1 text-xs text-muted-foreground">Still needed: {missing.join(", ")}</p>
         )}

@@ -30,10 +30,12 @@ export interface ChatPanelProps {
   onDraftChange?: (text: string) => void;
   /** Intake fields still empty; while any remain, sending is blocked and they are listed under the box. */
   missingFields?: string[];
+  /** When set, sending is switched off and this sentence is shown (used while a saved replay is on screen). */
+  lockedReason?: string;
 }
 
-export function ChatPanel({ messages, onSend, busy, draft, onDraftChange, missingFields = [] }: ChatPanelProps) {
-  const blocked = missingFields.length > 0;
+export function ChatPanel({ messages, onSend, busy, draft, onDraftChange, missingFields = [], lockedReason }: ChatPanelProps) {
+  const blocked = missingFields.length > 0 || Boolean(lockedReason);
   const [localDraft, setLocalDraft] = useState("");
   const text = draft ?? localDraft;
   const setText = onDraftChange ?? setLocalDraft;
@@ -109,10 +111,14 @@ export function ChatPanel({ messages, onSend, busy, draft, onDraftChange, missin
             }
           }}
         />
-        {blocked && (
-          <p className="w-full text-xs text-muted-foreground">
-            Fill in the intake first. Still needed: {missingFields.join(", ")}
-          </p>
+        {lockedReason ? (
+          <p className="w-full text-xs text-muted-foreground">{lockedReason}</p>
+        ) : (
+          blocked && (
+            <p className="w-full text-xs text-muted-foreground">
+              Fill in the intake first. Still needed: {missingFields.join(", ")}
+            </p>
+          )
         )}
         <Button type="button" disabled={busy || blocked || !text.trim()} onClick={() => void submit()}>
           Send

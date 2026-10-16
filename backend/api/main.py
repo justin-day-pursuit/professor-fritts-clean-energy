@@ -7,7 +7,7 @@ Django admin is mounted separately in fritts.asgi; this app owns /api/* routes.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routers import dev, documents, health, messages, records, runs, sessions
+from api.routers import dev, documents, health, messages, records, replay, runs, sessions
 from django.conf import settings
 
 
@@ -52,5 +52,6 @@ def create_app() -> FastAPI:
     app.include_router(messages.router, prefix="/api")
     app.include_router(runs.router, prefix="/api")
     app.include_router(records.router, prefix="/api")
+    app.include_router(replay.router, prefix="/api")
     app.include_router(dev.router, prefix="/api")
     return app

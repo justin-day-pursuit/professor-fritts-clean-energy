@@ -17,14 +17,17 @@ import {
   ApiError,
   createSession,
   getSession,
+  listReplayCases,
   postMessage,
+  replayCase,
   updateProfile,
   uploadDocument,
 } from "@/lib/api";
 import { DANA_DEFAULT_QUESTION, DANA_INTAKE } from "@/lib/dana-intake";
 import { apiToProfile, emptyProfile, missingRequiredFields, profileToApi } from "@/lib/profile-utils";
-import type { Claim, DocumentResponse, IntakeProfile, RunResponse } from "@/lib/types";
-import { useCallback, useState } from "react";
+import { playbackDelays } from "@/lib/replay-playback";
+import type { Claim, DocumentResponse, IntakeProfile, ReplayCase, RunResponse } from "@/lib/types";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * Prefix for bubbles that exist only in the browser (optimistic user lines and
@@ -63,6 +66,28 @@ export default function PlannerPage() {
   const [error, setError] = useState<string | null>(null);
   const [chatDraft, setChatDraft] = useState(DANA_DEFAULT_QUESTION);
 
+  // Saved-demo replay: the menu, what is on screen, and the switches that let playback be skipped or cancelled.
+  // A replay never calls Claude; the server plays a saved run back and this page shows it step by step.
+  const [replayCases, setReplayCases] = useState<ReplayCase[]>([]);
+  const [replayMode, setReplayMode] = useState<{ label: string; kind: string } | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const playToken = useRef(0); // each replay or reset gets a new number; a playback that no longer matches stops
+  const skipRef = useRef(false); // set by "Skip to result" to jump to the finished run
+
+  useEffect(() => {
+    let cancelled = false;
+    listReplayCases()
+      .then((result) => {
+        if (!cancelled) setReplayCases(result.cases);
+      })
+      .catch(() => {
+        /* The menu just stays hidden if the server has no replay endpoint (an older backend). */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const showError = useCallback((err: unknown) => {
     const msg = err instanceof ApiError ? err.message : err instanceof Error ? err.message : String(err);
     setError(msg);
@@ -86,6 +111,11 @@ export default function PlannerPage() {
    * to the old session. If Dana's fields change, edit DANA_INTAKE — not this handler.
    */
   const loadDana = async () => {
+    // Leaving a replay: stop any playback and clear the replay banner first.
+    playToken.current++;
+    skipRef.current = true;
+    setReplayMode(null);
+    setPlaying(false);
     setBusy(true);
     setError(null);
     try {
@@ -147,6 +177,8 @@ export default function PlannerPage() {
    * a local user bubble and only render the server copy.
    */
   const handleSend = async (text: string) => {
+    // While a saved replay is on screen the chat is off: a new message would start a real (paid) run.
+    if (replayMode) return;
     setBusy(true);
     setError(null);
     let optimisticId: string | null = null;
@@ -215,6 +247,100 @@ export default function PlannerPage() {
     }
   };
 
+  /**
+   * Waits up to ms, but returns early when playback is skipped or replaced, so "Skip to result" and
+   * "Exit replay" take effect at once instead of after the current pause.
+   */
+  const pause = async (ms: number, token: number) => {
+    const end = Date.now() + ms;
+    while (Date.now() < end && !skipRef.current && token === playToken.current) {
+      await new Promise((resolve) => setTimeout(resolve, 40));
+    }
+  };
+
+  /**
+   * Replays a saved demo without calling Claude. The server returns the whole saved run at once; this fills
+   * the form with that building, shows the question, then reveals the run log one step at a time (scrolling
+   * with it, the tool counter climbing) and finally shows the plan, as a live run would. Chat and re-plan are
+   * switched off until the replay is exited, because a new message would start a real paid run.
+   */
+  const handleReplay = async (caseId: string) => {
+    const token = ++playToken.current;
+    skipRef.current = false;
+    setBusy(true);
+    setPlaying(true);
+    setError(null);
+    try {
+      const result = await replayCase(caseId);
+      if (token !== playToken.current) return;
+      setSessionId(null); // the replay's session is never reused for chat
+      setDocuments([]);
+      setRuns([]);
+      setSelectedRunId(null);
+      setProfile(apiToProfile(result.session.profile as Record<string, unknown>));
+      setChatDraft("");
+      setReplayMode({ label: result.case.label, kind: result.case.kind });
+      setMessages([
+        {
+          id: nextClientMessageId(),
+          session_id: result.session.id,
+          role: "user",
+          content: result.case.question,
+          created_at: new Date().toISOString(),
+          run_id: null,
+        },
+      ]);
+
+      const events = [...result.run.events].sort((a, b) => a.seq - b.seq);
+      const delays = playbackDelays(events);
+      const running = (shown: typeof events): RunResponse => ({
+        ...result.run,
+        status: "running",
+        finished_at: null,
+        output: {},
+        flags: {},
+        tool_call_count: shown.filter((e) => e.kind === "tool_call").length,
+        elapsed_seconds: null,
+        events: shown,
+      });
+      appendRun(running([]));
+      for (let i = 0; i < events.length; i++) {
+        await pause(delays[i], token);
+        if (token !== playToken.current) return;
+        if (skipRef.current) break;
+        appendRun(running(events.slice(0, i + 1)));
+      }
+      if (token !== playToken.current) return;
+      appendRun(result.run);
+      if (result.message) {
+        const claims = claimsFromRun(result.run);
+        setMessages((prev) => [...prev, { ...result.message!, claims: claims.length ? claims : undefined }]);
+      }
+    } catch (err) {
+      if (token === playToken.current) showError(err);
+    } finally {
+      if (token === playToken.current) {
+        setBusy(false);
+        setPlaying(false);
+      }
+    }
+  };
+
+  /** Leaves the replay and returns to a blank planner, ready for a real run. */
+  const exitReplay = () => {
+    playToken.current++;
+    skipRef.current = true;
+    setReplayMode(null);
+    setPlaying(false);
+    setBusy(false);
+    setProfile(emptyProfile());
+    setDocuments([]);
+    setMessages([]);
+    setRuns([]);
+    setSelectedRunId(null);
+    setChatDraft(DANA_DEFAULT_QUESTION);
+  };
+
   const activeRun =
     runs.find((r) => r.id === selectedRunId) ?? runs[runs.length - 1] ?? null;
 
@@ -227,6 +353,38 @@ export default function PlannerPage() {
           <p className="text-sm text-muted-foreground">building renewable energy planner</p>
         </div>
       </header>
+
+      {replayMode && (
+        <div className="px-4 pt-3">
+          <Alert>
+            <AlertTitle>Replay of a saved run: {replayMode.label}</AlertTitle>
+            <AlertDescription>
+              <p>
+                {replayMode.kind === "recorded"
+                  ? "A recording of a real Claude run, played back from saved data. No Claude call is being made."
+                  : "A scripted demo: the numbers come from real tool data, but we wrote the plan text. No Claude call is being made."}
+              </p>
+              <div className="pt-2">
+                {playing ? (
+                  <button
+                    type="button"
+                    className="rounded border px-2 py-1 text-xs"
+                    onClick={() => {
+                      skipRef.current = true;
+                    }}
+                  >
+                    Skip to result
+                  </button>
+                ) : (
+                  <button type="button" className="rounded border px-2 py-1 text-xs" onClick={exitReplay}>
+                    Exit replay
+                  </button>
+                )}
+              </div>
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
 
       {error && (
         <div className="px-4 pt-3">
@@ -245,6 +403,9 @@ export default function PlannerPage() {
             onLoadDana={() => void loadDana()}
             onUpdateAndReplan={() => void handleReplan()}
             busy={busy}
+            replayCases={replayCases}
+            onReplay={(caseId) => void handleReplay(caseId)}
+            replayLocked={replayMode !== null}
           />
           <DocumentUpload documents={documents} onUpload={handleUpload} busy={busy} />
         </div>
@@ -254,6 +415,11 @@ export default function PlannerPage() {
           onSend={handleSend}
           busy={busy}
           missingFields={missingRequiredFields(profile)}
+          lockedReason={
+            replayMode
+              ? "This is a replay of a saved run, so chat is switched off. Exit the replay to plan your own."
+              : undefined
+          }
           draft={chatDraft}
           onDraftChange={setChatDraft}
         />
