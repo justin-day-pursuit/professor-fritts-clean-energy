@@ -1,0 +1,15 @@
+{
+  "_comment": "Demo case. Written before the run; checked by agent/evals.py.",
+  "status": "done",
+  "check4_passed": true,
+  "roadmap_includes": [
+    "more than your budget",
+    "elective pay",
+    "solar schools",
+    "uncertain",
+    "left out of net cost"
+  ],
+  "flags_include": [
+    "tariff_needs_user_confirmation"
+  ]
+}

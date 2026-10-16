@@ -196,6 +196,10 @@ The live model gets the same rules from `backend/agent/prompts/system_prompt_v4.
 
 Four **real** NYC buildings (`real1`–`real4` under `backend/mocks/fixtures/`) are logged with their public data, the live tool results and the live roadmaps from two live passes on Oct 15, 2026 (before and after the roof, existing-systems and budget changes). They are live-only for now, not eval cases. See [documentation/real-cases.md](documentation/real-cases.md) for the inputs, the results and what the traces showed.
 
+**Demo case and replays.** `backend/mocks/fixtures/demo_ps236_bronx/` is a real Bronx school chosen as the cleanest example in the public data, with real building, solar, price, flood and incentive data; see [documentation/demo-case.md](documentation/demo-case.md). Its plan text is a script we wrote, not a Claude recording. `python manage.py record_case --run <id> --case <name>` saves any finished live run as a replayable case (tool calls, tool answers and the model's own plan), and a replay (`LLM_PROVIDER=scripted TOOL_MODE=mock python manage.py run_case --case <name>`) costs nothing and runs the real checks. The four real-building runs are recorded this way.
+
+**Claude spend.** The Anthropic client marks the system prompt and the end of the conversation for prompt caching, which makes the repeated reads about a tenth of the price (`ANTHROPIC_PROMPT_CACHE=0` turns it off; if Anthropic rejects the markers the call is retried without them). Each live run saves every call's token counts and an estimated cost as `usage` events and a total in the run's flags, so spend is visible without the Anthropic console. Caching has been tested with a fake client only and still needs one live run to confirm.
+
 The web UI shows mock badges on tool results and downloads the same roadmap Markdown/JSON the CLI prints.
 
 ## Team
