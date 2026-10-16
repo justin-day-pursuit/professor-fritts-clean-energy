@@ -105,7 +105,7 @@ TOOL_SPECS: dict[str, ToolSpec] = {
     "optimize_solar_storage": ToolSpec(
         name="optimize_solar_storage",
         description=(
-            "Size a battery for the critical loads (saved REopt sample data until v8). Returns battery_kwh, "
+            "Size a battery for the critical loads from the user's own critical load kW and backup hours (estimated and flagged when blank; saved sample only in mock mode). Returns battery_kwh, "
             "battery_kw and critical_load_kw; pass those to run_financial_model for scenario C."
         ),
         input_model=EmptyInput,
@@ -250,7 +250,7 @@ def execute_tool(
     if name == "get_solar_production":
         return get_solar_production(fixture_case, session_profile, getattr(validated, "system_kw", None))
     if name == "optimize_solar_storage":
-        return optimize_solar_storage(fixture_case)
+        return optimize_solar_storage(fixture_case, session_profile)
     if name == "calculate":
         _check_roof_formula(validated.formula, validated.inputs, session_profile)
         calc_in = CalculateInput(

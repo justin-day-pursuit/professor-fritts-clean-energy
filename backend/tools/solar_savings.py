@@ -4,10 +4,11 @@ Solar production and storage optimization tools (group 2) — live PVWatts in v1
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any
 
 from mocks.mock_mode import get_tool_mode, require_mock_or_fixture
-from tools.base import ToolResult
+from tools.base import ToolResult, ToolUnavailableError
 from tools.live_solar import fetch_live_solar_production
 from tools.roof import (
     check_new_array_fits,
@@ -51,6 +52,79 @@ def get_solar_production(
     return result.model_copy(update={"flags": flags, "data": data})
 
 
-def optimize_solar_storage(case: str) -> ToolResult:
-    """Return saved REopt-style battery sizing for critical-load hours."""
+# Battery sizing: round-trip efficiency, the default backup length, and the stand-in critical load when the user gave none.
+BATTERY_EFFICIENCY = 0.85
+DEFAULT_BACKUP_HOURS = 8.0
+ESTIMATED_CRITICAL_WATTS_PER_SQFT = 1.0
+
+
+def _number(value: Any) -> float | None:
+    """A positive number from an intake value, or None when blank or not usable."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if number > 0 else None
+
+
+def size_battery_from_profile(profile: dict[str, Any]) -> ToolResult:
+    """
+    Size a backup battery from the user's own numbers: kW = critical load, kWh = kW x hours / 0.85.
+
+    Real inputs come first. When the user left the critical load blank it is estimated from floor area
+    (about 1 W per sq ft), and blank backup hours default to 8; each estimate is named in the assumption
+    text and in a flag so the plan labels it an ASSUMPTION. With neither a critical load nor a floor area
+    there is nothing to size from, so the tool reports itself unavailable instead of inventing a number.
+    """
+    kw = _number(profile.get("critical_load_kw"))
+    hours = _number(profile.get("backup_hours_wanted"))
+    flags: list[str] = []
+    parts: list[str] = []
+    if kw is None:
+        floor_area = _number(profile.get("floor_area_sqft"))
+        if floor_area is None:
+            raise ToolUnavailableError(
+                "Battery sizing needs a critical load in kW or a floor area; the intake has neither."
+            )
+        kw = round(floor_area * ESTIMATED_CRITICAL_WATTS_PER_SQFT / 1000.0, 1)
+        flags.append("battery_inputs_estimated")
+        parts.append(
+            f"Critical load not given, so estimated at {ESTIMATED_CRITICAL_WATTS_PER_SQFT} W per sq ft x "
+            f"{floor_area:g} sq ft = {kw} kW (a team placeholder, not metered)."
+        )
+    else:
+        parts.append(f"Critical load of {kw:g} kW as entered by the user.")
+    if hours is None:
+        hours = DEFAULT_BACKUP_HOURS
+        if "battery_inputs_estimated" not in flags:
+            flags.append("battery_inputs_estimated")
+        parts.append(f"Backup length not given, so {DEFAULT_BACKUP_HOURS:g} hours assumed.")
+    else:
+        parts.append(f"Backup length of {hours:g} hours as entered by the user.")
+    kwh = round(kw * hours / BATTERY_EFFICIENCY)
+    parts.append(f"Battery energy = kW x hours / {BATTERY_EFFICIENCY} round-trip efficiency = {kwh} kWh.")
+    return ToolResult(
+        tool="optimize_solar_storage",
+        data={
+            "battery_kw": kw,
+            "battery_kwh": kwh,
+            "critical_load_kw": kw,
+            "critical_load_hours": hours,
+            "notes": " ".join(parts),
+        },
+        source_url="internal://optimize_solar_storage",
+        retrieved_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        dataset_version="battery-sizing-v1",
+        mock=False,
+        flags=flags,
+    )
+
+
+def optimize_solar_storage(case: str, profile: dict[str, Any] | None = None) -> ToolResult:
+    """
+    Size the backup battery. Live mode sizes from the user's intake; mock mode returns the saved sample
+    so recorded and scripted demos replay unchanged.
+    """
+    if get_tool_mode() == "live":
+        return size_battery_from_profile(profile or {})
     return require_mock_or_fixture(case, "optimize_solar_storage")

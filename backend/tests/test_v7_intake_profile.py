@@ -87,3 +87,45 @@ def test_optional_fields_are_listed_but_do_not_become_missing_flags():
 def test_profile_flags_reach_the_tool_result():
     result = get_building_profile({"profile_flags": ["annual_kwh_from_bills"]})
     assert "annual_kwh_from_bills" in result.flags
+
+
+# ---- battery sizing from the user's own numbers ----
+
+import pytest
+
+from mocks.mock_mode import forced_tool_mode
+from tools.base import ToolUnavailableError
+from tools.solar_savings import optimize_solar_storage, size_battery_from_profile
+
+
+def test_battery_sized_from_users_kw_and_hours():
+    result = size_battery_from_profile({"critical_load_kw": 50, "backup_hours_wanted": 8})
+    assert result.data["battery_kw"] == 50
+    assert result.data["battery_kwh"] == round(50 * 8 / 0.85)
+    assert result.mock is False
+    assert result.flags == []
+
+
+def test_blank_inputs_are_estimated_and_flagged():
+    result = size_battery_from_profile({"floor_area_sqft": 40000})
+    assert result.data["battery_kw"] == 40.0
+    assert result.data["critical_load_hours"] == 8
+    assert "battery_inputs_estimated" in result.flags
+    assert "not metered" in result.data["notes"]
+
+
+def test_nothing_to_size_from_is_unavailable_not_invented():
+    with pytest.raises(ToolUnavailableError):
+        size_battery_from_profile({})
+
+
+def test_mock_mode_still_returns_the_saved_sample():
+    result = optimize_solar_storage("case1_queens_library", {"critical_load_kw": 5})
+    assert result.mock is True
+    assert result.data["battery_kwh"] == 960
+
+
+def test_live_mode_uses_the_profile():
+    with forced_tool_mode("live"):
+        result = optimize_solar_storage("case1_queens_library", {"critical_load_kw": 10, "backup_hours_wanted": 4})
+    assert result.data["battery_kwh"] == round(10 * 4 / 0.85)

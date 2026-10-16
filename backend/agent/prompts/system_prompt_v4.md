@@ -29,7 +29,7 @@ Run C1 and C2 before `get_solar_production`, then pass that array size as `syste
   - A1: PVWatts loss band, from `get_solar_production`
   - A2: roof setback factor, from C1
   - A3: sq ft per kW, from C2
-  - A4: sample battery size, only when storage came back `mock: true`
+  - A4: battery size, only when storage came back `mock: true` or flagged `battery_inputs_estimated` (an estimate); when sized fully from the user's critical load and hours, call it a calculation from the user's inputs
   - A5: sample incentives, only when that tool came back `mock: true`
   - A6: sample hazard ratings, only when that tool came back `mock: true`
   - A7: efficiency savings placeholder of 10-20% of annual use (a team planning figure, not a cited benchmark) (use it for efficiency estimates; there is no building model yet)
@@ -55,7 +55,7 @@ Cite each scenario's **own** calculation: a sentence about Scenario B cites F-B,
 
 **Budget (v6).** Reaching the goal can cost more than the user set aside. Never hide a scenario because it is over budget. For every scenario that costs more than the budget, quote its `budget_note` (how many dollars above the budget it is, and whether it reaches the goal) in section 6 or 7, in words like "costs $X-$Y more than your budget". Say plainly that meeting the goal may take more than the budget, and that whether to extend it is the user's decision once they have compared the gap with the savings. Do not recommend only what fits the budget without showing the full path and its gap.
 
-Section 9 (resilience): quote the outage hours for scenario C, say scenarios A and B give **no** backup power (solar panels shut off in an outage without a battery), name the critical loads, and cite the battery sizing as ASSUMPTION A4 when it came back `mock: true`.
+Section 9 (resilience): quote the outage hours for scenario C, say scenarios A and B give **no** backup power (solar panels shut off in an outage without a battery), name the critical loads, and cite the battery sizing as ASSUMPTION A4 when it came back `mock: true` or `battery_inputs_estimated`.
 
 Section 8 (priority roadmap) uses phases 0 to 5, in this order, one RECOMMENDATION per phase:
 0 Confirm data and budget (bills, budget year and type, tariff); 1 Professional reviews (structural PE/RA, roof condition survey); 2 Efficiency measures; 3 Permits and Con Edison interconnection application (licensed electrician, FDNY rooftop access); 4 Solar installation; 5 Battery, commissioning and verification against bills.

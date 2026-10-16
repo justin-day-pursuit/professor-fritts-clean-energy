@@ -165,7 +165,7 @@ class AgentNotes(BaseModel):
             self.calculations[result.data["calc_id"]] = result.data
             self.assumptions.setdefault("A9", str(result.data.get("assumption_text", "Benchmark prices")))
 
-        if tool_name == "optimize_solar_storage" and result.mock:
+        if tool_name == "optimize_solar_storage" and (result.mock or "battery_inputs_estimated" in result.flags):
             notes_desc = result.data.get("notes") or "Sample battery sizing for 8-hour backup; critical loads are not metered"
             self.assumptions.setdefault("A4", str(notes_desc))
 
