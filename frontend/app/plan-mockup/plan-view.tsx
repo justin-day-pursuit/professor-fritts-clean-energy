@@ -128,22 +128,55 @@ function ToolBlock({ title, payload, skip }: { title: string; payload: Obj | nul
   );
 }
 
+/** What each of the four labels means, with an example and what the reader should do about it. */
+const LABEL_EXPLAINED: Record<string, { meaning: string; example: string; action: string }> = {
+  FACT: {
+    meaning: "From a named source.",
+    example: "The size of the roof, from the city's roof check.",
+    action: "Trust it. The source is linked so you can look.",
+  },
+  ESTIMATE: {
+    meaning: "Calculated from the building's data, and always shown as a range.",
+    example: "How much grid electricity a plan would cut.",
+    action: "Use it to compare the plans. Expect it to move once an audit and contractor bids are in.",
+  },
+  ASSUMPTION: {
+    meaning: "A starting point used because the real number isn't known.",
+    example: "The electricity price, when you haven't entered your own.",
+    action: "Check it. If you know the real number, enter it and the plan changes to match.",
+  },
+  RECOMMENDATION: {
+    meaning: "A suggested next step.",
+    example: "Have a roofer look at the roof before any panels are ordered.",
+    action: "Take it to the professional it names. They make the final call.",
+  },
+};
+
 /** One labeled statement from the report, with what it was worked out from and where it came from. */
 function ClaimRow({ claim }: { claim: Claim }) {
   const { dev, calcNames } = useContext(PlainCtx);
   const range = claim.value_low != null && claim.value_high != null ? `${show(claim.value_low)}${claim.value_low !== claim.value_high ? ` to ${show(claim.value_high)}` : ""} ${claim.units ?? ""}` : "";
+  // The first sentence is the bold headline; any further sentences are the lighter reasoning under it.
+  const text = dev ? claim.text : plainify(claim.text);
+  const sentences = text.split(/(?<=[.!?])\s+(?=[A-Z$(])/);
+  const headline = sentences[0];
+  const reasoning = sentences.slice(1).join(" ");
   return (
-    <li className="flex flex-col gap-1 rounded-lg border border-[var(--fr-line)] bg-white p-3 text-sm">
-      <div className="flex flex-wrap items-center gap-2">
-        <Chip label={claim.label} />
-        <span className="text-[11px] text-[var(--fr-mute)]">{claim.confidence} confidence</span>
-        {claim.calc_id && <span className="rounded bg-[var(--fr-soft)] px-1.5 py-0.5 text-[11px]">worked out from: {calcNames[claim.calc_id] ?? claim.calc_id}</span>}
-        {dev && claim.assumption_id && <span className="rounded bg-[var(--fr-soft)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--fr-warn)]">{claim.assumption_id}</span>}
-        {dev && claim.calc_id && <span className="font-mono text-[11px] text-[var(--fr-warn)]">{claim.calc_id}</span>}
-        <span className="text-[11px]"><SourceLink url={claim.source_url} /></span>
-      </div>
-      <p className="text-[var(--fr-ink)]">{dev ? claim.text : plainify(claim.text)}</p>
+    <li className="flex flex-col gap-1.5 rounded-lg border border-[var(--fr-line)] bg-white p-3 text-sm">
+      <p className="text-base font-semibold text-[var(--fr-ink)]">{headline}</p>
+      {reasoning && <p className="text-[13.5px] text-[var(--fr-mute)]">{reasoning}</p>}
       {range && <p className="text-xs text-[var(--fr-mute)]">{range.trim()}</p>}
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-[var(--fr-mute)]">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--fr-ink)]">
+          <i className="inline-block h-2 w-2 rounded-full" style={{ background: LABELS[claim.label]?.color ?? "#555" }} />
+          {claim.label}
+        </span>
+        <span>{claim.confidence} confidence</span>
+        {claim.calc_id && <span>From: {calcNames[claim.calc_id] ?? claim.calc_id}</span>}
+        {dev && claim.assumption_id && <span className="font-mono text-[var(--fr-warn)]">{claim.assumption_id}</span>}
+        {dev && claim.calc_id && <span className="font-mono text-[var(--fr-warn)]">{claim.calc_id}</span>}
+        <SourceLink url={claim.source_url} />
+      </div>
     </li>
   );
 }
@@ -652,7 +685,7 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
   const allClaims = sum.sections.flatMap((s) => s.claims);
   const labelCounts = Object.fromEntries(Object.keys(LABELS).map((k) => [k, allClaims.filter((c) => c.label === k).length]));
   const total = allClaims.length || 1;
-  const missingReason = o.code === "needs_roof_check" ? "Waiting on your roof check. We won't size solar on a pitched roof from a guess." : "This option could not be costed for this building. See what to confirm first.";
+  const missingReason = o.code === "needs_roof_check" ? "Waiting on your roof check. Solar is not sized on a pitched roof from a guess." : "This option could not be costed for this building. See what to confirm first.";
   const phases = (section("8")?.claims ?? []).map((c) => {
     const m = (dev ? c.text : plainify(c.text)).match(/^Phase (\d)[,:]?\s*([^:]+):\s*(.*)$/i);
     return { claim: c, n: m?.[1] ?? "", title: m ? m[2].charAt(0).toUpperCase() + m[2].slice(1) : c.text, body: m ? m[3].charAt(0).toUpperCase() + m[3].slice(1) : "" };
@@ -693,14 +726,37 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
         )}
       </div>
 
-      <Card className="bg-[var(--fr-soft)]">
-        <div className="text-sm font-semibold text-[var(--fr-ink)]">How to read this plan</div>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {Object.entries(LABELS).map(([k, l]) => (
-            <div key={k} className="text-sm"><Chip label={k} /><p className="mt-1 text-xs text-[var(--fr-mute)]">{l.blurb}</p></div>
+      <Card>
+        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--fr-teal)]">How to read this plan</div>
+        <h2 className="mt-1 text-xl font-bold text-[var(--fr-ink)]">What to trust, what to check, and what to hand to a professional</h2>
+        <p className="mt-2 text-sm text-[var(--fr-ink)]/80">Every number is labeled &ndash; {allClaims.length} statements in this plan</p>
+
+        <div className="mt-4 flex h-3 overflow-hidden rounded-full bg-[var(--fr-soft)]">
+          {Object.keys(LABELS).map((k) => (
+            <div key={k} style={{ width: `${(labelCounts[k] / total) * 100}%`, background: LABELS[k].color }} title={`${k}: ${labelCounts[k]}`} />
           ))}
         </div>
-        <p className="mt-3 text-xs text-[var(--fr-mute)]">Costs and savings are shown as ranges because this is an early estimate made from public data, before anyone has walked the building. A range of about half to double the figure is normal at this stage. An energy audit and contractor bids are what narrow it.</p>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {Object.keys(LABELS).map((k) => {
+            const e = LABEL_EXPLAINED[k];
+            return (
+              <div key={k} className="flex flex-col gap-2 rounded-xl bg-[var(--fr-soft)] p-3">
+                <div className="flex items-baseline justify-between gap-2">
+                  <Chip label={k} />
+                  <span className="text-lg font-bold leading-none text-[var(--fr-ink)]">{labelCounts[k]}</span>
+                </div>
+                <p className="text-sm font-semibold text-[var(--fr-ink)]">{e.meaning}</p>
+                <p className="text-xs text-[var(--fr-mute)]"><span className="font-semibold text-[var(--fr-ink)]">For example: </span>{e.example}</p>
+                <p className="text-xs text-[var(--fr-mute)]"><span className="font-semibold text-[var(--fr-ink)]">What to do: </span>{e.action}</p>
+              </div>
+            );
+          })}
+        </div>
+
+        <p className="mt-4 border-t border-[var(--fr-line)] pt-3 text-xs text-[var(--fr-mute)]">
+          <span className="font-semibold text-[var(--fr-ink)]">Why costs and savings are ranges.</span> This is an early estimate made from public data, before anyone has walked the building. A range of about half to double the figure is normal at this stage. An energy audit and contractor bids are what narrow it.
+        </p>
       </Card>
 
       <div>
@@ -768,7 +824,7 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
       </div>
 
       <div>
-        <SectionTitle eyebrow="Money and rules" title="Incentives that may apply" sub="Each was re-read from its official page when this plan was made. A program we could not confirm is left out of the costs." />
+        <SectionTitle eyebrow="Money and rules" title="Incentives that may apply" sub="Each was re-read from its official page when this plan was made. A program that could not be confirmed is left out of the costs." />
         {sum.incentives.length > 0 ? (
           <div className="grid gap-3 md:grid-cols-2">{sum.incentives.map((p) => <ProgramCard key={p.name} p={p} />)}</div>
         ) : (
@@ -790,23 +846,6 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
           </div>
         </div>
       )}
-
-      <div>
-        <SectionTitle eyebrow="Confidence" title="How sure are we?" sub="Every statement in this plan carries one of four labels." />
-        <Card>
-          <div className="flex h-5 overflow-hidden rounded-full">
-            {Object.keys(LABELS).map((k) => (
-              <div key={k} style={{ width: `${(labelCounts[k] / total) * 100}%`, background: LABELS[k].color }} title={`${k}: ${labelCounts[k]}`} />
-            ))}
-          </div>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            {Object.entries(LABELS).map(([k, l]) => (
-              <div key={k} className="text-sm"><Chip label={k} count={labelCounts[k]} /><p className="mt-1 text-xs text-[var(--fr-mute)]">{l.blurb}</p></div>
-            ))}
-          </div>
-          <p className="mt-3 text-xs text-[var(--fr-mute)]">{allClaims.length} labeled statements in this plan. Nothing is unlabeled.</p>
-        </Card>
-      </div>
 
       <div>
         <SectionTitle eyebrow="The full report" title="Every statement and every record, section by section" sub="The complete written plan in the order of the 13 report sections. Under each section, the data behind it: the city records, prices, calculations and sources it rests on." />

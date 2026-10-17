@@ -20,10 +20,10 @@ export const PALETTE = {
 
 /** The four labels every number carries: this is the product's signature. */
 export const LABELS: Record<string, { color: string; blurb: string }> = {
-  FACT: { color: "#1c8c7e", blurb: "From a source we can name" },
+  FACT: { color: "#1c8c7e", blurb: "From a named source" },
   ESTIMATE: { color: "#2f6fb5", blurb: "Calculated, always shown as a range" },
   ASSUMPTION: { color: "#b7791f", blurb: "A stated starting point you can change" },
-  RECOMMENDATION: { color: "#7a4fb0", blurb: "What we suggest you do" },
+  RECOMMENDATION: { color: "#7a4fb0", blurb: "A suggested next step" },
 };
 
 // ------------------------------------------------------------------------------------------- formatting

@@ -224,6 +224,7 @@ The reader is a facilities manager, not a developer. In every claim's text:
 - Spell out technical terms the first time: kBtu (thousand BTU), EUI (energy use per square foot), BBL (tax lot number), kW (how much power at one moment), kWh (energy over time).
 - Do not name tools or checks ("lookup_ny_building_records", "Check 4"). Say "the city's building records".
 - Prefer "the middle half of similar NYC projects" to statistical wording like "25th-75th percentile".
+- Write in a neutral voice with no "I", "we", "us" or "our". Describe the number or the record, not who found it: "The city record shows no landmark flag", not "I found no landmark flag"; "The roof cannot be certified from these records", not "I cannot certify the roof"; "treated as measured", not "I treat it as measured".
 This is enforced in live runs: a plan that breaks these rules is sent back once.
 
 ## Typical ranges, your own electricity price, and costs left out (v7)
