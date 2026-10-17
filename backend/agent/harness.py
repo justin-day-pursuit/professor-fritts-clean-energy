@@ -20,6 +20,7 @@ from agent.limits import MAX_CONSECUTIVE_THINK_STEPS, RunLimits
 from agent.llm.base import LLMConfigurationError, LLMStep
 from agent.llm.factory import get_llm_client
 from agent.notes import AgentNotes
+from agent.plan_summary import build_plan_summary
 from agent.profile_prep import effective_profile
 from agent.roadmap import render_follow_up_markdown, render_roadmap_json, render_roadmap_markdown
 from core.models import Run, Session
@@ -180,6 +181,12 @@ def _finish_with_roadmap(
     }
     if answer_summary is not None:
         output["summary"] = answer_summary
+    if final_tool_name != "write_answer":
+        # Everything the run found and calculated, grouped for the screen. A bug here must never fail a run.
+        try:
+            output["plan_summary"] = build_plan_summary(run, output, notes.next_steps())
+        except Exception as exc:  # noqa: BLE001
+            output["plan_summary_error"] = f"{type(exc).__name__}: {exc}"
 
     services.add_message(session, role="assistant", content=assistant_text, run=run)
     services.finish_run(
