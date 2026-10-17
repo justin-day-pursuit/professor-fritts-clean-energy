@@ -45,6 +45,16 @@ class AgentNotes(BaseModel):
     # always link back to them: {label, url, retrieved_at, sample}. "sample" is True for saved sample data.
     source_links: list[dict[str, Any]] = Field(default_factory=list)
 
+    def next_steps(self) -> list[dict[str, str]]:
+        """Official pages to go to next, picked from what this run learned about the building (tools/next_steps.py)."""
+        from tools.next_steps import next_steps_for
+
+        has_battery = any(
+            cid.startswith("F-") and (data.get("package") or {}).get("battery_kwh", 0) > 0
+            for cid, data in self.calculations.items()
+        )
+        return next_steps_for(self.site_context, has_battery)
+
     def add_source_link(self, label: str, url: str | None, retrieved_at: str = "", sample: bool = False) -> None:
         """Remember one clickable source (web addresses only, once per address; quarantined pages are skipped)."""
         if not url or not str(url).startswith(("http://", "https://")):

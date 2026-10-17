@@ -80,6 +80,21 @@ def _trace_text(claim: Claim) -> str:
     return " and ".join(parts) if parts else "source: n/a"
 
 
+def render_next_steps(steps: list[dict]) -> list[str]:
+    """
+    The plan's "Who to contact" list: for each step, the official page, why this building needs it, and any
+    phone or email the agency itself publishes. Chosen by code from the building's facts, not written by the model.
+    """
+    if not steps:
+        return []
+    lines = ["## Who to contact and where to start", ""]
+    for step in steps:
+        contact = f" Contact: {step['contact']}." if step.get("contact") else ""
+        lines.append(f"- [{step['name']}]({step['url']}): {step['why']}{contact}")
+    lines.append("")
+    return lines
+
+
 def render_source_links(sources: list[dict]) -> list[str]:
     """
     The plan's closing list of links: every page the numbers and rules came from, with the date it was read.
@@ -140,7 +155,9 @@ def ordered_sections(payload: RoadmapPayload) -> list[RoadmapSection]:
     return result
 
 
-def render_roadmap_markdown(payload: RoadmapPayload, sources: list[dict] | None = None) -> str:
+def render_roadmap_markdown(
+    payload: RoadmapPayload, sources: list[dict] | None = None, next_steps: list[dict] | None = None
+) -> str:
     """
     Build human-readable Markdown with the 13 section headers and labeled claims.
 
@@ -164,6 +181,7 @@ def render_roadmap_markdown(payload: RoadmapPayload, sources: list[dict] | None 
             lines.append(_format_claim(claim, section_id=section.section_id))
         lines.append("")
 
+    lines.extend(render_next_steps(next_steps or []))
     lines.extend(render_source_links(sources or []))
     if payload.footer_note:
         lines.append("---")
@@ -171,11 +189,14 @@ def render_roadmap_markdown(payload: RoadmapPayload, sources: list[dict] | None 
     return "\n".join(lines).rstrip() + "\n"
 
 
-def render_roadmap_json(payload: RoadmapPayload, sources: list[dict] | None = None) -> dict:
+def render_roadmap_json(
+    payload: RoadmapPayload, sources: list[dict] | None = None, next_steps: list[dict] | None = None
+) -> dict:
     """JSON-serializable dict mirroring the structured payload plus rendered markdown."""
     return {
         "roadmap": payload.model_dump(),
-        "markdown": render_roadmap_markdown(payload, sources),
+        "markdown": render_roadmap_markdown(payload, sources, next_steps),
+        "next_steps": next_steps or [],
     }
 
 

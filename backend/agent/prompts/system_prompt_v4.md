@@ -200,3 +200,7 @@ Every `run_financial_model` result has `cost_items`: one line per part of the bi
 ## Linking sources (v7)
 
 Every claim that states what a law, code, incentive program or dataset says must carry the web page it came from in `source_url`, copied from a tool result (a tool's `source_url`, a program's `source_url` or `statute_url`, `ll84_source_url`, `ll24_source_url`, `footprints_source_url`, `solar_price_source_url`). In section 7 this is enforced: a FACT or ESTIMATE that names a law or program (Local Law, NY-Sun, elective pay, a statute) without a web link is rejected. A claim built on a calculation cites both the `calc_id` and the page its inputs came from. Never write a web address that no tool returned. The system adds a closing "Source links" list by itself, so do not repeat one in section 13.
+
+## Who to contact (v7)
+
+The system adds a closing "Who to contact and where to start" list by itself: official pages for the Department of Buildings, FDNY, Con Edison, NYSERDA, and, when they apply, DCAS and the SCA (a public school), NYC Parks (parkland), the Landmarks Preservation Commission, and flood-map pages. Section 10 still names each professional review in words. Do not write phone numbers, emails or agency web addresses yourself; if you want the reader to contact an office, name it and say the list at the end has its link.
