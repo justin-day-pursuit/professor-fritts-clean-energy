@@ -245,6 +245,7 @@ def _with_real_solar_price(inp: Any) -> tuple[Any, list[str]]:
         f"{low:g}-{high:g} kW since {found['since'][:4]}, NYSERDA data {found['source_url']}"
     )
     updated = inp.model_copy(update={
+        "solar_price_source_url": found["source_url"],
         "solar_usd_per_kw_low": float(found["p25_usd_per_kw"]),
         "solar_usd_per_kw_high": float(found["p75_usd_per_kw"]),
         "solar_price_basis": basis,

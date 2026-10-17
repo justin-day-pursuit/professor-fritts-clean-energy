@@ -155,7 +155,7 @@ def _finish_with_roadmap(
     Call this for done, partial, or exhausted scripted fix with an existing roadmap object.
     Pass answer_summary when the final tool was write_answer so the main text is not dropped.
     """
-    rendered = render_roadmap_json(roadmap_payload)
+    rendered = render_roadmap_json(roadmap_payload, notes.source_links)
     markdown_out = rendered["markdown"]
     if final_tool_name == "write_answer" and answer_summary:
         markdown_out = render_follow_up_markdown(answer_summary, roadmap_payload)
@@ -170,7 +170,7 @@ def _finish_with_roadmap(
     if final_tool_name == "write_answer" and answer_summary:
         assistant_text = render_follow_up_markdown(answer_summary, roadmap_payload)
     else:
-        assistant_text = render_roadmap_markdown(roadmap_payload)
+        assistant_text = render_roadmap_markdown(roadmap_payload, notes.source_links)
 
     output: dict[str, Any] = {
         "roadmap": roadmap_payload.model_dump(),

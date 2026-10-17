@@ -41,6 +41,33 @@ class AgentNotes(BaseModel):
     quarantined_sources: list[dict[str, str]] = Field(default_factory=list)
     # Site facts that trigger extra referrals in Check 4: flood_zone, landmark, parkland.
     site_context: dict[str, Any] = Field(default_factory=dict)
+    # Every web page the plan's numbers and rules rest on, collected by code (not by the model) so the plan can
+    # always link back to them: {label, url, retrieved_at, sample}. "sample" is True for saved sample data.
+    source_links: list[dict[str, Any]] = Field(default_factory=list)
+
+    def add_source_link(self, label: str, url: str | None, retrieved_at: str = "", sample: bool = False) -> None:
+        """Remember one clickable source (web addresses only, once per address; quarantined pages are skipped)."""
+        if not url or not str(url).startswith(("http://", "https://")):
+            return
+        if url in self.quarantined_urls() or any(s["url"] == url for s in self.source_links):
+            return
+        self.source_links.append({"label": label, "url": url, "retrieved_at": retrieved_at, "sample": sample})
+
+    def _collect_source_links(self, tool_name: str, result: ToolResult) -> None:
+        """Pull every web link out of a tool result: its own source, the extra sources in its data, and each program's pages."""
+        data = result.data
+        self.add_source_link(tool_name, result.source_url, result.retrieved_at, sample=result.mock)
+        for key, label in (
+            ("footprints_source_url", "NYC building footprints"),
+            ("ll84_source_url", "NYC Local Law 84 energy report"),
+            ("ll24_source_url", "NYC Local Law 24 solar readiness"),
+            ("solar_price_source_url", "NYSERDA solar project costs"),
+        ):
+            self.add_source_link(label, data.get(key), result.retrieved_at)
+        for program in data.get("programs") or []:
+            name = str(program.get("name") or "program")
+            self.add_source_link(name, program.get("source_url"), result.retrieved_at, sample=result.mock)
+            self.add_source_link(f"{name} (statute or rule text)", program.get("statute_url"), result.retrieved_at, sample=result.mock)
 
     def record_tool_failure(self, tool_name: str, error: str) -> None:
         """Remember that a tool returned no data, and flag it so section 12 must explain the gap."""
@@ -142,6 +169,7 @@ class AgentNotes(BaseModel):
             "data_keys": list(result.data.keys()),
         }
         self.tool_calls.append(entry)
+        self._collect_source_links(tool_name, result)
         if result.source_url:
             self.sources.append(
                 {

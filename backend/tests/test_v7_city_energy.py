@@ -101,3 +101,55 @@ def test_old_roof_from_city_record_requires_reroof_mention():
     assert any("20 years old or more" in i for i in _issues(_plan(), notes))
     ok = _plan(s5=[_claim("The roof is 20 years old, so plan a roof replacement before solar.")])
     assert not any("20 years old or more" in i for i in _issues(ok, notes))
+
+
+# ---- source links in the output ----
+
+from agent.claims import RoadmapPayload
+from agent.roadmap import render_roadmap_markdown, render_source_links
+from tools.base import ToolResult
+
+
+def test_source_links_come_from_tool_results_and_programs_and_skip_non_web():
+    notes = AgentNotes()
+    notes.record_tool_result("search_ny_incentives_and_rules", ToolResult(
+        tool="search_ny_incentives_and_rules",
+        data={"programs": [{"name": "Elective pay", "source_url": "https://www.irs.gov/x", "statute_url": "https://law.cornell.edu/y"}]},
+        source_url="https://example.gov/index", retrieved_at="2026-10-16T00:00:00Z", dataset_version="v", mock=False,
+    ))
+    notes.record_tool_result("run_financial_model", ToolResult(
+        tool="run_financial_model", data={"solar_price_source_url": "https://data.ny.gov/z"},
+        source_url="internal://run_financial_model", retrieved_at="", dataset_version="v", mock=False,
+    ))
+    urls = [s["url"] for s in notes.source_links]
+    assert urls == ["https://example.gov/index", "https://www.irs.gov/x", "https://law.cornell.edu/y", "https://data.ny.gov/z"]
+
+
+def test_sample_data_is_labeled_and_quarantined_pages_are_left_out():
+    notes = AgentNotes()
+    notes.record_quarantine("search_ny_incentives_and_rules", "https://bad.example/p", "hidden instruction")
+    notes.add_source_link("bad", "https://bad.example/p")
+    notes.add_source_link("tariff", "https://example.test/sample", sample=True)
+    assert [s["url"] for s in notes.source_links] == ["https://example.test/sample"]
+    text = "\n".join(render_source_links(notes.source_links))
+    assert "saved sample data, not a live source" in text
+
+
+def test_plan_markdown_links_sources_and_ends_with_the_link_list():
+    from tests.test_v6_roof_and_budget import _claim, _plan
+
+    plan = _plan(s7=[_claim("Federal credit is open.", source_url="https://www.irs.gov/x", calc_id="F-B")])
+    md = render_roadmap_markdown(plan, [{"label": "IRS", "url": "https://www.irs.gov/x", "retrieved_at": "2026-10-16T00:00:00Z", "sample": False}])
+    assert "calculation `F-B` and [source](https://www.irs.gov/x)" in md
+    assert "## Source links" in md and "[IRS](https://www.irs.gov/x), retrieved 2026-10-16" in md
+
+
+def test_a_law_in_section_7_needs_a_web_link_but_advice_does_not():
+    from tests.test_v6_roof_and_budget import _claim, _issues, _plan
+
+    bare = _plan(s7=[_claim("Federal elective pay covers 30% of solar.", label="FACT", source_url="session://profile")])
+    assert any("law or program" in i for i in _issues(bare, AgentNotes()))
+    linked = _plan(s7=[_claim("Federal elective pay covers 30% of solar.", label="FACT", source_url="https://www.irs.gov/x")])
+    assert not any("law or program" in i for i in _issues(linked, AgentNotes()))
+    advice = _plan(s7=[_claim("Check the status of federal elective pay before you commit.", source_url="session://profile")])
+    assert not any("law or program" in i for i in _issues(advice, AgentNotes()))

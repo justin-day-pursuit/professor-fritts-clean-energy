@@ -55,12 +55,46 @@ def _format_claim(claim: Claim, *, section_id: str = "") -> str:
             f"- **{claim.label}** ({claim.confidence}) [{claim.assumption_id}]: {claim.text}"
             f"{value_part}{extra}"
         )
-    trace = claim.calc_id or claim.source_url or "n/a"
     _ = section_id  # reserved for section-specific layout later
     return (
         f"- **{claim.label}** ({claim.confidence}): {claim.text}{value_part} "
-        f"— source/calc: `{trace}`"
+        f"— {_trace_text(claim)}"
     )
+
+
+def _trace_text(claim: Claim) -> str:
+    """
+    How a claim points back to where it came from: a clickable link for a web source, the calculation id for math.
+
+    A claim that has both (a calculation built on a cited page) shows both. Calculations are explained, with
+    their inputs' links, in the "Source links" list at the end of the plan.
+    """
+    parts: list[str] = []
+    if claim.calc_id:
+        parts.append(f"calculation `{claim.calc_id}`")
+    url = claim.source_url or ""
+    if url.startswith(("http://", "https://")):
+        parts.append(f"[source]({url})")
+    elif url:
+        parts.append(f"source: `{url}`")
+    return " and ".join(parts) if parts else "source: n/a"
+
+
+def render_source_links(sources: list[dict]) -> list[str]:
+    """
+    The plan's closing list of links: every page the numbers and rules came from, with the date it was read.
+
+    Saved sample data is labeled as such, so a reader can tell a live government page from a stand-in.
+    """
+    if not sources:
+        return []
+    lines = ["## Source links", "", "Every page the numbers and rules in this plan rest on:"]
+    for source in sources:
+        date = f", retrieved {source['retrieved_at'][:10]}" if source.get("retrieved_at") else ""
+        sample = " (saved sample data, not a live source)" if source.get("sample") else ""
+        lines.append(f"- [{source['label']}]({source['url']}){date}{sample}")
+    lines.append("")
+    return lines
 
 
 def _assumption_sort_key(assumption_id: str) -> tuple[int, str]:
@@ -106,7 +140,7 @@ def ordered_sections(payload: RoadmapPayload) -> list[RoadmapSection]:
     return result
 
 
-def render_roadmap_markdown(payload: RoadmapPayload) -> str:
+def render_roadmap_markdown(payload: RoadmapPayload, sources: list[dict] | None = None) -> str:
     """
     Build human-readable Markdown with the 13 section headers and labeled claims.
 
@@ -130,17 +164,18 @@ def render_roadmap_markdown(payload: RoadmapPayload) -> str:
             lines.append(_format_claim(claim, section_id=section.section_id))
         lines.append("")
 
+    lines.extend(render_source_links(sources or []))
     if payload.footer_note:
         lines.append("---")
         lines.append(f"*{payload.footer_note}*")
     return "\n".join(lines).rstrip() + "\n"
 
 
-def render_roadmap_json(payload: RoadmapPayload) -> dict:
+def render_roadmap_json(payload: RoadmapPayload, sources: list[dict] | None = None) -> dict:
     """JSON-serializable dict mirroring the structured payload plus rendered markdown."""
     return {
         "roadmap": payload.model_dump(),
-        "markdown": render_roadmap_markdown(payload),
+        "markdown": render_roadmap_markdown(payload, sources),
     }
 
 

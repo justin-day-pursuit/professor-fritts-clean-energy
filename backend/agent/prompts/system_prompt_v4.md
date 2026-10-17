@@ -196,3 +196,7 @@ In live runs `get_hazard_context` returns only the current FEMA flood zone for t
 ## Itemized costs (v7)
 
 Every `run_financial_model` result has `cost_items`: one line per part of the bill (efficiency, solar, battery, federal credit), each with a low-high dollar range and a `basis` sentence. In section 7, list each part of the scenario you recommend as its own line, quoting the range and the basis, citing that scenario's `calc_id`. When `solar_price_basis` is set, the solar price is real: 25th-75th percentile cost per kW of completed NYC projects from NYSERDA data. Say that, not "benchmark". If the result is flagged `solar_price_placeholder`, say the solar price is a placeholder. The battery and efficiency prices are always team placeholders; say so (A9). Never replace these ranges with figures of your own.
+
+## Linking sources (v7)
+
+Every claim that states what a law, code, incentive program or dataset says must carry the web page it came from in `source_url`, copied from a tool result (a tool's `source_url`, a program's `source_url` or `statute_url`, `ll84_source_url`, `ll24_source_url`, `footprints_source_url`, `solar_price_source_url`). In section 7 this is enforced: a FACT or ESTIMATE that names a law or program (Local Law, NY-Sun, elective pay, a statute) without a web link is rejected. A claim built on a calculation cites both the `calc_id` and the page its inputs came from. Never write a web address that no tool returned. The system adds a closing "Source links" list by itself, so do not repeat one in section 13.

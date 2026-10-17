@@ -672,6 +672,7 @@ def _run_context_issues(payload: RoadmapPayload, notes: AgentNotes) -> list[str]
 
     issues.extend(_roof_and_existing_issues(payload, notes, claims))
     issues.extend(_intake_detail_issues(payload, notes, claims))
+    issues.extend(_law_link_issues(payload))
     issues.extend(_budget_gap_issues(payload, notes))
     issues.extend(_calc_id_issues(claims, notes))
 
@@ -762,6 +763,31 @@ _LED_WORD = re.compile(r"\bLED\b")
 _LED_ALREADY = re.compile(
     r"\b(?:already|existing|installed|have|has|in place|beyond|no further|nothing more|not a new)\b", re.I
 )
+
+
+_LAW_MENTION = re.compile(
+    r"\bLocal Law \d+|\bLL ?\d{2,3}\b|elective pay|direct pay|\bNY-Sun\b|\bU\.S\.C\.|\bIRC \d+", re.I
+)
+
+
+def _law_link_issues(payload: RoadmapPayload) -> list[str]:
+    """
+    v7: in section 7 (cost, financing and incentives), a FACT or ESTIMATE that names a law or incentive program must
+    carry a web link to its source.
+
+    A calculation id or the intake is not a source for a law, and without a link the reader cannot check the
+    rule. Only section 7 is held to this so far: it is where rules turn into dollars.
+    """
+    issues = []
+    for section in payload.sections:
+        if section.section_id != "7":
+            continue
+        for claim in section.claims:
+            if claim.label not in ("FACT", "ESTIMATE") or not _LAW_MENTION.search(claim.text):
+                continue
+            if not str(claim.source_url or "").startswith(("http://", "https://")):
+                issues.append(f"A law or program is named without a web link to its source: {claim.text[:80]}")
+    return issues
 
 
 def _intake_detail_issues(payload: RoadmapPayload, notes: AgentNotes, claims: list[Claim]) -> list[str]:

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import { ClaimSource } from "@/components/claim-source";
 import { LabelBadge } from "@/components/label-badge";
 import type { Claim, MessageResponse } from "@/lib/types";
 import { useState } from "react";
@@ -88,6 +89,7 @@ export function ChatPanel({ messages, onSend, busy, draft, onDraftChange, missin
                       <li key={`${msg.id}-claim-${i}`} className="space-y-1">
                         <LabelBadge label={claim.label} confidence={claim.confidence} />
                         <p className="text-xs">{claim.text}</p>
+                        <ClaimSource claim={claim} />
                       </li>
                     ))}
                   </ul>
