@@ -382,6 +382,19 @@ export function IntakeForm({
           kWh is the electricity you buy over a year. It&apos;s on your Con Edison bills, and the city&apos;s energy
           report may already list it for your building.
         </p>
+        <Field id="electricity_rate_usd_per_kwh" label="Your electricity price ($ per kWh, optional)">
+          <Input
+            id="electricity_rate_usd_per_kwh"
+            inputMode="decimal"
+            placeholder="for example 0.26"
+            value={profile.electricity_rate_usd_per_kwh ?? ""}
+            onChange={(e) => set("electricity_rate_usd_per_kwh", e.target.value)}
+          />
+        </Field>
+        <p className="-mt-2 text-xs text-muted-foreground">
+          From a bill: total charges divided by the kWh used. Leave it blank and the plan uses the New York average and
+          says so.
+        </p>
         <div className="grid grid-cols-3 gap-2">
           <Field id="budget_amount" label="Budget amount">
             <Input

@@ -60,6 +60,9 @@ class FinancialModelInput(BaseModel):
     efficiency_usd_per_kwh: dict[str, list[float]] | None = Field(default=None, description="Set by the system from real NYC project costs; leave blank")
     efficiency_price_basis: str = Field(default="", description="Set by the system; where the efficiency price came from")
     efficiency_price_source_url: str = Field(default="", description="Set by the system; web page of the efficiency price data")
+    solar_usd_per_kw_mid: float | None = Field(default=None, gt=0, description="Set by the system: the median solar price; leave blank")
+    battery_usd_per_kwh_mid: float | None = Field(default=None, gt=0, description="Set by the system: the median battery price; leave blank")
+    efficiency_usd_per_kwh_mid: dict[str, float] | None = Field(default=None, description="Set by the system: median efficiency prices; leave blank")
     efficiency_realization: list[float] | None = Field(default=None, description="Set by the system from the City's measured results; leave blank")
     federal_credit_open: bool = Field(
         default=False,
@@ -140,6 +143,9 @@ def run_financial_model(inp: FinancialModelInput) -> ToolResult:
         battery_price_basis=inp.battery_price_basis,
         efficiency_usd_per_kwh=_efficiency_prices(inp),
         efficiency_price_basis=inp.efficiency_price_basis,
+        solar_usd_per_kw_mid=inp.solar_usd_per_kw_mid,
+        battery_usd_per_kwh_mid=inp.battery_usd_per_kwh_mid,
+        efficiency_usd_per_kwh_mid=inp.efficiency_usd_per_kwh_mid,
         efficiency_realization=tuple(inp.efficiency_realization) if inp.efficiency_realization else None,
     )
     result = model_package(package, site)
@@ -167,6 +173,9 @@ def run_financial_model(inp: FinancialModelInput) -> ToolResult:
         "solar_price_basis": inp.solar_price_basis or None,
         "solar_price_source_url": inp.solar_price_source_url or None,
         "efficiency_usd_per_kwh": inp.efficiency_usd_per_kwh,
+        "solar_usd_per_kw_mid": inp.solar_usd_per_kw_mid,
+        "battery_usd_per_kwh_mid": inp.battery_usd_per_kwh_mid,
+        "efficiency_usd_per_kwh_mid": inp.efficiency_usd_per_kwh_mid,
         "efficiency_realization": inp.efficiency_realization,
         "efficiency_price_basis": inp.efficiency_price_basis or None,
         "efficiency_price_source_url": inp.efficiency_price_source_url or None,

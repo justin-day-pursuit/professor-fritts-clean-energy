@@ -15,7 +15,7 @@ from typing import Any
 
 from agent.plain_names import calculation_formula, calculation_name, tool_name
 
-SUMMARY_VERSION = 2
+SUMMARY_VERSION = 3
 
 # Plain-language text for each flag the tools raise. A flag with no entry is shown under its own name.
 FLAG_TEXT = {
@@ -67,6 +67,15 @@ def _scenarios(calculations: dict[str, Any]) -> list[dict[str, Any]]:
     return [calculations[key] for key in ("F-A", "F-B", "F-C") if isinstance(calculations.get(key), dict)]
 
 
+def _about(scenario: dict[str, Any]) -> str:
+    """The cost as a range, with the median of similar NYC projects after it when there is one."""
+    rng = _money(scenario.get("upfront_usd"))
+    median = scenario.get("upfront_usd_best")
+    if not median:
+        return rng
+    return f"{rng} (the median of similar NYC projects is about {_money([median, median]).split('-')[0]})"
+
+
 def _money(pair: list[float] | None) -> str:
     """A low-high dollar range as text ($53k-$367k style for the headline)."""
     if not pair:
@@ -111,7 +120,7 @@ def decide_outcome(scenarios: list[dict[str, Any]], site_context: dict[str, Any]
             "code": "reached_within_budget", "label": "Goal reached within budget", "tone": "good",
             "headline": f"Yes. Plan {best['scenario_id']} reaches your {goal:g}% goal within{budget_text}.",
             "subhead": f"{best['scenario_name']}: cuts grid use {best['reduction_pct_of_use'][0]:g}-{best['reduction_pct_of_use'][1]:g}% "
-                       f"for {_money(best['upfront_usd'])} before incentives.",
+                       f"for {_about(best)} before incentives.",
             "recommended": best["scenario_id"],
         }
     if reaching:
@@ -122,7 +131,7 @@ def decide_outcome(scenarios: list[dict[str, Any]], site_context: dict[str, Any]
             "code": "reached_over_budget", "label": "Goal reachable, over budget", "tone": "caution",
             "headline": f"Plan {best['scenario_id']} reaches your {goal:g}% goal{gap_text}.",
             "subhead": f"{best['scenario_name']}: cuts grid use {best['reduction_pct_of_use'][0]:g}-{best['reduction_pct_of_use'][1]:g}% "
-                       f"for {_money(best['upfront_usd'])}. Reaching the goal may take more than the amount set aside.",
+                       f"for {_about(best)}. Reaching the goal may take more than the amount set aside.",
             "recommended": best["scenario_id"],
         }
     nearest = max(scenarios, key=lambda s: s["reduction_pct_of_use"][1])
@@ -142,6 +151,55 @@ def decide_outcome(scenarios: list[dict[str, Any]], site_context: dict[str, Any]
     }
 
 
+# What replacing a flat commercial roof costs in NYC, in dollars per square foot installed. The range is the span of the three
+# membrane types in Roofvista's NYC guide (EPDM $6.50-11, TPO $8-13, modified bitumen $8-14), each including tear-off, insulation,
+# membrane and flashing. These are contractor price guides, not audited project data, and Roofvista's page is written mainly for
+# residential NYC buildings, so the figure is shown only as a labeled rough guide and never added to a total.
+ROOF_REPLACEMENT_USD_PER_SQFT = (6.5, 14.0)
+ROOF_REPLACEMENT_SOURCES = [
+    {
+        "label": "Roofvista, NYC flat roof replacement guide (published March 26, 2026): EPDM $6.50-11, TPO $8-13 and modified bitumen $8-14 per sq ft installed, including tear-off, insulation, membrane and flashing",
+        "url": "https://roofvista.com/resources/guides/nyc-flat-roof-replacement-guide",
+    },
+    {
+        "label": "Roof Observations, New York commercial roof costs (updated January 7, 2026): New York State averages of $5.45 to $24.30 per sq ft depending on membrane and insulation, and a note that New York City costs can run more than 50% above the national average",
+        "url": "https://roofobservations.com/new-york-roof-cost-guide/",
+    },
+]
+
+
+def not_included(profile: dict[str, Any], site: dict[str, Any]) -> list[dict[str, Any]]:
+    """
+    Costs the plan's totals leave out, shown beside them so the reader is not surprised.
+
+    Today: roof replacement, when the city or the user says the roof is old or poor. It is listed with a rough guide figure
+    when the roof area is known, and always with the advice to get a roofer's quote.
+    """
+    items: list[dict[str, Any]] = []
+    if site.get("roof_age_20_plus") or site.get("roof_condition") == "poor" or site.get("city_not_solar_ready"):
+        try:
+            area = float(profile.get("roof_area_sqft"))
+        except (TypeError, ValueError):
+            area = 0.0
+        item: dict[str, Any] = {
+            "item": "Replacing the roof, if it needs it",
+            "why": "The roof is old or in poor shape, so it may need replacing before solar goes on. No plan's total includes this.",
+            "next": "Get a roofer's quote.",
+        }
+        if area > 0:
+            low, high = (round(area * p, -3) for p in ROOF_REPLACEMENT_USD_PER_SQFT)
+            item["rough_guide_usd"] = [low, high]
+            item["basis"] = (
+                f"${ROOF_REPLACEMENT_USD_PER_SQFT[0]:.2f} to ${ROOF_REPLACEMENT_USD_PER_SQFT[1]:.2f} per sq ft installed, across "
+                f"{area:,.0f} sq ft. That is the span of the three roof types in Roofvista's 2026 NYC guide (below). These are "
+                "contractor price guides, not audited project data, and the NYC guide is written mainly for residential buildings, "
+                "so treat the figure as a rough order of magnitude and get a roofer's quote."
+            )
+        item["sources"] = ROOF_REPLACEMENT_SOURCES
+        items.append(item)
+    return items
+
+
 def confirm_first(flags: list[str], records: dict[str, Any], site: dict[str, Any]) -> list[dict[str, str]]:
     """What the reader should check before relying on the plan, from the run's flags and the city-record differences."""
     items: list[dict[str, str]] = []
@@ -158,6 +216,8 @@ def confirm_first(flags: list[str], records: dict[str, Any], site: dict[str, Any
             items.append({"kind": "gap", "text": f"{tool_name(flag.split(':', 1)[1])} could not return data, so that part of the plan is missing."})
         elif flag in FLAG_TEXT:
             items.append({"kind": "flag", "text": FLAG_TEXT[flag]})
+    if not_included({}, site):
+        items.append({"kind": "flag", "text": "No plan's cost includes replacing the roof, which may be needed first. Get a roofer's quote."})
     if site.get("roof_age_20_plus") and "city_roof_not_solar_ready" not in flags:
         items.append({"kind": "flag", "text": "The city lists the roof as 20 years old or more. Check it before solar."})
     return items
@@ -235,6 +295,7 @@ def build_plan_summary(run: Any, output: dict[str, Any], next_steps: list[dict[s
         "solar": {"production": results.get("get_solar_production") or None},
         "prices": {"electricity": results.get("get_utility_rates") or None, "tariff": results.get("get_utility_tariff") or None},
         "scenarios": scenarios,
+        "not_included": not_included(profile, site),
         "cost_basis": cost_basis,
         "incentives": (data.get("search_ny_incentives_and_rules") or {}).get("programs") or [],
         "battery": results.get("optimize_solar_storage") or None,
@@ -250,7 +311,12 @@ def build_plan_summary(run: Any, output: dict[str, Any], next_steps: list[dict[s
         "assumptions": [{"id": key, "text": text} for key, text in (notes.get("assumptions") or {}).items()],
         "referrals": referrals,
         "next_steps": next_steps or [],
-        "sources": notes.get("source_links") or [],
+        "sources": (notes.get("source_links") or [])
+        + (
+            [{"label": f"Contractor price guide, not audited: {g['label'].split(':')[0]}", "url": g["url"], "retrieved_at": "2026-10-17T00:00:00Z", "sample": False} for g in ROOF_REPLACEMENT_SOURCES]
+            if not_included(profile, site)
+            else []
+        ),
         "sections": sections,
         "flags": flags,
         "tools": [

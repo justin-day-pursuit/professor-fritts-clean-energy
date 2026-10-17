@@ -236,15 +236,15 @@ def _with_saved_price_ranges(inp: Any, fixture_case: str) -> Any:
     update: dict[str, Any] = {}
     solar, battery, efficiency = saved.get("solar"), saved.get("battery"), saved.get("efficiency")
     if solar and not inp.solar_usd_per_kw_low:
-        update.update(solar_usd_per_kw_low=solar["low"], solar_usd_per_kw_high=solar["high"],
+        update.update(solar_usd_per_kw_low=solar["low"], solar_usd_per_kw_high=solar["high"], solar_usd_per_kw_mid=solar.get("mid"),
                       solar_price_basis=solar["basis"], solar_price_source_url=solar.get("source_url") or "")
     if battery and inp.battery_kwh > 0 and not inp.battery_usd_per_kwh_low:
-        update.update(battery_usd_per_kwh_low=battery["low"], battery_usd_per_kwh_high=battery["high"],
+        update.update(battery_usd_per_kwh_low=battery["low"], battery_usd_per_kwh_high=battery["high"], battery_usd_per_kwh_mid=battery.get("mid"),
                       battery_price_basis=battery["basis"], battery_price_source_url=battery.get("source_url") or "")
     if saved.get("realization") and not inp.efficiency_realization:
         update.update(efficiency_realization=saved["realization"])
     if efficiency and not inp.efficiency_usd_per_kwh:
-        update.update(efficiency_usd_per_kwh=efficiency["prices"], efficiency_price_basis=efficiency["basis"],
+        update.update(efficiency_usd_per_kwh=efficiency["prices"], efficiency_usd_per_kwh_mid=efficiency.get("mid"), efficiency_price_basis=efficiency["basis"],
                       efficiency_price_source_url=efficiency.get("source_url") or "")
     return inp.model_copy(update=update) if update else inp
 
@@ -296,6 +296,7 @@ def _with_real_efficiency_price(inp: Any) -> tuple[Any, list[str]]:
     )
     return inp.model_copy(update={
         "efficiency_usd_per_kwh": {"standard": [standard["p25"], standard["p75"]], "deep": [deep["p25"], deep["p75"]]},
+        "efficiency_usd_per_kwh_mid": {"standard": standard["p50"], "deep": deep["p50"]},
         "efficiency_price_basis": basis,
         "efficiency_price_source_url": found["source_url"],
     }), []
@@ -318,6 +319,7 @@ def _with_real_battery_price(inp: Any) -> tuple[Any, list[str]]:
     return inp.model_copy(update={
         "battery_usd_per_kwh_low": float(found["p25_usd_per_kwh"]),
         "battery_usd_per_kwh_high": float(found["p75_usd_per_kwh"]),
+        "battery_usd_per_kwh_mid": float(found["p50_usd_per_kwh"]),
         "battery_price_basis": basis,
         "battery_price_source_url": found["source_url"],
     }), []
@@ -342,6 +344,7 @@ def _with_real_solar_only(inp: Any) -> tuple[Any, list[str]]:
         "solar_price_source_url": found["source_url"],
         "solar_usd_per_kw_low": float(found["p25_usd_per_kw"]),
         "solar_usd_per_kw_high": float(found["p75_usd_per_kw"]),
+        "solar_usd_per_kw_mid": float(found["p50_usd_per_kw"]),
         "solar_price_basis": basis,
     })
     return updated, []

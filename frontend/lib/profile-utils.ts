@@ -14,6 +14,7 @@ const NUMERIC_KEYS: (keyof IntakeProfile)[] = [
   "target_year",
   "critical_load_hours",
   "critical_load_kw",
+  "electricity_rate_usd_per_kwh",
   "backup_hours_wanted",
   "goal_percent",
   "lighting_retrofit_year",

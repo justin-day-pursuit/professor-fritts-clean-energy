@@ -49,6 +49,7 @@ export const FIELDS: Record<string, FieldInfo> = {
   budget_type: { label: "Budget type", fmt: tidyKey },
   goal: { label: "Goal" },
   goal_percent: { label: "Goal: cut grid electricity by", fmt: (v) => `${v}%` },
+  electricity_rate_usd_per_kwh: { label: "Your electricity price", fmt: usdPerKwh },
   target_year: { label: "Target year", fmt: (v) => String(v) },
   critical_loads: { label: "What must keep running in an outage" },
   critical_load_kw: { label: "Power those loads draw", fmt: (v) => num(v, " kW") },

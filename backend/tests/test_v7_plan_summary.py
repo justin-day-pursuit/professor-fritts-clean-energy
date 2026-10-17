@@ -85,3 +85,43 @@ def test_a_normal_plan_run_has_a_summary_and_no_error():
     session = services.create_session(profile=profile, fixture_case="case1_queens_library")
     run = run_harness(session, question, llm_provider="scripted", tool_mode="mock")
     assert "plan_summary" in run.output and "plan_summary_error" not in run.output
+
+
+# ---- best guess in the headline, the user's own rate, and costs left out of the totals ----
+
+def test_the_headline_leads_with_the_range_and_names_the_median_second():
+    scenario = _scenario("B", 32, 44, True, "within budget", (300000, 700000))
+    scenario["upfront_usd_best"] = 450000
+    outcome = decide_outcome([scenario], {}, 800000)
+    assert "$300k-$700k (the median of similar NYC projects is about $450k)" in outcome["subhead"]
+
+
+def test_roof_replacement_is_listed_as_not_included_with_a_labeled_guide_figure():
+    from agent.plan_summary import not_included
+
+    items = not_included({"roof_area_sqft": 10260}, {"roof_age_20_plus": True})
+    assert len(items) == 1 and items[0]["rough_guide_usd"] == [67000.0, 144000.0]  # 10,260 sq ft x $6.50 to $14
+    assert "not audited" in items[0]["basis"] and "roofer" in items[0]["next"].lower()
+    assert [g["url"] for g in items[0]["sources"]] == [
+        "https://roofvista.com/resources/guides/nyc-flat-roof-replacement-guide",
+        "https://roofobservations.com/new-york-roof-cost-guide/",
+    ]
+    assert not_included({"roof_area_sqft": 10260}, {}) == []
+    assert "rough_guide_usd" not in not_included({}, {"roof_condition": "poor"})[0]
+    flags = confirm_first([], {}, {"roof_age_20_plus": True})
+    assert any("replacing the roof" in i["text"] for i in flags)
+
+
+def test_a_price_the_user_entered_is_used_as_is_in_any_mode():
+    from mocks.mock_mode import forced_tool_mode
+    from tools.ny_rules_rates import get_utility_rates, user_electricity_rate
+
+    assert user_electricity_rate({"electricity_rate_usd_per_kwh": "0.26"}) == 0.26
+    assert user_electricity_rate({"electricity_rate_usd_per_kwh": 26}) is None  # cents by mistake: ignored, not guessed
+    assert user_electricity_rate({}) is None
+    for mode in ("mock", "live"):
+        with forced_tool_mode(mode):
+            result = get_utility_rates("case1_queens_library", {"electricity_rate_usd_per_kwh": 0.26})
+        data = result.data
+        assert result.mock is False and result.source_url == "session://profile"
+        assert data["price_low_usd_per_kwh"] == data["price_high_usd_per_kwh"] == 0.26 and result.flags == []

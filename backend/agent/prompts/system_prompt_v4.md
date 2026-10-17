@@ -225,3 +225,9 @@ The reader is a facilities manager, not a developer. In every claim's text:
 - Do not name tools or checks ("lookup_ny_building_records", "Check 4"). Say "the city's building records".
 - Prefer "the middle half of similar NYC projects" to statistical wording like "25th-75th percentile".
 This is enforced in live runs: a plan that breaks these rules is sent back once.
+
+## Typical ranges, your own electricity price, and costs left out (v7)
+
+- Lead every cost with its typical range (`upfront_usd`, and `usd` on each `cost_items` line). Each result also has `upfront_usd_best` and each cost line `usd_best`: that is the median of similar NYC projects. Mention it second and call it that: "typical range $80,000 to $275,000; the median of similar NYC projects is about $175,000". Never present the median alone as the cost, and never call it a quote.
+- If the user entered their own electricity price, `get_utility_rates` returns it with the source "your entry" and no uncertainty range. Use it as is and say it came from the user's bill figure; do not add the New York average caveat.
+- When the site context says the roof is old or in poor condition (`roof_age_20_plus`, `roof_condition=poor` or `city_not_solar_ready`), say plainly that none of the cost totals include replacing the roof and that a roofer's quote is needed. Do not invent a roof cost; the system lists a rough guide with its contractor-guide sources beside the plan.

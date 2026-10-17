@@ -24,6 +24,7 @@ import {
   hoursRange,
   isWeb,
   money,
+  moneyExact,
   moneyRange,
   moneyRangeExact,
   nice,
@@ -186,13 +187,14 @@ function ScenarioCard({ id, s, budget, recommended, reason }: { id: "A" | "B" | 
       <div className="mt-4">
         <div className="flex items-baseline justify-between text-sm"><span className="text-[var(--fr-mute)]">Upfront cost</span><span className="font-semibold text-[var(--fr-ink)]">{moneyRange(s.upfront_usd)}</span></div>
         <RangeBar low={s.upfront_usd[0]} high={s.upfront_usd[1]} max={costMax} color={over ? "#c2562b" : "#2f6fb5"} marker={budget} markerLabel={`Budget ${money(budget)}`} />
+        {s.upfront_usd_best != null && <p className="mt-1 text-xs text-[var(--fr-mute)]">Median of similar NYC projects: about {money(s.upfront_usd_best)}</p>}
         {over ? <p className="mt-1 text-xs font-medium text-[var(--fr-warn)]">{moneyRange(s.budget_gap_usd as [number, number])} more than your budget</p> : null}
         {s.incentives_counted_usd[1] > 0 && <p className="mt-1 text-xs text-[var(--fr-mute)]">After a {moneyRange(s.incentives_counted_usd)} federal credit: {moneyRange(s.net_cost_usd)}</p>}
       </div>
 
       <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-[var(--fr-line)] pt-3 text-sm">
         <div><dt className="text-xs text-[var(--fr-mute)]">Saves each year</dt><dd className="font-semibold text-[var(--fr-ink)]">{moneyRange(s.annual_savings_usd)}</dd></div>
-        <div><dt className="text-xs text-[var(--fr-mute)]">Pays back in</dt><dd className="font-semibold text-[var(--fr-ink)]">{yearsRange(s.payback_years)}</dd></div>
+        <div><dt className="text-xs text-[var(--fr-mute)]">Pays back in</dt><dd className="font-semibold text-[var(--fr-ink)]">{yearsRange(s.payback_years)}</dd>{s.payback_years_best ? <dd className="text-[11px] text-[var(--fr-mute)]">about {Math.round(s.payback_years_best)} years at the median cost</dd> : null}</div>
         <div><dt className="text-xs text-[var(--fr-mute)]">Backup power</dt><dd className="font-semibold text-[var(--fr-ink)]">{hoursRange(s.outage_hours)}</dd></div>
         <div><dt className="text-xs text-[var(--fr-mute)]">Portion of your goal met</dt><dd className="font-semibold text-[var(--fr-ink)]">{pctRange(s.share_of_goal_pct)}</dd></div>
       </dl>
@@ -202,16 +204,17 @@ function ScenarioCard({ id, s, budget, recommended, reason }: { id: "A" | "B" | 
       <details className="mt-3 rounded-lg border border-[var(--fr-line)] p-3">
         <summary className="cursor-pointer text-sm font-semibold text-[var(--fr-ink)]">Itemized bill</summary>
         <table className="mt-2 w-full text-left text-xs">
-          <thead><tr className="text-[var(--fr-mute)]"><th className="py-1 pr-2">Item</th><th className="py-1 pr-2">Cost range</th></tr></thead>
+          <thead><tr className="text-[var(--fr-mute)]"><th className="py-1 pr-2">Item</th><th className="py-1 pr-2">Typical range</th><th className="py-1 pr-2">Median of similar projects</th></tr></thead>
           <tbody>
             {s.cost_items.map((c) => (
               <tr key={c.item} className="border-t border-[var(--fr-line)] align-top">
                 <td className="py-1.5 pr-2"><div className="font-medium text-[var(--fr-ink)]">{c.item}</div><div className="text-[var(--fr-mute)]"><LinkedText text={dev ? c.basis : plainify(c.basis)} /></div></td>
                 <td className="whitespace-nowrap py-1.5 pr-2 text-[var(--fr-ink)]">{moneyRangeExact(c.usd)}</td>
+                <td className="whitespace-nowrap py-1.5 pr-2 text-[var(--fr-mute)]">{c.usd_best != null ? moneyExact(c.usd_best) : ""}</td>
               </tr>
             ))}
-            <tr className="border-t-2 border-[var(--fr-ink)] font-semibold"><td className="py-1.5 pr-2">Upfront total</td><td className="py-1.5 text-[var(--fr-ink)]">{moneyRangeExact(s.upfront_usd)}</td></tr>
-            <tr className="font-semibold"><td className="py-1.5 pr-2">Net after incentives counted</td><td className="py-1.5 text-[var(--fr-ink)]">{moneyRangeExact(s.net_cost_usd)}</td></tr>
+            <tr className="border-t-2 border-[var(--fr-ink)] font-semibold"><td className="py-1.5 pr-2">Upfront total</td><td className="py-1.5 pr-2 text-[var(--fr-ink)]">{moneyRangeExact(s.upfront_usd)}</td><td className="py-1.5 text-[var(--fr-mute)]">{s.upfront_usd_best != null ? moneyExact(s.upfront_usd_best) : ""}</td></tr>
+            <tr className="font-semibold"><td className="py-1.5 pr-2">Net after incentives counted</td><td className="py-1.5 pr-2 text-[var(--fr-ink)]">{moneyRangeExact(s.net_cost_usd)}</td><td className="py-1.5 text-[var(--fr-mute)]">{s.net_cost_usd_best != null ? moneyExact(s.net_cost_usd_best) : ""}</td></tr>
           </tbody>
         </table>
       </details>
@@ -220,6 +223,151 @@ function ScenarioCard({ id, s, budget, recommended, reason }: { id: "A" | "B" | 
 }
 
 // ------------------------------------------------------------------------------------------------ incentives
+
+// ----------------------------------------------------------------------------------------- side-by-side tables
+
+const PLAN_IDS = ["A", "B", "C"] as const;
+const th = "px-3 py-2.5 text-left align-top";
+const rowHead = "px-3 py-2.5 text-left align-top font-semibold text-[var(--fr-ink)] w-[22%]";
+
+/** The plan's make-up in a few words, for the column heading. */
+function packageText(s?: Scenario): string {
+  if (!s) return "Not costed";
+  const parts = [s.package.efficiency_level === "deep" ? "Expanded efficiency" : "Standard efficiency"];
+  if (s.package.solar_kw_dc > 0) parts.push(`solar (${s.package.solar_kw_dc} kW)`);
+  if (s.package.battery_kwh > 0) parts.push(`${s.package.battery_kwh} kWh battery`);
+  return parts.join(" + ");
+}
+
+/** The legend line above a table: one ESTIMATE tag instead of one on every figure. */
+function EstimateLegend({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--fr-mute)]">
+      <Chip label="ESTIMATE" /> <span>{children}</span>
+    </div>
+  );
+}
+
+/** Section 6: the three plans as columns and the questions a reader asks as rows. */
+function ComparisonTable({ sum, budget, recommended }: { sum: PlanSummary; budget: number; recommended: string | null }) {
+  const by = (id: string) => sum.scenarios.find((x) => x.scenario_id === id);
+  const goal = sum.scenarios[0]?.goal_pct ?? sum.baseline.goal_percent ?? 30;
+  const col = (id: string) => (recommended === id ? "bg-[var(--fr-soft)]" : "");
+  const cell = (fn: (s: Scenario) => ReactNode) =>
+    PLAN_IDS.map((id) => {
+      const sc = by(id);
+      return <td key={id} className={`px-3 py-2.5 align-top ${col(id)}`}>{sc ? fn(sc) : <span className="text-[var(--fr-mute)]">Not costed in this plan</span>}</td>;
+    });
+  const goalCell = (s: Scenario) =>
+    s.reaches_goal ? (
+      <span className="font-semibold text-[#1f7a4d]">Yes, even at the low end</span>
+    ) : s.reduction_pct_of_use[1] >= goal ? (
+      <span className="font-semibold text-[#9a6a00]">Only at the high end</span>
+    ) : (
+      <span className="font-semibold text-[var(--fr-warn)]">No</span>
+    );
+  const budgetCell = (s: Scenario) =>
+    s.budget_strain === "within budget" ? (
+      <span className="font-semibold text-[#1f7a4d]">Yes{s.budget_ratio ? ` (${Math.round(s.budget_ratio[0] * 100)}% to ${Math.round(s.budget_ratio[1] * 100)}% of it)` : ""}</span>
+    ) : (
+      <span className="font-semibold text-[var(--fr-warn)]">{s.budget_gap_usd && s.budget_gap_usd[1] > 0 ? `Up to ${money(s.budget_gap_usd[1])} over` : "May exceed it"}</span>
+    );
+  return (
+    <div className="space-y-3">
+      <EstimateLegend>Every figure is a calculated range and low confidence. Prices come from similar NYC projects and the state average electricity price, not this building&rsquo;s own bill.</EstimateLegend>
+      <div className="overflow-x-auto rounded-xl border border-[var(--fr-line)] bg-white">
+        <table className="w-full min-w-[640px] border-collapse text-sm">
+          <thead>
+            <tr className="text-[var(--fr-ink)]">
+              <th className={th}></th>
+              {PLAN_IDS.map((id) => (
+                <th key={id} className={`${th} ${col(id)}`}>
+                  <div className="text-base font-semibold">Plan {id}{recommended === id ? <span className="ml-2 rounded-full bg-[var(--fr-gold)] px-2 py-0.5 text-[10px] font-bold">Recommended</span> : null}</div>
+                  <div className="text-xs font-normal text-[var(--fr-mute)]">{packageText(by(id))}</div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="[&>tr]:border-t [&>tr]:border-[var(--fr-line)]">
+            <tr><th className={rowHead}>Upfront cost</th>{cell((s) => (<><div className="text-base font-bold">{moneyRange(s.upfront_usd)}</div>{s.upfront_usd_best != null && <div className="text-xs text-[var(--fr-mute)]">Median of similar NYC projects: about {money(s.upfront_usd_best)}</div>}</>))}</tr>
+            <tr><th className={rowHead}>After the federal credit</th>{cell((s) => (s.incentives_counted_usd[1] > 0 ? <>{moneyRange(s.net_cost_usd)}</> : <span className="text-[var(--fr-mute)]">No credit counted</span>))}</tr>
+            <tr><th className={rowHead}>Cuts grid electricity</th>{cell((s) => <>{pctRange(s.reduction_pct_of_use)}</>)}</tr>
+            <tr><th className={rowHead}>Reaches the {goal}% goal?</th>{cell(goalCell)}</tr>
+            <tr><th className={rowHead}>Saves each year</th>{cell((s) => <>{moneyRange(s.annual_savings_usd)}</>)}</tr>
+            <tr><th className={rowHead}>Pays back in</th>{cell((s) => <>{yearsRange(s.payback_years)}</>)}</tr>
+            <tr><th className={rowHead}>Backup power</th>{cell((s) => (s.outage_hours[1] > 0 ? <>{hoursRange(s.outage_hours)} for the critical loads</> : <span className="text-[var(--fr-mute)]">None (solar panels shut off in an outage)</span>))}</tr>
+            <tr><th className={rowHead}>Fits the {budget ? `$${budget.toLocaleString()} ` : ""}budget?</th>{cell(budgetCell)}</tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/** Section 7: each part of the bill as a row, the three plans as columns. */
+function CostTable({ sum, recommended }: { sum: PlanSummary; recommended: string | null }) {
+  const by = (id: string) => sum.scenarios.find((x) => x.scenario_id === id);
+  const kind = (item: string) => (/efficiency/i.test(item) ? "Efficiency work" : /solar/i.test(item) ? "Rooftop solar" : /battery/i.test(item) ? "Backup battery" : /credit/i.test(item) ? "Federal credit" : item);
+  const rows = Array.from(new Set(sum.scenarios.flatMap((s) => s.cost_items.map((c) => kind(c.item)))));
+  const col = (id: string) => (recommended === id ? "bg-[var(--fr-soft)]" : "");
+  return (
+    <div className="space-y-3">
+      <EstimateLegend>Each line is a typical range from similar NYC projects, with the median of those projects underneath. None of these costs include replacing the roof.</EstimateLegend>
+      <div className="overflow-x-auto rounded-xl border border-[var(--fr-line)] bg-white">
+        <table className="w-full min-w-[640px] border-collapse text-sm">
+          <thead>
+            <tr className="text-[var(--fr-ink)]">
+              <th className={th}></th>
+              {PLAN_IDS.map((id) => (
+                <th key={id} className={`${th} ${col(id)}`}>
+                  <div className="text-base font-semibold">Plan {id}</div>
+                  <div className="text-xs font-normal text-[var(--fr-mute)]">{packageText(by(id))}</div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="[&>tr]:border-t [&>tr]:border-[var(--fr-line)]">
+            {rows.map((row) => (
+              <tr key={row}>
+                <th className={rowHead}>{row}</th>
+                {PLAN_IDS.map((id) => {
+                  const item = by(id)?.cost_items.find((c) => kind(c.item) === row);
+                  return (
+                    <td key={id} className={`px-3 py-2.5 align-top ${col(id)}`}>
+                      {item ? (
+                        <>
+                          <div className="font-medium text-[var(--fr-ink)]">{moneyRangeExact(item.usd)}</div>
+                          {item.usd_best != null && <div className="text-xs text-[var(--fr-mute)]">Median: {moneyExact(item.usd_best)}</div>}
+                          <div className="mt-0.5 text-xs text-[var(--fr-mute)]"><LinkedText text={item.basis} /></div>
+                        </>
+                      ) : (
+                        <span className="text-[var(--fr-mute)]">Not part of this plan</span>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+            <tr className="border-t-2 border-[var(--fr-ink)] font-semibold">
+              <th className={rowHead}>Upfront total</th>
+              {PLAN_IDS.map((id) => {
+                const sc = by(id);
+                return <td key={id} className={`px-3 py-2.5 align-top ${col(id)}`}>{sc ? <><div>{moneyRangeExact(sc.upfront_usd)}</div>{sc.upfront_usd_best != null && <div className="text-xs font-normal text-[var(--fr-mute)]">Median: {moneyExact(sc.upfront_usd_best)}</div>}</> : "Not costed"}</td>;
+              })}
+            </tr>
+            <tr className="font-semibold">
+              <th className={rowHead}>After incentives counted</th>
+              {PLAN_IDS.map((id) => {
+                const sc = by(id);
+                return <td key={id} className={`px-3 py-2.5 align-top ${col(id)}`}>{sc ? moneyRangeExact(sc.net_cost_usd) : "Not costed"}</td>;
+              })}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
 const STATUS_STYLE: Record<string, { label: string; bg: string }> = {
   open: { label: "Open", bg: "#1c8c7e" },
@@ -267,8 +415,158 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
   const sum: PlanSummary = plan.plan;
   const ctx: PlainContext = { dev, calcNames: sum.calculation_names ?? {}, flagText: sum.flag_text ?? {} };
   const calcNames = ctx.calcNames;
+
+  const records = obj(sum.building.city_records);
+  const prod = sum.solar.production;
   const o = sum.outcome;
   const budget = Number(plan.profile.budget_amount) || 0;
+  // The data behind each report section: the records, prices, calculations and sources the written statements rest on.
+  const data: Record<string, ReactNode> = {
+    building: (
+<Detail title="Your building" note="what you entered and what the city says">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">What you entered</p>
+            <KV data={plan.profile as Obj} />
+            <p className="pt-2 text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">City tax-lot and building-outline record</p>
+            <KV data={records} skip={["ll84", "ll24", "differs_from_intake"]} />
+            {Array.isArray(records.differs_from_intake) && (records.differs_from_intake as Obj[]).length > 0 && (
+              <>
+                <p className="pt-2 text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">Where the city record differs from what you entered</p>
+                {(records.differs_from_intake as Obj[]).map((d) => (
+                  <p key={String(d.field)} className="text-sm text-[var(--fr-ink)]">
+                    {fieldLabel(String(d.field))}: you entered {fieldValue(String(d.field), d.intake)}; the city record says {fieldValue(String(d.field), d.city_record)}.
+                  </p>
+                ))}
+              </>
+            )}
+            <p className="pt-2 text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">What the plan noticed about the site</p>
+            <KV data={obj(sum.building.site_context)} />
+          </Detail>
+    ),
+    energy: (
+<Detail title="Energy use and your goal" note={sum.baseline.source}>
+            <KV data={sum.baseline as unknown as Obj} />
+            {sum.building.energy_report && (<><p className="pt-2 text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">City energy report (Local Law 84)</p><KV data={obj(sum.building.energy_report)} /></>)}
+          </Detail>
+    ),
+    roof: (
+<Detail title="The city's roof assessment" note="Local Law 24">
+            {sum.building.roof_assessment ? <KV data={obj(sum.building.roof_assessment)} /> : <p className="text-sm text-[var(--fr-mute)]">This building is not in the city&rsquo;s roof assessment data.</p>}
+          </Detail>
+    ),
+    solar: (
+<Detail title="Solar" note="expected output and the roof math">
+            {prod && <ToolMeta payload={prod as Obj} />}
+            {prod && <KV data={obj((prod as Obj).data)} />}
+            {Object.entries(sum.calculations).map(([id, calc]) => (
+              <div key={id} className="rounded-lg border border-[var(--fr-line)] p-3">
+                <div className="mb-1 text-sm font-semibold text-[var(--fr-ink)]">
+                  {String(obj(calc).name ?? calcNames[id] ?? id)}
+                  {dev && <span className="ml-1 font-mono text-[10px] text-[var(--fr-warn)]">{id}</span>}
+                </div>
+                <KV data={calc as Obj} skip={["label"]} />
+              </div>
+            ))}
+          </Detail>
+    ),
+    price: (
+<Detail title="Electricity price and rate schedules">
+            {sum.prices.electricity && <><ToolMeta payload={sum.prices.electricity} /><KV data={obj(sum.prices.electricity.data)} /></>}
+            {sum.prices.tariff && (
+              <>
+                <ToolMeta payload={sum.prices.tariff} />
+                <KV data={obj(sum.prices.tariff.data)} skip={["candidate_tariffs"]} />
+                {Array.isArray(obj(sum.prices.tariff.data).candidate_tariffs) && (
+                  <ul className="list-disc space-y-1 pl-5 text-sm">
+                    {(obj(sum.prices.tariff.data).candidate_tariffs as Obj[]).map((t) => (
+                      <li key={String(t.tariff_name)}><SourceLink url={t.openei_url}>{String(t.tariff_name)}</SourceLink> · effective {String(t.effective_date)} · fixed charge ${show(t.fixed_charge_usd_per_month)} a month</li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
+          </Detail>
+    ),
+    prices: (
+<Detail title="Where the prices come from" note="solar, battery and efficiency">
+            {(["solar", "battery", "efficiency"] as const).map((k) => {
+              const b = obj(obj(sum.cost_basis)[k]);
+              return (
+                <div key={k} className="rounded-lg border border-[var(--fr-line)] p-3 text-sm">
+                  <div className="font-semibold text-[var(--fr-ink)]">{k === "solar" ? "Solar panels" : k === "battery" ? "Backup battery" : "Efficiency work"}</div>
+                  <p className="text-[var(--fr-mute)]">{b.basis ? <LinkedText text={dev ? String(b.basis) : plainify(String(b.basis))} /> : "Planning estimate, not yet based on project data."}</p>
+                  {b.price != null && <p className="text-[var(--fr-ink)]">Price used: {priceText(k, b.price)}</p>}
+                  <SourceLink url={b.source_url} />
+                </div>
+              );
+            })}
+            {obj(sum.cost_basis).efficiency_savings_realization != null && (
+              <p className="text-sm text-[var(--fr-ink)]">Efficiency savings counted at {fieldValue("efficiency_savings_realization", obj(sum.cost_basis).efficiency_savings_realization)} of what was predicted, which is what the City&rsquo;s own audited projects delivered.</p>
+            )}
+            {typeof obj(sum.cost_basis).assumption_text === "string" && <p className="text-xs text-[var(--fr-mute)]"><LinkedText text={dev ? String(obj(sum.cost_basis).assumption_text) : plainify(String(obj(sum.cost_basis).assumption_text))} /></p>}
+          </Detail>
+    ),
+    battery: (
+<ToolBlock title="Backup battery size" payload={sum.battery} />
+    ),
+    hazards: (
+<ToolBlock title="Flood zone" payload={sum.hazards} />
+    ),
+    assumptions: (
+<Detail title="Assumptions behind the numbers" note={`${sum.assumptions.length} stated`}>
+            <ul className="space-y-1.5 text-sm">
+              {sum.assumptions.map((a) => (
+                <li key={a.id}>{dev && <span className="mr-2 rounded bg-[var(--fr-soft)] px-1.5 py-0.5 font-mono text-xs text-[var(--fr-warn)]">{a.id}</span>}{dev ? a.text : plainify(a.text)}</li>
+              ))}
+            </ul>
+          </Detail>
+    ),
+    tools: (
+<Detail title="Where each number came from" note={`${sum.tools.length} sources`}>
+            <table className="w-full text-left text-xs">
+              <thead><tr className="text-[var(--fr-mute)]"><th className="py-1 pr-2">Source</th><th className="py-1 pr-2">Kind of data</th><th className="py-1 pr-2">Read on</th><th className="py-1 pr-2">Link</th></tr></thead>
+              <tbody>
+                {sum.tools.map((t) => (
+                  <tr key={t.tool} className="border-t border-[var(--fr-line)] align-top">
+                    <td className="py-1.5 pr-2 font-medium text-[var(--fr-ink)]">{toolLabel(t.tool)}{dev && <span className="ml-1 font-mono text-[10px] text-[var(--fr-warn)]">{t.tool}</span>}</td>
+                    <td className="py-1.5 pr-2">{t.mock ? SAMPLE_BADGE_TEXT : "Live"}</td>
+                    <td className="py-1.5 pr-2">{t.retrieved_at?.slice(0, 10) ?? ""}</td>
+                    <td className="py-1.5 pr-2"><SourceLink url={t.source_url}>{dev && t.dataset_version ? t.dataset_version : "open"}</SourceLink></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Detail>
+    ),
+    links: (
+<Detail title="Source links" note={`${sum.sources.length} pages`}>
+            <ul className="space-y-1 text-sm">
+              {sum.sources.map((s) => (
+                <li key={s.url}><SourceLink url={s.url}>{s.label}</SourceLink>{s.retrieved_at ? <span className="text-xs text-[var(--fr-mute)]"> · read {s.retrieved_at.slice(0, 10)}</span> : null}{s.sample ? <span className="text-xs text-[#b7791f]"> · {SAMPLE_BADGE_TEXT}</span> : null}</li>
+              ))}
+            </ul>
+          </Detail>
+    ),
+    usage: (
+(dev && sum.usage && <Detail title="What this plan cost to make (developer view)"><KV data={obj(sum.usage)} /></Detail>)
+    ),
+  };
+  // Side-by-side tables that open sections 6 and 7; the section's written statements stay below them, folded.
+  const top: Record<string, ReactNode> = {};
+  if (sum.scenarios.length > 0) {
+    top["6"] = <ComparisonTable sum={sum} budget={budget} recommended={o.recommended} />;
+    top["7"] = <CostTable sum={sum} recommended={o.recommended} />;
+  }
+  // Which data blocks sit under which report section (sections not listed have only their written statements).
+  const SECTION_DATA: Record<string, string[]> = {
+    "2": ["building"],
+    "3": ["assumptions"],
+    "4": ["energy"],
+    "5": ["roof", "solar"],
+    "6": ["price"],
+    "7": ["prices"],
+    "9": ["battery", "hazards"],
+    "13": ["tools", "links", "usage"],
+  };
   const toneBg = o.tone === "good" ? "linear-gradient(135deg,#dff3ea,#fdf0cf)" : o.tone === "caution" ? "linear-gradient(135deg,#fdf0cf,#faf6ee)" : "linear-gradient(135deg,#e3ecf6,#faf6ee)";
   const byId = (id: string) => sum.scenarios.find((s) => s.scenario_id === id);
   const section = (id: string): Section | undefined => sum.sections.find((s) => s.section_id === id);
@@ -280,8 +578,6 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
     const m = (dev ? c.text : plainify(c.text)).match(/^Phase (\d)[,:]?\s*([^:]+):\s*(.*)$/i);
     return { claim: c, n: m?.[1] ?? "", title: m ? m[2].charAt(0).toUpperCase() + m[2].slice(1) : c.text, body: m ? m[3].charAt(0).toUpperCase() + m[3].slice(1) : "" };
   });
-  const records = obj(sum.building.city_records);
-  const prod = sum.solar.production;
 
   return (
     <PlainCtx.Provider value={ctx}>
@@ -336,6 +632,26 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
           ))}
         </div>
       </div>
+
+      {(sum.not_included ?? []).length > 0 && (
+          <Card className="border-[var(--fr-gold)] bg-[#fffaf0]">
+            <div className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-warn)]">Not in these totals</div>
+            {sum.not_included.map((n) => (
+              <div key={n.item} className="mt-2 text-sm text-[var(--fr-ink)]">
+                <div className="font-semibold">{n.item}{n.rough_guide_usd ? `: roughly ${moneyRange(n.rough_guide_usd)}` : ""}</div>
+                <p className="text-[var(--fr-mute)]">{n.why} {n.next}</p>
+                {n.basis && <p className="mt-1 text-xs text-[var(--fr-mute)]">{n.basis}</p>}
+                {n.sources && n.sources.length > 0 && (
+                  <ul className="mt-1 list-disc space-y-0.5 pl-5 text-xs text-[var(--fr-mute)]">
+                    {n.sources.map((g) => (
+                      <li key={g.url}>{g.label} <SourceLink url={g.url}>link</SourceLink></li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </Card>
+        )}
 
       <div className="grid gap-8 lg:grid-cols-[1.3fr_1fr]">
         <div>
@@ -414,122 +730,36 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
       </div>
 
       <div>
-        <SectionTitle eyebrow="For the curious" title="All the data we found" sub="Every record, price, calculation and source the plan rests on, exactly as the tools returned it." />
+        <SectionTitle eyebrow="The full report" title="Every statement and every record, section by section" sub="The complete written plan in the order of the 13 report sections. Under each section, the data behind it: the city records, prices, calculations and sources it rests on." />
         <div className="space-y-2">
-          <Detail title="Your building" note="what you entered and what the city says">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">What you entered</p>
-            <KV data={plan.profile as Obj} />
-            <p className="pt-2 text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">City tax-lot and building-outline record</p>
-            <KV data={records} skip={["ll84", "ll24", "differs_from_intake"]} />
-            {Array.isArray(records.differs_from_intake) && (records.differs_from_intake as Obj[]).length > 0 && (
-              <>
-                <p className="pt-2 text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">Where the city record differs from what you entered</p>
-                {(records.differs_from_intake as Obj[]).map((d) => (
-                  <p key={String(d.field)} className="text-sm text-[var(--fr-ink)]">
-                    {fieldLabel(String(d.field))}: you entered {fieldValue(String(d.field), d.intake)}; the city record says {fieldValue(String(d.field), d.city_record)}.
-                  </p>
-                ))}
-              </>
-            )}
-            <p className="pt-2 text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">What the plan noticed about the site</p>
-            <KV data={obj(sum.building.site_context)} />
-          </Detail>
-          <Detail title="Energy use and your goal" note={sum.baseline.source}>
-            <KV data={sum.baseline as unknown as Obj} />
-            {sum.building.energy_report && (<><p className="pt-2 text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">City energy report (Local Law 84)</p><KV data={obj(sum.building.energy_report)} /></>)}
-          </Detail>
-          <Detail title="The city's roof assessment" note="Local Law 24">
-            {sum.building.roof_assessment ? <KV data={obj(sum.building.roof_assessment)} /> : <p className="text-sm text-[var(--fr-mute)]">This building is not in the city&rsquo;s roof assessment data.</p>}
-          </Detail>
-          <Detail title="Solar" note="expected output and the roof math">
-            {prod && <ToolMeta payload={prod as Obj} />}
-            {prod && <KV data={obj((prod as Obj).data)} />}
-            {Object.entries(sum.calculations).map(([id, calc]) => (
-              <div key={id} className="rounded-lg border border-[var(--fr-line)] p-3">
-                <div className="mb-1 text-sm font-semibold text-[var(--fr-ink)]">
-                  {String(obj(calc).name ?? calcNames[id] ?? id)}
-                  {dev && <span className="ml-1 font-mono text-[10px] text-[var(--fr-warn)]">{id}</span>}
-                </div>
-                <KV data={calc as Obj} skip={["label"]} />
-              </div>
-            ))}
-          </Detail>
-          <Detail title="Electricity price and rate schedules">
-            {sum.prices.electricity && <><ToolMeta payload={sum.prices.electricity} /><KV data={obj(sum.prices.electricity.data)} /></>}
-            {sum.prices.tariff && (
-              <>
-                <ToolMeta payload={sum.prices.tariff} />
-                <KV data={obj(sum.prices.tariff.data)} skip={["candidate_tariffs"]} />
-                {Array.isArray(obj(sum.prices.tariff.data).candidate_tariffs) && (
-                  <ul className="list-disc space-y-1 pl-5 text-sm">
-                    {(obj(sum.prices.tariff.data).candidate_tariffs as Obj[]).map((t) => (
-                      <li key={String(t.tariff_name)}><SourceLink url={t.openei_url}>{String(t.tariff_name)}</SourceLink> · effective {String(t.effective_date)} · fixed charge ${show(t.fixed_charge_usd_per_month)} a month</li>
-                    ))}
-                  </ul>
+          {sum.sections.map((s) => {
+            const parts = (SECTION_DATA[s.section_id] ?? []).map((k) => ({ k, node: data[k] })).filter((x) => Boolean(x.node));
+            return (
+              <Detail
+                key={s.section_id}
+                title={`${s.section_id}. ${SECTION_NAME[s.section_id] ?? s.title}`}
+                note={`${s.claims.length} statements${parts.length ? ` · ${parts.length} data block${parts.length === 1 ? "" : "s"}` : ""}`}
+              >
+                {top[s.section_id] && <div>{top[s.section_id]}</div>}
+                {s.claims.length === 0 ? (
+                  <p className="text-sm text-[var(--fr-mute)]">Nothing was provided for this section.</p>
+                ) : top[s.section_id] ? (
+                  <details className="rounded-lg border border-[var(--fr-line)] p-3">
+                    <summary className="cursor-pointer text-sm font-semibold text-[var(--fr-ink)]">All {s.claims.length} written statements in this section</summary>
+                    <ul className="mt-3 space-y-2">{s.claims.map((c) => <ClaimRow key={c.text} claim={c} />)}</ul>
+                  </details>
+                ) : (
+                  <ul className="space-y-2">{s.claims.map((c) => <ClaimRow key={c.text} claim={c} />)}</ul>
                 )}
-              </>
-            )}
-          </Detail>
-          <Detail title="Where the prices come from" note="solar, battery and efficiency">
-            {(["solar", "battery", "efficiency"] as const).map((k) => {
-              const b = obj(obj(sum.cost_basis)[k]);
-              return (
-                <div key={k} className="rounded-lg border border-[var(--fr-line)] p-3 text-sm">
-                  <div className="font-semibold text-[var(--fr-ink)]">{k === "solar" ? "Solar panels" : k === "battery" ? "Backup battery" : "Efficiency work"}</div>
-                  <p className="text-[var(--fr-mute)]">{b.basis ? <LinkedText text={dev ? String(b.basis) : plainify(String(b.basis))} /> : "Planning estimate, not yet based on project data."}</p>
-                  {b.price != null && <p className="text-[var(--fr-ink)]">Price used: {priceText(k, b.price)}</p>}
-                  <SourceLink url={b.source_url} />
-                </div>
-              );
-            })}
-            {obj(sum.cost_basis).efficiency_savings_realization != null && (
-              <p className="text-sm text-[var(--fr-ink)]">Efficiency savings counted at {fieldValue("efficiency_savings_realization", obj(sum.cost_basis).efficiency_savings_realization)} of what was predicted, which is what the City&rsquo;s own audited projects delivered.</p>
-            )}
-            {typeof obj(sum.cost_basis).assumption_text === "string" && <p className="text-xs text-[var(--fr-mute)]"><LinkedText text={dev ? String(obj(sum.cost_basis).assumption_text) : plainify(String(obj(sum.cost_basis).assumption_text))} /></p>}
-          </Detail>
-          <ToolBlock title="Backup battery size" payload={sum.battery} />
-          <ToolBlock title="Flood zone" payload={sum.hazards} />
-          <Detail title="Assumptions behind the numbers" note={`${sum.assumptions.length} stated`}>
-            <ul className="space-y-1.5 text-sm">
-              {sum.assumptions.map((a) => (
-                <li key={a.id}>{dev && <span className="mr-2 rounded bg-[var(--fr-soft)] px-1.5 py-0.5 font-mono text-xs text-[var(--fr-warn)]">{a.id}</span>}{dev ? a.text : plainify(a.text)}</li>
-              ))}
-            </ul>
-          </Detail>
-          <Detail title="Where each number came from" note={`${sum.tools.length} sources`}>
-            <table className="w-full text-left text-xs">
-              <thead><tr className="text-[var(--fr-mute)]"><th className="py-1 pr-2">Source</th><th className="py-1 pr-2">Kind of data</th><th className="py-1 pr-2">Read on</th><th className="py-1 pr-2">Link</th></tr></thead>
-              <tbody>
-                {sum.tools.map((t) => (
-                  <tr key={t.tool} className="border-t border-[var(--fr-line)] align-top">
-                    <td className="py-1.5 pr-2 font-medium text-[var(--fr-ink)]">{toolLabel(t.tool)}{dev && <span className="ml-1 font-mono text-[10px] text-[var(--fr-warn)]">{t.tool}</span>}</td>
-                    <td className="py-1.5 pr-2">{t.mock ? SAMPLE_BADGE_TEXT : "Live"}</td>
-                    <td className="py-1.5 pr-2">{t.retrieved_at?.slice(0, 10) ?? ""}</td>
-                    <td className="py-1.5 pr-2"><SourceLink url={t.source_url}>{dev && t.dataset_version ? t.dataset_version : "open"}</SourceLink></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Detail>
-          <Detail title="Source links" note={`${sum.sources.length} pages`}>
-            <ul className="space-y-1 text-sm">
-              {sum.sources.map((s) => (
-                <li key={s.url}><SourceLink url={s.url}>{s.label}</SourceLink>{s.retrieved_at ? <span className="text-xs text-[var(--fr-mute)]"> · read {s.retrieved_at.slice(0, 10)}</span> : null}{s.sample ? <span className="text-xs text-[#b7791f]"> · {SAMPLE_BADGE_TEXT}</span> : null}</li>
-              ))}
-            </ul>
-          </Detail>
-          {dev && sum.usage && <Detail title="What this plan cost to make (developer view)"><KV data={obj(sum.usage)} /></Detail>}
-        </div>
-      </div>
-
-      <div>
-        <SectionTitle eyebrow="The full report" title="Every statement, section by section" sub="The complete written plan, in the order of the 13 report sections." />
-        <div className="space-y-2">
-          {sum.sections.map((s) => (
-            <Detail key={s.section_id} title={`${s.section_id}. ${SECTION_NAME[s.section_id] ?? s.title}`} note={`${s.claims.length} statements`}>
-              {s.claims.length === 0 ? <p className="text-sm text-[var(--fr-mute)]">Nothing was provided for this section.</p> : <ul className="space-y-2">{s.claims.map((c) => <ClaimRow key={c.text} claim={c} />)}</ul>}
-            </Detail>
-          ))}
+                {parts.length > 0 && (
+                  <div className="mt-4 space-y-2 border-t border-[var(--fr-line)] pt-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-teal)]">The data behind this section</p>
+                    {parts.map((x) => <div key={x.k}>{x.node}</div>)}
+                  </div>
+                )}
+              </Detail>
+            );
+          })}
         </div>
       </div>
 

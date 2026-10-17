@@ -8,6 +8,7 @@ pre-fetched live status and quoted text into the versioned cache, with a page ha
 from __future__ import annotations
 
 import hashlib
+from datetime import datetime, timezone
 from typing import Any
 
 from mocks.mock_mode import get_tool_mode, require_mock_or_fixture
@@ -20,8 +21,40 @@ from tools.live_tariff import fetch_live_tariff
 from tools.upsert_cache import upsert_reference_cache
 
 
+def user_electricity_rate(profile: dict[str, Any] | None) -> float | None:
+    """The electricity price (dollars per kWh) the user entered, or None when blank or not a believable price."""
+    try:
+        rate = float((profile or {}).get("electricity_rate_usd_per_kwh"))
+    except (TypeError, ValueError):
+        return None
+    return rate if 0.02 <= rate <= 2.0 else None
+
+
 def get_utility_rates(case: str, profile: dict[str, Any] | None = None) -> ToolResult:
-    """Return the live EIA price in live mode, or the saved tariff in mock mode."""
+    """
+    The electricity price the savings use.
+
+    A price the user entered (from a bill) always wins, in any mode: it is their own figure and needs no lookup. Otherwise
+    the live EIA state average in live mode, or the saved tariff in mock mode.
+    """
+    entered = user_electricity_rate(profile)
+    if entered is not None:
+        return ToolResult(
+            tool="get_utility_rates",
+            data={
+                "utility": (profile or {}).get("utility") or "Your utility",
+                "tariff_name": "The electricity price you entered",
+                "avg_energy_charge_usd_per_kwh": entered,
+                "price_low_usd_per_kwh": entered,
+                "price_high_usd_per_kwh": entered,
+                "price_units": "dollars per kilowatt-hour",
+            },
+            source_url="session://profile",
+            retrieved_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            dataset_version="user-entered",
+            mock=False,
+            flags=[],
+        )
     if get_tool_mode() == "live":
         return fetch_live_utility_rates(profile or {})
     return require_mock_or_fixture(case, "get_utility_rates")

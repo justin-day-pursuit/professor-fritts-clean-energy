@@ -124,6 +124,8 @@ export interface IntakeProfile {
   critical_load_hours?: number | string;
   /** Size in kW of the loads that must keep running in an outage, and how many hours of backup are wanted. */
   critical_load_kw?: number | string;
+  /** The user's own electricity price in dollars per kWh (optional). When set, savings use it instead of the state average. */
+  electricity_rate_usd_per_kwh?: number | string;
   backup_hours_wanted?: number | string;
   /** Goal as a percent cut in grid electricity (5 to 100). The financial model uses this number directly. */
   goal_percent?: number | string;

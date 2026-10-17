@@ -58,6 +58,7 @@ OPTIONAL_PROFILE_FIELDS: tuple[str, ...] = (
     "goal_percent",
     "critical_load_kw",
     "backup_hours_wanted",
+    "electricity_rate_usd_per_kwh",
 )
 
 

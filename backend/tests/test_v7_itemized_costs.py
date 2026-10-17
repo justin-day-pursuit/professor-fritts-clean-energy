@@ -61,7 +61,7 @@ def test_real_price_replaces_placeholder_and_is_quoted():
 
 
 def test_live_mode_fills_price_and_mock_mode_does_not(monkeypatch):
-    found = {"p25_usd_per_kw": 2800, "p75_usd_per_kw": 4200, "projects": 558, "band_kw": [25.0, 100.0],
+    found = {"p25_usd_per_kw": 2800, "p50_usd_per_kw": 3300, "p75_usd_per_kw": 4200, "projects": 558, "band_kw": [25.0, 100.0],
              "since": "2022-01-01", "source_url": "https://data.ny.gov/x"}
     monkeypatch.setattr(solar_costs, "fetch_solar_cost_range", lambda kw: found)
     with forced_tool_mode("live"):
@@ -115,7 +115,7 @@ def test_battery_price_appears_in_the_bill_and_the_assumption():
 
 
 def test_live_mode_fills_battery_price_or_flags_the_placeholder(monkeypatch):
-    found = {"p25_usd_per_kwh": 533, "p75_usd_per_kwh": 800, "projects": 69, "source_url": "https://data.ny.gov/s"}
+    found = {"p25_usd_per_kwh": 533, "p50_usd_per_kwh": 649, "p75_usd_per_kwh": 800, "projects": 69, "source_url": "https://data.ny.gov/s"}
     monkeypatch.setattr(solar_costs, "fetch_storage_cost_range", lambda: found)
     monkeypatch.setattr(solar_costs, "fetch_solar_cost_range", lambda kw: None)
     with forced_tool_mode("live"):
@@ -185,7 +185,7 @@ def test_cost_per_kwh_saved_is_ordered_and_needs_enough_projects():
 def test_real_efficiency_cost_scales_with_the_kwh_the_package_saves():
     prices = {"standard": (1.0, 4.0), "deep": (1.0, 4.0)}
     low, high = efficiency_cost_range("standard", 40000, 450000, prices)
-    assert (round(low), round(high)) == (45000, 360000)  # 10% x 450,000 kWh x $1  and  20% x 450,000 x $4
+    assert (round(low), round(high)) == (67500, 270000)  # 15% (the middle of 10-20%) x 450,000 kWh x $1 and x $4
     placeholder = efficiency_cost_range("standard", 40000, 450000, None)
     assert placeholder == (160000, 320000)
 
@@ -194,7 +194,7 @@ def test_the_bill_and_assumption_quote_the_real_efficiency_prices():
     priced = _inp(efficiency_usd_per_kwh={"standard": [1.17, 4.02], "deep": [1.09, 3.83]}, efficiency_price_basis="NYSERDA eff test")
     data = run_financial_model(priced).data
     line = data["cost_items"][0]
-    assert "NYSERDA eff test" in line["basis"] and "$1.17-4.02 per kWh saved" in line["basis"] and "planning estimate 10-20%" in line["basis"]
+    assert "NYSERDA eff test" in line["basis"] and "$1.17-4.02 per kWh saved" in line["basis"] and "the middle of the 10-20% planning estimate" in line["basis"]
     assert "NYSERDA eff test" in data["assumption_text"]
     assert "savings percents are planning estimates" in data["assumption_text"]
     assert "and so are the efficiency prices" not in data["assumption_text"]
@@ -206,7 +206,7 @@ def test_without_real_efficiency_prices_the_text_still_says_placeholder():
 
 
 def test_live_mode_fills_efficiency_prices_or_flags_the_placeholder(monkeypatch):
-    found = {"standard": {"p25": 1.17, "p75": 4.02, "projects": 139}, "deep": {"p25": 1.09, "p75": 3.83, "projects": 42},
+    found = {"standard": {"p25": 1.17, "p50": 2.56, "p75": 4.02, "projects": 139}, "deep": {"p25": 1.09, "p50": 2.49, "p75": 3.83, "projects": 42},
              "since": 2016, "source_url": "https://data.ny.gov/e"}
     monkeypatch.setattr(solar_costs, "fetch_solar_cost_range", lambda kw: None)
     monkeypatch.setattr(efficiency_costs, "fetch_efficiency_cost_ranges", lambda: found)
@@ -266,3 +266,33 @@ def test_realization_rate_is_saved_with_a_recording_and_linked_as_a_source():
     notes = AgentNotes()
     notes.record_tool_result("run_financial_model", ToolResult(tool="run_financial_model", data=data, source_url="internal://x", retrieved_at="", dataset_version="v", mock=False))
     assert any("local-law-87-annual-report-fy-2022" in s["url"] for s in notes.source_links)
+
+
+# ---- a best guess next to every range ----
+
+def test_every_cost_line_has_a_best_guess_inside_its_range():
+    data = run_financial_model(_inp(
+        scenario_id="C", battery_kwh=500, critical_load_kw=60,
+        solar_usd_per_kw_low=3000.0, solar_usd_per_kw_high=4000.0, solar_usd_per_kw_mid=3300.0, solar_price_basis="S",
+        battery_usd_per_kwh_low=500.0, battery_usd_per_kwh_high=700.0, battery_usd_per_kwh_mid=560.0, battery_price_basis="B",
+        efficiency_usd_per_kwh={"standard": [1.0, 4.0], "deep": [1.0, 4.0]}, efficiency_usd_per_kwh_mid={"standard": 2.5, "deep": 2.5},
+        efficiency_price_basis="E",
+    )).data
+    for item in data["cost_items"]:
+        low, high = sorted(item["usd"])
+        assert low <= item["usd_best"] <= high, item["item"]
+    solar = [i for i in data["cost_items"] if i["item"] == "Rooftop solar"][0]
+    assert solar["usd_best"] == round(85.5 * 3300)
+    assert data["upfront_usd"][0] <= data["upfront_usd_best"] <= data["upfront_usd"][1]
+    assert data["net_cost_usd_best"] <= data["upfront_usd_best"]
+
+
+def test_without_real_prices_the_best_guess_is_the_middle_of_the_range():
+    data = run_financial_model(_inp()).data
+    assert abs(data["upfront_usd_best"] - sum(data["upfront_usd"]) / 2) <= 2
+    assert data["payback_years_best"] is None or data["payback_years_best"] > 0
+
+
+def test_efficiency_range_no_longer_stacks_the_savings_spread_on_the_price_spread():
+    low, high = efficiency_cost_range("standard", 40000, 450000, {"standard": (1.0, 4.0), "deep": (1.0, 4.0)})
+    assert high / low == 4.0  # only the real price spread remains (it used to be 8x: the 2x savings spread on top of 4x)

@@ -22,6 +22,8 @@ export interface CostItem {
   item: string;
   basis: string;
   usd: Range;
+  /** The best guess for this line: the median price of similar NYC projects. */
+  usd_best?: number;
 }
 
 export interface Scenario {
@@ -32,6 +34,10 @@ export interface Scenario {
   package: { efficiency_level: string; solar_kw_dc: number; battery_kwh: number };
   cost_items: CostItem[];
   upfront_usd: Range;
+  /** The best guess for the upfront cost, with upfront_usd as the typical range around it. */
+  upfront_usd_best?: number;
+  net_cost_usd_best?: number;
+  payback_years_best?: number | null;
   incentives_counted_usd: Range;
   net_cost_usd: Range;
   reduction_kwh: Range;
@@ -101,6 +107,8 @@ export interface PlanSummary {
   solar: { production: (Json & { data?: Json }) | null };
   prices: { electricity: Json | null; tariff: Json | null };
   scenarios: Scenario[];
+  /** Costs the totals leave out, such as replacing an old roof. */
+  not_included: { item: string; why: string; next: string; rough_guide_usd?: Range; basis?: string; sources?: { label: string; url: string }[] }[];
   cost_basis: Json;
   incentives: Program[];
   battery: Json | null;
