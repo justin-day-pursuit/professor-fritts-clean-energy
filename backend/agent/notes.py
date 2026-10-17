@@ -89,6 +89,10 @@ class AgentNotes(BaseModel):
             ("efficiency_price_source_url", "NYSERDA completed efficiency project costs"),
         ):
             self.add_source_link(label, data.get(key), result.retrieved_at)
+        if data.get("efficiency_realization"):
+            from tools.financial import EFFICIENCY_REALIZATION_URL
+
+            self.add_source_link("NYC DCAS Local Law 87 report (measured savings realization)", EFFICIENCY_REALIZATION_URL, result.retrieved_at)
         for tariff in data.get("candidate_tariffs") or []:
             self.add_source_link(str(tariff.get("tariff_name") or "Utility tariff"), tariff.get("openei_url"), result.retrieved_at)
         for program in data.get("programs") or []:

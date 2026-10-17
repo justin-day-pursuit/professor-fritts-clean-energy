@@ -44,12 +44,20 @@ Researched Oct 16, 2026. Update this file whenever a number changes or a new sou
 - Limits: a project's cost may also cover gas or oil savings that the kWh figure leaves out, which makes the cost per kWh look high for electricity alone. The dataset has no baseline use per project, so it cannot give a savings percent. Fewer than 20 projects in a category means the placeholder dollars per square foot ($4-8 standard, $10-16 deep) are used and flagged.
 - Cross-check: our old placeholder worked out to about $1.90-7.70 per kWh saved for P.S. 236, a little higher than the real middle half ($1.17-4.02).
 
-**Savings percent: still a placeholder (10-20% standard, 15-25% deep).** Evidence found, none specific to a NYC public building:
+**Savings percent: still a placeholder (10-20% standard, 15-25% deep), now trimmed by a measured realization rate.**
+Read from the City's own report (DCAS, Local Law 87 annual report FY2022, https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf, text read Oct 16, 2026):
+- Section 3, footnote 9 (p. 17): "A survey of the past three years' LL87 reports show that gross savings realizations rates range from 62% to 88%." The code (`EFFICIENCY_REALIZATION` in `backend/tools/financial.py`) counts only 62-88% of the predicted efficiency savings in live runs.
+- Table 3 (FY22): of 1,071 recommended measures, 5% have a projected payback of 7 years or less, 37% of 8 to 20 years, and 58% of 21 years or more.
+- Section 2: the cost of implementing about 1,700 measures was 33% below the audits' estimates, mostly because agency staff did the work themselves.
+- Tables 6 and 7 (measured savings of 15 projects) are NOT used: DCAS itself says they are distorted by COVID-era building use. For reference, the audits' predicted whole-facility savings in those projects were small (about 3-4% of total building energy for lighting and multi-technology work).
+- The 10-20% and 15-25% base percents themselves still have no direct source.
+
+Other evidence found, none specific to a NYC public building:
 - LBNL meta-analysis of lighting controls (240 estimates, 88 sources, 2012): 24-38% savings, lighting only. https://eta-publications.lbl.gov/bibcite/reference/23139
 - PNNL, DOE-sponsored (2017): up to 30% of building energy avoidable with better sensing and controls; a modeled potential, and few studies document actual savings. https://www.pnnl.gov/publications/energy-savings-potential-improved-building-controls-us-commercial-building-sector
 - DOE: 20-30% potential for small and medium commercial buildings. https://www.energy.gov/eere/buildings/articles/advanced-building-control-solutions
 - NYC Local Law 87 (DCAS): completed projects cut energy use by 10% in the FY2014 report, with a 7-year simple payback threshold. Reports: https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf (the fetch tool could not read these compressed PDFs; read them in a PDF viewer).
-- To turn this into a sourced number: read the Local Law 87 tables for measured percent savings by measure.
+- The FY2021 and earlier LL87 reports (same path, different year) may hold more measured savings tables; not read yet.
 
 ## Other numbers worth keeping
 

@@ -241,6 +241,8 @@ def _with_saved_price_ranges(inp: Any, fixture_case: str) -> Any:
     if battery and inp.battery_kwh > 0 and not inp.battery_usd_per_kwh_low:
         update.update(battery_usd_per_kwh_low=battery["low"], battery_usd_per_kwh_high=battery["high"],
                       battery_price_basis=battery["basis"], battery_price_source_url=battery.get("source_url") or "")
+    if saved.get("realization") and not inp.efficiency_realization:
+        update.update(efficiency_realization=saved["realization"])
     if efficiency and not inp.efficiency_usd_per_kwh:
         update.update(efficiency_usd_per_kwh=efficiency["prices"], efficiency_price_basis=efficiency["basis"],
                       efficiency_price_source_url=efficiency.get("source_url") or "")
@@ -270,6 +272,10 @@ def _with_real_solar_price(inp: Any, fixture_case: str = "") -> tuple[Any, list[
     if not inp.efficiency_usd_per_kwh:
         inp, efficiency_flags = _with_real_efficiency_price(inp)
         flags += efficiency_flags
+    if not inp.efficiency_realization:
+        from tools.financial import EFFICIENCY_REALIZATION
+
+        inp = inp.model_copy(update={"efficiency_realization": list(EFFICIENCY_REALIZATION)})
     return inp, flags
 
 

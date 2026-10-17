@@ -28,6 +28,18 @@ EFFICIENCY_LEVELS = {
     "deep": {"savings_pct": (15.0, 25.0), "usd_per_sqft": (10.0, 16.0)},
 }
 
+# Share of an audit's predicted efficiency savings that the City's measured projects actually delivered: "gross
+# savings realizations rates range from 62% to 88%" in the past three Local Law 87 annual reports (DCAS, FY2022 report,
+# section 3, footnote 9). Applied in live runs only; see EFFICIENCY_REALIZATION_SOURCE.
+EFFICIENCY_REALIZATION = (0.62, 0.88)
+EFFICIENCY_REALIZATION_URL = (
+    "https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf"
+)
+EFFICIENCY_REALIZATION_SOURCE = (
+    f"NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), "
+    f"{EFFICIENCY_REALIZATION_URL}"
+)
+
 # The federal commercial tax credit rate. It is applied only when the incentives tool reported the
 # program as open; otherwise the plan leaves every incentive out of net cost (the safe default).
 ITC_RATE = 0.30
@@ -64,6 +76,7 @@ def benchmark_assumption_text(
     battery_basis: str = "",
     efficiency_prices: dict[str, tuple[float, float]] | None = None,
     efficiency_basis: str = "",
+    realization: tuple[float, float] | None = None,
 ) -> str:
     """
     The one sentence behind assumption A9, built from the tables above.
@@ -99,6 +112,12 @@ def benchmark_assumption_text(
         f"{deep['savings_pct'][0]:.0f}-{deep['savings_pct'][1]:.0f}%; "
         f"usable battery share {BATTERY_USABLE_FRACTION[0]:.0%}-{BATTERY_USABLE_FRACTION[1]:.0%}; "
         "the efficiency savings percents are team placeholders, not yet sourced"
+        + (
+            f", but only {realization[0]:.0%}-{realization[1]:.0%} of them is counted because the City's audited "
+            f"projects delivered that share ({EFFICIENCY_REALIZATION_SOURCE})"
+            if realization
+            else ""
+        )
         + ("; " if efficiency_prices else ", and so are the efficiency prices; ")
         + 
         "the 30% federal credit counts only when the incentives tool says the program is open."
@@ -141,6 +160,8 @@ class Site:
     # costs replace the placeholder dollars per square foot when found.
     efficiency_usd_per_kwh: dict[str, tuple[float, float]] | None = None
     efficiency_price_basis: str = ""
+    # Share of the predicted efficiency savings that is really delivered, as (low, high); None means all of it.
+    efficiency_realization: tuple[float, float] | None = None
 
 
 def _round_pair(low: float, high: float, digits: int = 0) -> list[float]:
@@ -197,7 +218,8 @@ def model_package(package: Package, site: Site) -> dict:
     net = [upfront[0] - credit[0], upfront[1] - credit[1]]
 
     # --- energy: how many kWh per year the package removes from the grid bill ---
-    efficiency_kwh = [site.annual_use_kwh * pct / 100.0 for pct in eff["savings_pct"]]
+    realization = site.efficiency_realization or (1.0, 1.0)
+    efficiency_kwh = [site.annual_use_kwh * pct / 100.0 * realization[i] for i, pct in enumerate(eff["savings_pct"])]
     scale = (package.solar_kw_dc / site.full_array_kw_dc) if site.full_array_kw_dc else 0.0
     solar_kwh = [site.full_array_kwh_low * scale, site.full_array_kwh_high * scale]
     # Solar can only replace power the building still uses after efficiency. Anything beyond that is surplus

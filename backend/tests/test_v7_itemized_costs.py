@@ -231,3 +231,38 @@ def test_recordings_keep_the_efficiency_prices():
 
     data = run_financial_model(_inp(efficiency_usd_per_kwh={"standard": [1.0, 2.0], "deep": [1.0, 2.0]}, efficiency_price_basis="t")).data
     assert cost_ranges_from_notes({"F-B": data})["efficiency"]["prices"]["standard"] == [1.0, 2.0]
+
+
+# ---- the City's measured savings realization rate (62-88%) ----
+
+def test_realization_rate_trims_the_efficiency_savings_but_not_the_cost():
+    plain = run_financial_model(_inp(scenario_id="A")).data
+    trimmed = run_financial_model(_inp(scenario_id="A", efficiency_realization=[0.62, 0.88])).data
+    assert plain["reduction_pct_of_use"] == [10.0, 20.0]
+    assert trimmed["reduction_pct_of_use"] == [6.2, 17.6]
+    assert trimmed["upfront_usd"] == plain["upfront_usd"]  # you still pay for the predicted savings
+    assert "62%-88%" in trimmed["assumption_text"] and "Local Law 87" in trimmed["assumption_text"]
+    assert "62%-88%" not in plain["assumption_text"]
+
+
+def test_live_mode_sets_the_realization_rate_and_mock_mode_does_not(monkeypatch):
+    monkeypatch.setattr(solar_costs, "fetch_solar_cost_range", lambda kw: None)
+    monkeypatch.setattr(efficiency_costs, "fetch_efficiency_cost_ranges", lambda: None)
+    with forced_tool_mode("live"):
+        live, _ = _with_real_solar_price(_inp())
+    assert live.efficiency_realization == [0.62, 0.88]
+    with forced_tool_mode("mock"):
+        mock, _ = _with_real_solar_price(_inp())
+    assert mock.efficiency_realization is None
+
+
+def test_realization_rate_is_saved_with_a_recording_and_linked_as_a_source():
+    from agent.notes import AgentNotes
+    from agent.record import cost_ranges_from_notes
+    from tools.base import ToolResult
+
+    data = run_financial_model(_inp(efficiency_realization=[0.62, 0.88])).data
+    assert cost_ranges_from_notes({"F-B": data})["realization"] == [0.62, 0.88]
+    notes = AgentNotes()
+    notes.record_tool_result("run_financial_model", ToolResult(tool="run_financial_model", data=data, source_url="internal://x", retrieved_at="", dataset_version="v", mock=False))
+    assert any("local-law-87-annual-report-fy-2022" in s["url"] for s in notes.source_links)

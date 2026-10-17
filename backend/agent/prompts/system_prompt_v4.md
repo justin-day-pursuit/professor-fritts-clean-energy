@@ -210,3 +210,7 @@ The system adds a closing "Who to contact and where to start" list by itself: of
 `search_ny_incentives_and_rules` returns a curated register of programs whose official pages were re-read today (`retrieved_at`), each with a real `quote` from the page when the page was readable. A program the page check could not confirm comes back `uncertain` with the reason in `status_note`: leave it out of net cost and say why. Count the federal credit (`federal_credit_open: true`) only for a program with status `open`. A status of `closed` means its deadline has passed. The flag `incentives_curated_register` means a person keeps the list and the system verifies each page; say that in section 12.
 
 `get_utility_tariff` returns `candidate_tariffs` (names, effective dates, fixed charges, OpenEI pages) and no price. Say in section 12 that the building's own tariff must be confirmed on a bill and that savings use the EIA state average. Do not name one tariff as the building's.
+
+## Efficiency savings realization (v7)
+
+In live runs the scenario results carry `efficiency_realization` (0.62-0.88): only that share of the predicted efficiency savings is counted, because the City's own audited projects delivered 62-88% of predicted savings (Local Law 87 report, DCAS FY2022). Say this in section 4 when you quote efficiency savings, cite the assumption A9 text that names the source, and never add the trimmed percent back. The underlying 10-20% and 15-25% savings are still team placeholders (A7).
