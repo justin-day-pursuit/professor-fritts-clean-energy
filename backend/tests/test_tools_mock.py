@@ -97,7 +97,7 @@ def _fake_httpx_get(url, params=None, timeout=None):
 def test_live_mode_keeps_fixtures_for_tools_without_a_live_version(monkeypatch):
     """A tool with no live version still answers from its saved file, marked mock, when live mode is on."""
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
-    result = execute_tool("get_hazard_context", {}, session_profile={}, fixture_case=CASE)
+    result = execute_tool("search_ny_incentives_and_rules", {}, session_profile={}, fixture_case=CASE)
     assert result.mock is True
 
 

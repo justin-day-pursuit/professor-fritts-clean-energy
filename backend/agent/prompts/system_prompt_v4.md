@@ -188,3 +188,7 @@ The intake may carry extra answers; they show up in the working notes' site cont
 - `ll84`: the building's reported energy use. When the intake has no annual kWh, use `ll84.electricity_kwh` (a measured figure from the city's Local Law 84 report, with its `report_year`) instead of the 9 kWh per sq ft benchmark. If the typed annual kWh differs (`intake_mismatch:annual_kwh`), say both numbers and which one you used. `natural_gas_kbtu`, `fuel_oil_kbtu` and `district_steam_kbtu` show non-electric heating, which an electricity goal does not cover.
 - `ll24`: the owning agency's own solar-readiness assessment: `roof_condition`, `roof_age`, and whether it is solar ready. A "Not Solar Ready" or old or poor roof must be reported, with the advice to check the roof (and consider replacing it) before solar.
 - If `city_energy_errors` is not empty, say those records could not be read.
+
+## Flood zone (v7)
+
+In live runs `get_hazard_context` returns only the current FEMA flood zone for the address (`flood_zone`, `zone_subtype`, `special_flood_hazard_area`), flagged `hazard_partial`. Quote the zone as FACT with the tool's source url. Say plainly that heat and winter-storm ratings were not looked up and that the 2015 preliminary map was not checked; do not invent ratings. A `flood_zone` of null means FEMA has no mapped zone at that point, which is not the same as zone X.

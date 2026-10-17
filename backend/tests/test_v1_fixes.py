@@ -297,7 +297,7 @@ def test_intake_and_calculate_are_not_flagged_stale(monkeypatch):
 
 def test_mock_results_are_flagged_in_a_live_run_only(monkeypatch):
     """A tool that still answers from saved data is flagged mock_data_in_live_run in live mode, not in mock mode."""
-    step = LLMStep(kind="tool", tool_name="get_hazard_context", tool_input={}, tool_use_id="t1")
+    step = LLMStep(kind="tool", tool_name="search_ny_incentives_and_rules", tool_input={}, tool_use_id="t1")
 
     run, _ = _run(monkeypatch, [step], mode="live")
     live = [e for e in run.events.all() if e.kind == "tool_result"][0]

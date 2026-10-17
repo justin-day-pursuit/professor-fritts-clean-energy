@@ -158,8 +158,8 @@ TOOL_SPECS: dict[str, ToolSpec] = {
     "get_hazard_context": ToolSpec(
         name="get_hazard_context",
         description=(
-            "Heat, flood, and winter-storm context from saved FEMA and NYC flood data "
-            "(mock until a later version; not a live FEMA call)."
+            "Flood context for the address: live mode reads the current FEMA flood zone (heat and storm ratings are "
+            "not looked up); mock mode returns saved sample ratings."
         ),
         input_model=EmptyInput,
         freshness_kind="hazard",
@@ -272,7 +272,7 @@ def execute_tool(
     if name == "search_ny_incentives_and_rules":
         return search_ny_incentives_and_rules(fixture_case)
     if name == "get_hazard_context":
-        return get_hazard_context(fixture_case)
+        return get_hazard_context(fixture_case, session_profile)
     if name == "upsert_reference_cache":
         return _upsert_cache_handler(
             record_id=validated.record_id,
