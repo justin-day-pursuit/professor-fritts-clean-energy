@@ -14,7 +14,9 @@ from mocks.mock_mode import get_tool_mode, require_mock_or_fixture
 from tools.base import ToolResult
 from tools.cache import get_reference_cache, is_stale
 from tools.injection import has_hidden_instructions
+from tools.live_incentives import fetch_live_incentives
 from tools.live_rates import fetch_live_utility_rates
+from tools.live_tariff import fetch_live_tariff
 from tools.upsert_cache import upsert_reference_cache
 
 
@@ -78,7 +80,7 @@ def _quarantine_entry(program: dict[str, Any], source_url: str) -> dict[str, Any
     }
 
 
-def search_ny_incentives_and_rules(case: str) -> ToolResult:
+def search_ny_incentives_and_rules(case: str, profile: dict[str, Any] | None = None) -> ToolResult:
     """
     Return saved incentive snippets, and refresh any program whose cache row is stale.
 
@@ -90,7 +92,11 @@ def search_ny_incentives_and_rules(case: str) -> ToolResult:
     hidden_instruction_pattern. A program where DSIRE (a finder, not a source) disagrees with the
     official page adds finder_official_conflict; the official status is the one used and saved.
     """
-    result = require_mock_or_fixture(case, "search_ny_incentives_and_rules")
+    if get_tool_mode() == "live":
+        # Live: the curated register, each program's official page re-read and verified today (tools/live_incentives.py).
+        result = fetch_live_incentives(profile or {})
+    else:
+        result = require_mock_or_fixture(case, "search_ny_incentives_and_rules")
     flags = list(result.flags)
     programs: list[dict[str, Any]] = []
     quarantined: list[dict[str, Any]] = []
@@ -117,7 +123,7 @@ def search_ny_incentives_and_rules(case: str) -> ToolResult:
     return result.model_copy(update={"flags": flags, "data": data})
 
 
-def get_utility_tariff(case: str) -> ToolResult:
+def get_utility_tariff(case: str, profile: dict[str, Any] | None = None) -> ToolResult:
     """
     Return the named utility tariff (OpenEI-style) with its effective date and price ranges.
 
@@ -125,4 +131,6 @@ def get_utility_tariff(case: str) -> ToolResult:
     marks it 'mock_data_in_live_run' so the plan never presents it as live data. The tariff is
     flagged for the user to confirm, because picking the wrong tariff skews savings widely.
     """
+    if get_tool_mode() == "live":
+        return fetch_live_tariff(profile or {})
     return require_mock_or_fixture(case, "get_utility_tariff")

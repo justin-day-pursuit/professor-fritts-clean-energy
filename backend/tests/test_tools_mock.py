@@ -94,11 +94,15 @@ def _fake_httpx_get(url, params=None, timeout=None):
     )
 
 
-def test_live_mode_keeps_fixtures_for_tools_without_a_live_version(monkeypatch):
-    """A tool with no live version still answers from its saved file, marked mock, when live mode is on."""
+def test_a_saved_file_is_always_marked_mock_even_when_live_mode_is_on(monkeypatch):
+    """
+    Every tool now has a live version, but a saved file (used by replays and by any future tool without one) is
+    still marked mock when it is read in a live run.
+    """
+    from mocks.mock_mode import require_mock_or_fixture
+
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
-    result = execute_tool("search_ny_incentives_and_rules", {}, session_profile={}, fixture_case=CASE)
-    assert result.mock is True
+    assert require_mock_or_fixture(CASE, "get_utility_tariff").mock is True
 
 
 def test_live_solar_returns_real_shaped_result(monkeypatch):

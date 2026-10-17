@@ -88,6 +88,8 @@ class AgentNotes(BaseModel):
             ("battery_price_source_url", "NYSERDA battery storage project costs"),
         ):
             self.add_source_link(label, data.get(key), result.retrieved_at)
+        for tariff in data.get("candidate_tariffs") or []:
+            self.add_source_link(str(tariff.get("tariff_name") or "Utility tariff"), tariff.get("openei_url"), result.retrieved_at)
         for program in data.get("programs") or []:
             name = str(program.get("name") or "program")
             self.add_source_link(name, program.get("source_url"), result.retrieved_at, sample=result.mock)

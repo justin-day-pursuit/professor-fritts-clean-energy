@@ -365,9 +365,9 @@ def execute_tool(
     if name == "get_utility_rates":
         return get_utility_rates(fixture_case, session_profile)
     if name == "get_utility_tariff":
-        return get_utility_tariff(fixture_case)
+        return get_utility_tariff(fixture_case, session_profile)
     if name == "search_ny_incentives_and_rules":
-        return search_ny_incentives_and_rules(fixture_case)
+        return search_ny_incentives_and_rules(fixture_case, session_profile)
     if name == "get_hazard_context":
         return get_hazard_context(fixture_case, session_profile)
     if name == "upsert_reference_cache":
