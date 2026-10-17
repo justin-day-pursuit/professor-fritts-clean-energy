@@ -25,6 +25,8 @@ router = APIRouter(prefix="/replay", tags=["replay"])
 # The saved demos, in the order the dropdown shows them. To add one, record a run with
 # `manage.py record_case` (or build a scripted case) and add a row here.
 REPLAY_CASES: list[dict[str, str]] = [
+    {"id": "live_ps236_bronx_v7", "label": "P.S. 236, Bronx: live run with city records", "kind": "recorded",
+     "tag": "Real Claude run (Oct 16): city energy and roof records, real solar and battery prices, itemized bill"},
     {"id": "demo_ps236_bronx", "label": "P.S. 236, Bronx: the good case", "kind": "scripted",
      "tag": "Goal reached within budget; backup power over budget (our script, real data)"},
     {"id": "real3_ps38_staten_island", "label": "P.S. 38, Staten Island", "kind": "recorded",

@@ -143,6 +143,8 @@ def run_financial_model(inp: FinancialModelInput) -> ToolResult:
         "assumption_text": benchmark_assumption_text(
             site.solar_usd_per_kw, inp.solar_price_basis, site.battery_usd_per_kwh, inp.battery_price_basis
         ),
+        "solar_usd_per_kw": [inp.solar_usd_per_kw_low, inp.solar_usd_per_kw_high] if inp.solar_usd_per_kw_low else None,
+        "battery_usd_per_kwh": [inp.battery_usd_per_kwh_low, inp.battery_usd_per_kwh_high] if inp.battery_usd_per_kwh_low else None,
         "solar_price_basis": inp.solar_price_basis or None,
         "solar_price_source_url": inp.solar_price_source_url or None,
         "battery_price_basis": inp.battery_price_basis or None,

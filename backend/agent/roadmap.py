@@ -30,7 +30,10 @@ def _format_range(claim: Claim) -> str:
     low, high = claim.value_low, claim.value_high
     # Show whole numbers without decimals, and keep decimals for small values like $/kWh.
     def fmt(value: float) -> str:
-        return f"{value:,.0f}" if float(value).is_integer() else f"{value:,.4g}"
+        # Large numbers print in full ("20,028"), never as "2.003e+04"; small ones keep their decimals.
+        if float(value).is_integer() or abs(value) >= 1000:
+            return f"{value:,.0f}"
+        return f"{value:,.4g}"
 
     units = claim.units or ""
     if low == high:

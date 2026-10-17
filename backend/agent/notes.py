@@ -18,6 +18,18 @@ from tools.roof import number_from_profile, roof_kind, verified_usable_area
 NO_SYSTEM_WORDS = frozenset({"none", "no", "n/a", "na", "nothing", "not applicable", "0"})
 
 
+# Plain names for the link list, instead of the internal tool names.
+TOOL_SOURCE_LABELS = {
+    "lookup_ny_building_records": "NYC PLUTO tax-lot record",
+    "get_solar_production": "NREL PVWatts solar output",
+    "get_utility_rates": "EIA electricity prices",
+    "get_utility_tariff": "Utility tariff",
+    "search_ny_incentives_and_rules": "Incentive and rules page",
+    "get_hazard_context": "FEMA flood map",
+    "optimize_solar_storage": "Battery sizing",
+}
+
+
 class AgentNotes(BaseModel):
     """
     In-memory state for one run; saved inside run output for debugging.
@@ -66,7 +78,8 @@ class AgentNotes(BaseModel):
     def _collect_source_links(self, tool_name: str, result: ToolResult) -> None:
         """Pull every web link out of a tool result: its own source, the extra sources in its data, and each program's pages."""
         data = result.data
-        self.add_source_link(tool_name, result.source_url, result.retrieved_at, sample=result.mock)
+        label = TOOL_SOURCE_LABELS.get(tool_name, tool_name)
+        self.add_source_link(label, result.source_url, result.retrieved_at, sample=result.mock)
         for key, label in (
             ("footprints_source_url", "NYC building footprints"),
             ("ll84_source_url", "NYC Local Law 84 energy report"),

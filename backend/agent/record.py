@@ -50,6 +50,29 @@ def _final_step(output: dict[str, Any]) -> dict[str, Any]:
     return {"type": "final", "name": "write_roadmap", "input": {"roadmap": roadmap}}
 
 
+def cost_ranges_from_notes(calculations: dict[str, Any]) -> dict[str, Any]:
+    """
+    The solar and battery price ranges (with where they came from) that a run's scenarios used, or {} for a run
+    that used the placeholder prices. Read from the first scenario result that carries each one.
+    """
+    ranges: dict[str, Any] = {}
+    for data in calculations.values():
+        if not isinstance(data, dict):
+            continue
+        for key, price_key, basis_key, url_key in (
+            ("solar", "solar_usd_per_kw", "solar_price_basis", "solar_price_source_url"),
+            ("battery", "battery_usd_per_kwh", "battery_price_basis", "battery_price_source_url"),
+        ):
+            if key not in ranges and data.get(price_key) and data.get(basis_key):
+                ranges[key] = {
+                    "low": data[price_key][0],
+                    "high": data[price_key][1],
+                    "basis": data[basis_key],
+                    "source_url": data.get(url_key),
+                }
+    return ranges
+
+
 def record_run(run: Any, case: str, *, root: Path | None = None, overwrite: bool = False) -> dict[str, Any]:
     """
     Write the files for a replayable case from a stored run, and say what was written and what was left alone.
@@ -103,6 +126,12 @@ def record_run(run: Any, case: str, *, root: Path | None = None, overwrite: bool
             continue
         (folder / name).write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         written.append(name)
+
+    # The real prices a live run used (NYSERDA project costs), so a free replay prices the scenarios the same way.
+    ranges = cost_ranges_from_notes((output.get("notes") or {}).get("calculations") or {})
+    if ranges:
+        (folder / "cost_ranges.json").write_text(json.dumps(ranges, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        written.append("cost_ranges.json")
 
     if (folder / "intake.json").exists() and not overwrite:
         kept.append("intake.json")

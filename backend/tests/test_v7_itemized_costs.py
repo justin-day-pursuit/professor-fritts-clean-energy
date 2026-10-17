@@ -138,3 +138,26 @@ def test_no_battery_lookup_when_the_scenario_has_no_battery(monkeypatch):
     monkeypatch.setattr(solar_costs, "fetch_solar_cost_range", lambda kw: None)
     with forced_tool_mode("live"):
         _with_real_solar_price(_inp())
+
+
+# ---- recordings keep the real prices, so a free replay shows the same dollars ----
+
+from agent.record import cost_ranges_from_notes
+from tools.registry import _with_saved_price_ranges
+
+
+def test_ranges_are_read_from_scenario_results_and_skip_placeholder_runs():
+    data = run_financial_model(_inp(scenario_id="C", battery_kwh=500, critical_load_kw=60,
+                                    solar_usd_per_kw_low=3000.0, solar_usd_per_kw_high=4000.0, solar_price_basis="S",
+                                    battery_usd_per_kwh_low=500.0, battery_usd_per_kwh_high=700.0, battery_price_basis="B")).data
+    ranges = cost_ranges_from_notes({"F-C": data})
+    assert ranges["solar"]["low"] == 3000.0 and ranges["battery"]["high"] == 700.0 and ranges["solar"]["basis"] == "S"
+    assert cost_ranges_from_notes({"F-A": run_financial_model(_inp()).data}) == {}
+
+
+def test_replay_prices_a_recorded_case_with_its_saved_ranges():
+    priced = _with_saved_price_ranges(_inp(scenario_id="C", battery_kwh=500, critical_load_kw=60), "live_ps236_bronx_v7")
+    assert (priced.solar_usd_per_kw_low, priced.solar_usd_per_kw_high) == (3131.0, 4668.0)
+    assert (priced.battery_usd_per_kwh_low, priced.battery_usd_per_kwh_high) == (546.0, 812.0)
+    plain = _with_saved_price_ranges(_inp(), "case1_queens_library")  # no saved file: placeholders stay
+    assert plain.solar_usd_per_kw_low is None

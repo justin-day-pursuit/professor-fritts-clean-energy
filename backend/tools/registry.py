@@ -220,7 +220,31 @@ def _check_roof_formula(formula: str, inputs: dict[str, Any], profile: dict[str,
             )
 
 
-def _with_real_solar_price(inp: Any) -> tuple[Any, list[str]]:
+def _with_saved_price_ranges(inp: Any, fixture_case: str) -> Any:
+    """
+    Replays: price the scenarios with the real ranges saved next to a recorded case (cost_ranges.json), so a free
+    replay shows the same dollar figures the live run did. Cases with no such file keep the placeholder prices.
+    """
+    import json
+
+    from mocks.catalog import FIXTURES_ROOT
+
+    path = FIXTURES_ROOT / fixture_case / "cost_ranges.json"
+    if not path.exists():
+        return inp
+    saved = json.loads(path.read_text(encoding="utf-8"))
+    update: dict[str, Any] = {}
+    solar, battery = saved.get("solar"), saved.get("battery")
+    if solar and not inp.solar_usd_per_kw_low:
+        update.update(solar_usd_per_kw_low=solar["low"], solar_usd_per_kw_high=solar["high"],
+                      solar_price_basis=solar["basis"], solar_price_source_url=solar.get("source_url") or "")
+    if battery and inp.battery_kwh > 0 and not inp.battery_usd_per_kwh_low:
+        update.update(battery_usd_per_kwh_low=battery["low"], battery_usd_per_kwh_high=battery["high"],
+                      battery_price_basis=battery["basis"], battery_price_source_url=battery.get("source_url") or "")
+    return inp.model_copy(update=update) if update else inp
+
+
+def _with_real_solar_price(inp: Any, fixture_case: str = "") -> tuple[Any, list[str]]:
     """
     In live mode, replace the placeholder solar price with real NYC project costs (NYSERDA data, tools/solar_costs.py).
 
@@ -232,7 +256,7 @@ def _with_real_solar_price(inp: Any) -> tuple[Any, list[str]]:
     from tools.solar_costs import SolarCostError, fetch_solar_cost_range
 
     if get_tool_mode() != "live":
-        return inp, []
+        return (_with_saved_price_ranges(inp, fixture_case) if fixture_case else inp), []
     flags: list[str] = []
     if not inp.solar_usd_per_kw_low:
         inp, solar_flags = _with_real_solar_only(inp)
@@ -333,7 +357,7 @@ def execute_tool(
         goal_pct = _goal_fraction_from_profile(session_profile)
         if goal_pct is not None:
             validated = validated.model_copy(update={"goal_fraction": goal_pct})
-        validated, price_flags = _with_real_solar_price(validated)
+        validated, price_flags = _with_real_solar_price(validated, fixture_case)
         result = run_financial_model(validated)
         if price_flags:
             result = result.model_copy(update={"flags": list(result.flags) + price_flags})
