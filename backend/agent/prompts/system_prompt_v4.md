@@ -181,3 +181,10 @@ The intake may carry extra answers; they show up in the working notes' site cont
 - Annual budget (`budget_type_annual`): say the model treats the amount as one total upfront figure, so an annual budget is not modeled year by year (sections 6, 7 or 12).
 - The goal percent in the intake is applied by the financial model itself; quote it, do not change it.
 - Annual use marked "from your bills" came from the user's uploaded bills; say so and treat it as measured.
+
+## City energy and roof records (v7)
+
+`lookup_ny_building_records` may return two more city records for the lot. Quote them as FACT with their own source urls (`ll84_source_url`, `ll24_source_url`).
+- `ll84`: the building's reported energy use. When the intake has no annual kWh, use `ll84.electricity_kwh` (a measured figure from the city's Local Law 84 report, with its `report_year`) instead of the 9 kWh per sq ft benchmark. If the typed annual kWh differs (`intake_mismatch:annual_kwh`), say both numbers and which one you used. `natural_gas_kbtu`, `fuel_oil_kbtu` and `district_steam_kbtu` show non-electric heating, which an electricity goal does not cover.
+- `ll24`: the owning agency's own solar-readiness assessment: `roof_condition`, `roof_age`, and whether it is solar ready. A "Not Solar Ready" or old or poor roof must be reported, with the advice to check the roof (and consider replacing it) before solar.
+- If `city_energy_errors` is not empty, say those records could not be read.

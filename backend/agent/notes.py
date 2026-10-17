@@ -95,6 +95,27 @@ class AgentNotes(BaseModel):
             if answer(key):
                 self.site_context[key] = answer(key)
 
+    def _record_city_records(self, data: dict[str, Any]) -> None:
+        """
+        Remember what the city's LL24 roof assessment says, so Check 4 can hold the plan to it (v7).
+
+        The city's word fills a blank only: anything the user answered in the intake is kept. An agency of DOE
+        means a public school, a roof rated poor (or between fair and poor) counts as poor, and a roof 20 years
+        old or more is noted so the plan raises re-roofing before solar.
+        """
+        ll24 = data.get("ll24") or {}
+        if not ll24:
+            return
+        if str(ll24.get("agency") or "").strip().upper() == "DOE":
+            self.site_context.setdefault("owner_agency", "doe")
+        if "poor" in str(ll24.get("roof_condition") or "").lower():
+            self.site_context.setdefault("roof_condition", "poor")
+        age = str(ll24.get("roof_age") or "").lower()
+        if age.startswith(("20", "> 20", ">20", "over 20", "more than 20")):
+            self.site_context["roof_age_20_plus"] = True
+        if ll24.get("solar_ready") is False:
+            self.site_context["city_not_solar_ready"] = True
+
     def record_quarantine(self, tool_name: str, source_url: str, reason: str, name: str = "") -> None:
         """Remember a page that was ignored for hidden instructions (once per address)."""
         if any(q["source_url"] == source_url for q in self.quarantined_sources):
@@ -129,6 +150,8 @@ class AgentNotes(BaseModel):
                     "retrieved_at": result.retrieved_at,
                 }
             )
+        if tool_name == "lookup_ny_building_records":
+            self._record_city_records(result.data)
         if tool_name == "get_building_profile":
             self.building_facts.update(result.data.get("profile", {}))
             building_type = str(result.data.get("profile", {}).get("building_type") or "").lower()

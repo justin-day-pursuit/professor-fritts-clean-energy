@@ -786,10 +786,13 @@ def _intake_detail_issues(payload: RoadmapPayload, notes: AgentNotes, claims: li
                 and not _LED_ALREADY.search(claim.text)
             ):
                 issues.append(f"LED lighting recommended as a new measure, but the user says all lighting is LED: {claim.text[:80]}")
-    if site.get("roof_condition") == "poor":
+    if site.get("roof_condition") == "poor" or site.get("roof_age_20_plus"):
         where = [t for sid in ("5", "8", "10") for t in _section_claims(payload, sid)]
         if not any(_REROOF_WORDS.search(t) for t in where):
-            issues.append("The user rates the roof poor: section 5, 8 or 10 must say the roof may need replacing or repair before solar.")
+            issues.append(
+                "The roof is rated poor or is 20 years old or more (the user or the city's LL24 record says so): "
+                "section 5, 8 or 10 must say the roof may need replacing or repair before solar."
+            )
     if site.get("owner_agency") == "doe":
         if not any(_SCHOOL_OWNER_WORDS.search(t) for t in _section_claims(payload, "10")):
             issues.append("The building is a DOE school: section 10 must name DCAS, NYC Public Schools or the SCA as the approval route.")

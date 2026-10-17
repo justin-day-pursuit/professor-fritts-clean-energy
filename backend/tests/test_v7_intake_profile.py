@@ -171,9 +171,9 @@ def test_led_cannot_be_recommended_when_all_lighting_is_led():
 
 def test_poor_roof_requires_a_reroof_mention():
     notes = _site(roof_condition="poor")
-    assert any("roof poor" in i for i in _issues(_plan(), notes))
+    assert any("roof is rated poor" in i for i in _issues(_plan(), notes))
     ok = _plan(s5=[_claim("The roof may need replacement before solar goes on.")])
-    assert not any("roof poor" in i for i in _issues(ok, notes))
+    assert not any("roof is rated poor" in i for i in _issues(ok, notes))
 
 
 def test_doe_owner_requires_the_school_route():
