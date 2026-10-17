@@ -17,6 +17,7 @@ import {
   LABELS,
   RangeBar,
   SectionTitle,
+  LinkedText,
   SourceLink,
   hoursRange,
   isWeb,
@@ -177,7 +178,7 @@ function ScenarioCard({ id, s, budget, recommended, reason }: { id: "A" | "B" | 
           <tbody>
             {s.cost_items.map((c) => (
               <tr key={c.item} className="border-t border-[var(--fr-line)] align-top">
-                <td className="py-1.5 pr-2"><div className="font-medium text-[var(--fr-ink)]">{c.item}</div><div className="text-[var(--fr-mute)]">{c.basis}</div></td>
+                <td className="py-1.5 pr-2"><div className="font-medium text-[var(--fr-ink)]">{c.item}</div><div className="text-[var(--fr-mute)]"><LinkedText text={c.basis} /></div></td>
                 <td className="whitespace-nowrap py-1.5 pr-2 text-[var(--fr-ink)]">{moneyRangeExact(c.usd)}</td>
               </tr>
             ))}
@@ -410,14 +411,14 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
               return (
                 <div key={k} className="rounded-lg border border-[var(--fr-line)] p-3 text-sm">
                   <div className="font-semibold text-[var(--fr-ink)]">{nice(k)}</div>
-                  <p className="text-[var(--fr-mute)]">{b.basis ? String(b.basis) : "Placeholder price (a team estimate), not from project data."}</p>
+                  <p className="text-[var(--fr-mute)]">{b.basis ? <LinkedText text={String(b.basis)} /> : "Placeholder price (a team estimate), not from project data."}</p>
                   {b.price != null && <p className="text-[var(--fr-ink)]">Price used: {show(b.price)}</p>}
                   <SourceLink url={b.source_url} />
                 </div>
               );
             })}
             {obj(sum.cost_basis).efficiency_savings_realization != null && <p className="text-sm text-[var(--fr-ink)]">Efficiency savings counted at {show(obj(sum.cost_basis).efficiency_savings_realization)} of predicted (the City&rsquo;s measured results).</p>}
-            {typeof obj(sum.cost_basis).assumption_text === "string" && <p className="text-xs text-[var(--fr-mute)]">{String(obj(sum.cost_basis).assumption_text)}</p>}
+            {typeof obj(sum.cost_basis).assumption_text === "string" && <p className="text-xs text-[var(--fr-mute)]"><LinkedText text={String(obj(sum.cost_basis).assumption_text)} /></p>}
           </Detail>
           <ToolBlock title="Backup battery sizing" payload={sum.battery} />
           <ToolBlock title="Flood zone and other hazards" payload={sum.hazards} />

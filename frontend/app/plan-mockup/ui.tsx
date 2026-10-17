@@ -108,6 +108,35 @@ export function SectionTitle({ eyebrow, title, sub }: { eyebrow?: string; title:
   );
 }
 
+/**
+ * Text that may contain long web addresses: each address is replaced by a short "source" link, so a line like
+ * "... since 2022, NYSERDA data https://data.ny.gov/very/long/path" reads "... since 2022 (source)".
+ * A leading phrase such as "NYSERDA data" is kept as the link's label.
+ */
+export function LinkedText({ text }: { text: string }) {
+  const urlPattern = /(?:(NYSERDA data|NYC DCAS[^,(]*?)\s*,?\s+)?(https?:\/\/[^\s),;]+)/g;
+  const parts: ReactNode[] = [];
+  let last = 0;
+  let match: RegExpExecArray | null;
+  while ((match = urlPattern.exec(text)) !== null) {
+    const before = text.slice(last, match.index).replace(/[,\s]+$/, "");
+    if (before) parts.push(before);
+    const label = match[1] ? match[1].trim() : "source";
+    parts.push(
+      <span key={match.index}>
+        {" "}
+        <a href={match[2]} target="_blank" rel="noreferrer" className="text-[var(--fr-teal)] underline">
+          {label}
+        </a>
+      </span>,
+    );
+    last = match.index + match[0].length;
+  }
+  const rest = text.slice(last);
+  if (rest) parts.push(rest);
+  return <>{parts}</>;
+}
+
 /** A link that opens in a new tab, shown only for real web addresses. */
 export function SourceLink({ url, children = "source" }: { url: unknown; children?: ReactNode }) {
   if (!isWeb(url)) return null;
