@@ -36,11 +36,34 @@ ITC_RATE = 0.30
 BATTERY_USABLE_FRACTION = (0.85, 1.0)
 
 
+def efficiency_cost_range(
+    level: str,
+    floor_area_sqft: float,
+    annual_use_kwh: float,
+    real_prices: dict[str, tuple[float, float]] | None = None,
+) -> tuple[float, float]:
+    """
+    Low and high upfront cost of an efficiency package.
+
+    With real prices (dollars per kWh saved per year, from NYSERDA's completed projects) the cost is the kWh the
+    package saves times that price: the low end pairs the low savings with the 25th percentile price, the high end
+    the high savings with the 75th percentile price. Without them it falls back to the placeholder dollars per
+    square foot.
+    """
+    eff = EFFICIENCY_LEVELS[level]
+    if real_prices and level in real_prices:
+        saved = [annual_use_kwh * pct / 100.0 for pct in eff["savings_pct"]]
+        return (saved[0] * real_prices[level][0], saved[1] * real_prices[level][1])
+    return (floor_area_sqft * eff["usd_per_sqft"][0], floor_area_sqft * eff["usd_per_sqft"][1])
+
+
 def benchmark_assumption_text(
     solar_price: tuple[float, float] | None = None,
     solar_basis: str = "",
     battery_price: tuple[float, float] | None = None,
     battery_basis: str = "",
+    efficiency_prices: dict[str, tuple[float, float]] | None = None,
+    efficiency_basis: str = "",
 ) -> str:
     """
     The one sentence behind assumption A9, built from the tables above.
@@ -52,6 +75,16 @@ def benchmark_assumption_text(
     solar = solar_price or COST_BENCHMARKS["solar_usd_per_kw_dc"]
     solar_text = f"solar ${solar[0]:,.0f}-{solar[1]:,.0f}/kW DC" + (f" ({solar_basis})" if solar_basis else " (placeholder)")
     battery = battery_price or COST_BENCHMARKS["battery_usd_per_kwh"]
+    if efficiency_prices:
+        efficiency_text = (
+            f"efficiency cost per kWh saved per year ${efficiency_prices['standard'][0]:.2f}-{efficiency_prices['standard'][1]:.2f} "
+            f"(standard) and ${efficiency_prices['deep'][0]:.2f}-{efficiency_prices['deep'][1]:.2f} (deep) ({efficiency_basis}), "
+        )
+    else:
+        efficiency_text = (
+            f"standard efficiency ${std['usd_per_sqft'][0]:.0f}-{std['usd_per_sqft'][1]:.0f}/sq ft and "
+            f"deep efficiency ${deep['usd_per_sqft'][0]:.0f}-{deep['usd_per_sqft'][1]:.0f}/sq ft (placeholders), "
+        )
     battery_text = f"battery ${battery[0]:,.0f}-{battery[1]:,.0f}/kWh" + (
         f" ({battery_basis})" if battery_basis else " (placeholder)"
     )
@@ -59,12 +92,15 @@ def benchmark_assumption_text(
         "Planning-level benchmark prices, not quotes: "
         f"{solar_text}, "
         f"{battery_text}, "
-        f"standard efficiency ${std['usd_per_sqft'][0]:.0f}-{std['usd_per_sqft'][1]:.0f}/sq ft saving "
+        f"{efficiency_text}"
+        f"standard efficiency saving "
         f"{std['savings_pct'][0]:.0f}-{std['savings_pct'][1]:.0f}%, "
-        f"deep efficiency ${deep['usd_per_sqft'][0]:.0f}-{deep['usd_per_sqft'][1]:.0f}/sq ft saving "
+        f"deep efficiency saving "
         f"{deep['savings_pct'][0]:.0f}-{deep['savings_pct'][1]:.0f}%; "
         f"usable battery share {BATTERY_USABLE_FRACTION[0]:.0%}-{BATTERY_USABLE_FRACTION[1]:.0%}; "
-        "efficiency prices and savings are team placeholders, not yet sourced; "
+        "the efficiency savings percents are team placeholders, not yet sourced"
+        + ("; " if efficiency_prices else ", and so are the efficiency prices; ")
+        + 
         "the 30% federal credit counts only when the incentives tool says the program is open."
     )
 
@@ -101,6 +137,10 @@ class Site:
     # Battery price per kWh as (low, high); real NYC project costs replace the placeholder when found.
     battery_usd_per_kwh: tuple[float, float] | None = None
     battery_price_basis: str = ""
+    # Efficiency cost per kWh saved per year by level ({"standard": (low, high), "deep": (low, high)}); real project
+    # costs replace the placeholder dollars per square foot when found.
+    efficiency_usd_per_kwh: dict[str, tuple[float, float]] | None = None
+    efficiency_price_basis: str = ""
 
 
 def _round_pair(low: float, high: float, digits: int = 0) -> list[float]:
@@ -139,7 +179,9 @@ def model_package(package: Package, site: Site) -> dict:
     eff = EFFICIENCY_LEVELS[package.efficiency_level]
 
     # --- upfront cost (low, high) ---
-    eff_cost = [site.floor_area_sqft * p for p in eff["usd_per_sqft"]]
+    eff_cost = list(efficiency_cost_range(
+        package.efficiency_level, site.floor_area_sqft, site.annual_use_kwh, site.efficiency_usd_per_kwh
+    ))
     solar_price = site.solar_usd_per_kw or COST_BENCHMARKS["solar_usd_per_kw_dc"]
     solar_cost = [package.solar_kw_dc * p for p in solar_price]
     battery_price = site.battery_usd_per_kwh or COST_BENCHMARKS["battery_usd_per_kwh"]
@@ -216,7 +258,14 @@ def model_package(package: Package, site: Site) -> dict:
     if package.efficiency_level != "none":
         cost_items.append({
             "item": f"{package.efficiency_level.title()} efficiency package",
-            "basis": f"{site.floor_area_sqft:,.0f} sq ft x ${eff['usd_per_sqft'][0]:.0f}-{eff['usd_per_sqft'][1]:.0f}/sq ft (team placeholder)",
+            "basis": (
+                f"{site.annual_use_kwh * eff['savings_pct'][0] / 100:,.0f}-{site.annual_use_kwh * eff['savings_pct'][1] / 100:,.0f} kWh "
+                f"saved a year (placeholder {eff['savings_pct'][0]:.0f}-{eff['savings_pct'][1]:.0f}%) x "
+                f"${site.efficiency_usd_per_kwh[package.efficiency_level][0]:.2f}-{site.efficiency_usd_per_kwh[package.efficiency_level][1]:.2f} "
+                f"per kWh saved ({site.efficiency_price_basis})"
+                if site.efficiency_usd_per_kwh and package.efficiency_level in site.efficiency_usd_per_kwh
+                else f"{site.floor_area_sqft:,.0f} sq ft x ${eff['usd_per_sqft'][0]:.0f}-{eff['usd_per_sqft'][1]:.0f}/sq ft (team placeholder)"
+            ),
             "usd": _round_pair(*eff_cost),
         })
     if package.solar_kw_dc > 0:

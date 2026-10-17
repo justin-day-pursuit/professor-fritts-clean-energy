@@ -70,6 +70,12 @@ def cost_ranges_from_notes(calculations: dict[str, Any]) -> dict[str, Any]:
                     "basis": data[basis_key],
                     "source_url": data.get(url_key),
                 }
+        if "efficiency" not in ranges and data.get("efficiency_usd_per_kwh") and data.get("efficiency_price_basis"):
+            ranges["efficiency"] = {
+                "prices": data["efficiency_usd_per_kwh"],
+                "basis": data["efficiency_price_basis"],
+                "source_url": data.get("efficiency_price_source_url"),
+            }
     return ranges
 
 

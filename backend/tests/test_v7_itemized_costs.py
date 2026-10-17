@@ -161,3 +161,73 @@ def test_replay_prices_a_recorded_case_with_its_saved_ranges():
     assert (priced.battery_usd_per_kwh_low, priced.battery_usd_per_kwh_high) == (546.0, 812.0)
     plain = _with_saved_price_ranges(_inp(), "case1_queens_library")  # no saved file: placeholders stay
     assert plain.solar_usd_per_kw_low is None
+
+
+# ---- efficiency priced from real NYC public projects (cost per kWh saved) ----
+
+from tools import efficiency_costs
+from tools.efficiency_costs import cost_per_kwh_saved
+from tools.financial import efficiency_cost_range
+
+
+def _eff_rows(n, base=1.0):
+    """n projects costing from base up to 2 x base dollars per kWh saved a year."""
+    return [{"total_project_cost": str(1000 * base * (1 + i / n)), "electric_energy_reduction_kwh": "1000"} for i in range(n)]
+
+
+def test_cost_per_kwh_saved_is_ordered_and_needs_enough_projects():
+    out = cost_per_kwh_saved(_eff_rows(40))
+    assert out["p25"] < out["p50"] < out["p75"] and out["projects"] == 40
+    assert cost_per_kwh_saved(_eff_rows(5)) is None
+    assert cost_per_kwh_saved(_eff_rows(30) + [{"total_project_cost": "0", "electric_energy_reduction_kwh": "9"}, {}])["projects"] == 30
+
+
+def test_real_efficiency_cost_scales_with_the_kwh_the_package_saves():
+    prices = {"standard": (1.0, 4.0), "deep": (1.0, 4.0)}
+    low, high = efficiency_cost_range("standard", 40000, 450000, prices)
+    assert (round(low), round(high)) == (45000, 360000)  # 10% x 450,000 kWh x $1  and  20% x 450,000 x $4
+    placeholder = efficiency_cost_range("standard", 40000, 450000, None)
+    assert placeholder == (160000, 320000)
+
+
+def test_the_bill_and_assumption_quote_the_real_efficiency_prices():
+    priced = _inp(efficiency_usd_per_kwh={"standard": [1.17, 4.02], "deep": [1.09, 3.83]}, efficiency_price_basis="NYSERDA eff test")
+    data = run_financial_model(priced).data
+    line = data["cost_items"][0]
+    assert "NYSERDA eff test" in line["basis"] and "$1.17-4.02 per kWh saved" in line["basis"] and "placeholder 10-20%" in line["basis"]
+    assert "NYSERDA eff test" in data["assumption_text"]
+    assert "savings percents are team placeholders" in data["assumption_text"]
+    assert "and so are the efficiency prices" not in data["assumption_text"]
+
+
+def test_without_real_efficiency_prices_the_text_still_says_placeholder():
+    text = run_financial_model(_inp()).data["assumption_text"]
+    assert "and so are the efficiency prices" in text
+
+
+def test_live_mode_fills_efficiency_prices_or_flags_the_placeholder(monkeypatch):
+    found = {"standard": {"p25": 1.17, "p75": 4.02, "projects": 139}, "deep": {"p25": 1.09, "p75": 3.83, "projects": 42},
+             "since": 2016, "source_url": "https://data.ny.gov/e"}
+    monkeypatch.setattr(solar_costs, "fetch_solar_cost_range", lambda kw: None)
+    monkeypatch.setattr(efficiency_costs, "fetch_efficiency_cost_ranges", lambda: found)
+    with forced_tool_mode("live"):
+        updated, flags = _with_real_solar_price(_inp())
+    assert updated.efficiency_usd_per_kwh == {"standard": [1.17, 4.02], "deep": [1.09, 3.83]} and "139" in updated.efficiency_price_basis
+    monkeypatch.setattr(efficiency_costs, "fetch_efficiency_cost_ranges", lambda: None)
+    with forced_tool_mode("live"):
+        same, flags = _with_real_solar_price(_inp())
+    assert same.efficiency_usd_per_kwh is None and "efficiency_price_placeholder" in flags
+
+
+def test_budget_cap_for_scenario_b_uses_the_real_efficiency_price():
+    placeholder = run_financial_model(_inp(budget_usd=600000)).data["package"]["solar_kw_dc"]
+    cheaper = run_financial_model(_inp(budget_usd=600000, efficiency_usd_per_kwh={"standard": [1.0, 2.0], "deep": [1.0, 2.0]},
+                                       efficiency_price_basis="t")).data["package"]["solar_kw_dc"]
+    assert cheaper >= placeholder  # cheaper efficiency leaves more of the budget for solar
+
+
+def test_recordings_keep_the_efficiency_prices():
+    from agent.record import cost_ranges_from_notes
+
+    data = run_financial_model(_inp(efficiency_usd_per_kwh={"standard": [1.0, 2.0], "deep": [1.0, 2.0]}, efficiency_price_basis="t")).data
+    assert cost_ranges_from_notes({"F-B": data})["efficiency"]["prices"]["standard"] == [1.0, 2.0]

@@ -86,6 +86,7 @@ class AgentNotes(BaseModel):
             ("ll24_source_url", "NYC Local Law 24 solar readiness"),
             ("solar_price_source_url", "NYSERDA solar project costs"),
             ("battery_price_source_url", "NYSERDA battery storage project costs"),
+            ("efficiency_price_source_url", "NYSERDA completed efficiency project costs"),
         ):
             self.add_source_link(label, data.get(key), result.retrieved_at)
         for tariff in data.get("candidate_tariffs") or []:

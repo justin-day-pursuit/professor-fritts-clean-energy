@@ -234,13 +234,16 @@ def _with_saved_price_ranges(inp: Any, fixture_case: str) -> Any:
         return inp
     saved = json.loads(path.read_text(encoding="utf-8"))
     update: dict[str, Any] = {}
-    solar, battery = saved.get("solar"), saved.get("battery")
+    solar, battery, efficiency = saved.get("solar"), saved.get("battery"), saved.get("efficiency")
     if solar and not inp.solar_usd_per_kw_low:
         update.update(solar_usd_per_kw_low=solar["low"], solar_usd_per_kw_high=solar["high"],
                       solar_price_basis=solar["basis"], solar_price_source_url=solar.get("source_url") or "")
     if battery and inp.battery_kwh > 0 and not inp.battery_usd_per_kwh_low:
         update.update(battery_usd_per_kwh_low=battery["low"], battery_usd_per_kwh_high=battery["high"],
                       battery_price_basis=battery["basis"], battery_price_source_url=battery.get("source_url") or "")
+    if efficiency and not inp.efficiency_usd_per_kwh:
+        update.update(efficiency_usd_per_kwh=efficiency["prices"], efficiency_price_basis=efficiency["basis"],
+                      efficiency_price_source_url=efficiency.get("source_url") or "")
     return inp.model_copy(update=update) if update else inp
 
 
@@ -264,7 +267,32 @@ def _with_real_solar_price(inp: Any, fixture_case: str = "") -> tuple[Any, list[
     if inp.battery_kwh > 0 and not inp.battery_usd_per_kwh_low:
         inp, battery_flags = _with_real_battery_price(inp)
         flags += battery_flags
+    if not inp.efficiency_usd_per_kwh:
+        inp, efficiency_flags = _with_real_efficiency_price(inp)
+        flags += efficiency_flags
     return inp, flags
+
+
+def _with_real_efficiency_price(inp: Any) -> tuple[Any, list[str]]:
+    """Fill the efficiency cost per kWh saved from NYSERDA's completed NYC projects; keep the placeholder (flagged) if unavailable."""
+    from tools.efficiency_costs import EfficiencyCostError, fetch_efficiency_cost_ranges
+
+    try:
+        found = fetch_efficiency_cost_ranges()
+    except EfficiencyCostError:
+        found = None
+    if not found:
+        return inp, ["efficiency_price_placeholder"]
+    standard, deep = found["standard"], found["deep"]
+    basis = (
+        f"25th-75th percentile of {standard['projects']} LED-lighting and {deep['projects']} comprehensive completed "
+        f"NYC public-sector projects since {found['since']}, NYSERDA data {found['source_url']}"
+    )
+    return inp.model_copy(update={
+        "efficiency_usd_per_kwh": {"standard": [standard["p25"], standard["p75"]], "deep": [deep["p25"], deep["p75"]]},
+        "efficiency_price_basis": basis,
+        "efficiency_price_source_url": found["source_url"],
+    }), []
 
 
 def _with_real_battery_price(inp: Any) -> tuple[Any, list[str]]:

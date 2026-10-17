@@ -9,7 +9,7 @@ Researched Oct 16, 2026. Update this file whenever a number changes or a new sou
 | --- | --- | --- |
 | Solar cost per kW DC | **Real, live.** Pulled at run time | NYSERDA project data (below) |
 | Battery cost per kWh | **Real, live.** NYSERDA NYC storage projects (placeholder $600-1,000 only if the lookup fails) | See "Battery" |
-| Efficiency cost per sq ft ($4-8 standard, $10-16 deep) | **Placeholder.** No source found | See "Efficiency" |
+| Efficiency cost | **Real, live.** Cost per kWh saved from completed NYC public-sector projects (placeholder $4-8 and $10-16 per sq ft only if the lookup fails) | See "Efficiency" |
 | Efficiency savings (10-20% standard, 15-25% deep) | **Placeholder.** Sources found suggest the right size, but none is a typical figure for NYC public buildings | See "Efficiency" |
 | Federal credit 30% | Rule, applied only when the incentives tool says the program is open | IRS / program rules |
 | Electricity price | **Real, live** | EIA, New York average |
@@ -34,19 +34,22 @@ Researched Oct 16, 2026. Update this file whenever a number changes or a new sou
 - NREL data file (no need to re-download the web pages): https://oedi-data-lake.s3.amazonaws.com/ATB/electricity/csv/2025/v1.0.0/ATBe.csv (320 MB; filter `technology_alias` = "Commercial Battery Storage", `core_metric_parameter` = "CAPEX", `scenario` = "Moderate"). Page: https://atb.nlr.gov/electricity/2025/commercial_battery_storage.
 - Limits: these are past project costs (some Approved projects carry estimated costs), not quotes. The price per kWh does not change with how many hours of backup the system gives; NREL shows short systems cost more per kWh.
 
-## Efficiency: placeholders; partial evidence
+## Efficiency: cost is real (in the code); savings percent is still a placeholder
 
-What the search found:
+**Cost, from NYSERDA's "Energy Efficiency Completed Projects: Beginning 1987"** (https://data.ny.gov/resource/erjw-j2zx, mostly New York Power Authority work for public customers; 2,942 projects, 768 of them schools).
+- The code (`backend/tools/efficiency_costs.py`) takes the New York City projects completed since 2016 and reports the 25th / 50th / 75th percentile **cost per kWh saved per year**, so a package costs (kWh it saves) x (that price).
+- Checked Oct 16, 2026:
+  - LED lighting (stands for "standard" efficiency): $1.17 / $2.56 / $4.02 per kWh saved a year (139 projects). Median simple payback was about 16.6 years.
+  - Comprehensive (stands for "deep" efficiency): $1.09 / $2.49 / $3.83 (42 projects). Median payback about 14 years.
+- Limits: a project's cost may also cover gas or oil savings that the kWh figure leaves out, which makes the cost per kWh look high for electricity alone. The dataset has no baseline use per project, so it cannot give a savings percent. Fewer than 20 projects in a category means the placeholder dollars per square foot ($4-8 standard, $10-16 deep) are used and flagged.
+- Cross-check: our old placeholder worked out to about $1.90-7.70 per kWh saved for P.S. 236, a little higher than the real middle half ($1.17-4.02).
 
-- LBNL meta-analysis of lighting controls (240 savings estimates from 88 sources, 2012): average savings of 24% (occupancy sensors), 28% (daylighting), 31% (personal tuning), 36% (institutional tuning), 38% (combined). Lighting only. https://eta-publications.lbl.gov/bibcite/reference/23139
-- PNNL, DOE-sponsored (2017): up to 30% of building energy could be avoided with better sensing and controls. This is a modeled potential, and the report says few studies document actual savings. https://www.pnnl.gov/publications/energy-savings-potential-improved-building-controls-us-commercial-building-sector
-- DOE project page: 20-30% potential for small and medium commercial buildings with low-cost sensors and retrofit building automation. https://www.energy.gov/eere/buildings/articles/advanced-building-control-solutions
-- NYC Local Law 87 (energy audits and retro-commissioning for city buildings): DCAS reports implemented measures dropped energy use by 10% in projects operating a year or more (FY2014 report). A 7-year simple payback is the law's threshold. Reports: https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf (other years are at the same path). This is the closest evidence to our 10-20% standard range, and it points to the low end.
-- NYSERDA case study (one building, Brockport): LED retrofit cut connected load about 61%, cost $69,143, payback 1.34 years with incentives. One building; not a typical figure.
-- DCAS Local Law 87 annual report PDFs could not be read as text by the fetch tool (compressed PDF); read them in a PDF viewer to get cost and payback tables.
-- **Cost per sq ft: no reliable source found.** The figures seen came from low-quality generic or industrial guides. Do not use them.
-
-What this means: the 10-20% standard range is plausible but unproven for NYC public buildings, and the cost per sq ft has no source. Best next sources to read directly: the DCAS Local Law 87 annual reports (cost and savings tables), and NYSERDA's commercial lighting and controls program pages.
+**Savings percent: still a placeholder (10-20% standard, 15-25% deep).** Evidence found, none specific to a NYC public building:
+- LBNL meta-analysis of lighting controls (240 estimates, 88 sources, 2012): 24-38% savings, lighting only. https://eta-publications.lbl.gov/bibcite/reference/23139
+- PNNL, DOE-sponsored (2017): up to 30% of building energy avoidable with better sensing and controls; a modeled potential, and few studies document actual savings. https://www.pnnl.gov/publications/energy-savings-potential-improved-building-controls-us-commercial-building-sector
+- DOE: 20-30% potential for small and medium commercial buildings. https://www.energy.gov/eere/buildings/articles/advanced-building-control-solutions
+- NYC Local Law 87 (DCAS): completed projects cut energy use by 10% in the FY2014 report, with a 7-year simple payback threshold. Reports: https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf (the fetch tool could not read these compressed PDFs; read them in a PDF viewer).
+- To turn this into a sourced number: read the Local Law 87 tables for measured percent savings by measure.
 
 ## Other numbers worth keeping
 
