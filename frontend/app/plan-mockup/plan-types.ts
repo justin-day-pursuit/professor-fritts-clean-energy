@@ -106,6 +106,9 @@ export interface PlanSummary {
   battery: Json | null;
   hazards: Json | null;
   calculations: Record<string, Json>;
+  /** Plain names for each calculation id (C1, F-B, ...), and a plain sentence for each flag the tools can raise. */
+  calculation_names: Record<string, string>;
+  flag_text: Record<string, string>;
   confirm_first: { kind: string; text: string }[];
   assumptions: { id: string; text: string }[];
   referrals: Claim[];

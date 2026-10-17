@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from agent.plain_names import calculation_formula, calculation_name
+from agent.plain_names import calculation_formula, calculation_name, tool_name
 
 SUMMARY_VERSION = 2
 
@@ -33,6 +33,13 @@ FLAG_TEXT = {
     "annual_kwh_from_bills": "Annual use was taken from the uploaded bills.",
     "budget_type_annual_not_modeled": "The budget is annual, but the model treats the amount as one total upfront figure.",
     "check4_partial": "The plan did not pass every quality check; read it as a partial plan.",
+}
+# The entries the city record can disagree with, in words.
+MISMATCH_FIELD_LABELS = {
+    "floor_area_sqft": "floor area",
+    "roof_area_sqft": "roof area",
+    "annual_kwh": "annual electricity use",
+    "year_built": "year built",
 }
 MISSING_FIELD_LABELS = {
     "roof_replaced_year": "the year the roof was last replaced",
@@ -146,9 +153,9 @@ def confirm_first(flags: list[str], records: dict[str, Any], site: dict[str, Any
             field = flag.split(":", 1)[1]
             diff = next((d for d in records.get("differs_from_intake", []) if d.get("field") == field), {})
             detail = f" You entered {diff.get('intake'):,.0f}; the city record says {diff.get('city_record'):,.0f}." if diff.get("intake") and diff.get("city_record") else ""
-            items.append({"kind": "mismatch", "text": f"Your {field.replace('_', ' ')} differs from the city record.{detail}"})
+            items.append({"kind": "mismatch", "text": f"Your {MISMATCH_FIELD_LABELS.get(field, field.replace('_', ' '))} differs from the city record.{detail}"})
         elif flag.startswith("tool_error:"):
-            items.append({"kind": "gap", "text": f"{flag.split(':', 1)[1]} could not return data, so that part is missing."})
+            items.append({"kind": "gap", "text": f"{tool_name(flag.split(':', 1)[1])} could not return data, so that part of the plan is missing."})
         elif flag in FLAG_TEXT:
             items.append({"kind": "flag", "text": FLAG_TEXT[flag]})
     if site.get("roof_age_20_plus") and "city_roof_not_solar_ready" not in flags:

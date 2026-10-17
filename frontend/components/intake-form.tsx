@@ -378,6 +378,10 @@ export function IntakeForm({
             onChange={(e) => set("annual_kwh", e.target.value)}
           />
         </Field>
+        <p className="-mt-2 text-xs text-muted-foreground">
+          kWh is the electricity you buy over a year. It&apos;s on your Con Edison bills, and the city&apos;s energy
+          report may already list it for your building.
+        </p>
         <div className="grid grid-cols-3 gap-2">
           <Field id="budget_amount" label="Budget amount">
             <Input
@@ -511,7 +515,9 @@ export function IntakeForm({
             </Field>
           </div>
           <p className="text-xs text-muted-foreground">
-            Leave these blank and the plan estimates them and says so.
+            Critical load is how much power the things that must keep running draw at one moment (emergency lighting,
+            communications, boiler controls). Backup hours is how long they need to run. If you don&apos;t know, leave
+            these blank: the plan estimates them and says so.
           </p>
         </div>
         {/* Systems the building already has, so the plan builds on them and does not start from nothing. */}

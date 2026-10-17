@@ -312,13 +312,13 @@
      "solar_alone_reaches_goal": false,
      "solar_alone_exceeds_use": false,
      "goal_pct": 30.0,
-     "assumption_text": "Planning-level benchmark prices, not quotes: solar $3,131-4,668/kW DC (25th-75th percentile of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $600-1,000/kWh (planning estimate), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open.",
+     "assumption_text": "Planning-level benchmark prices, not quotes: solar $3,131-4,668/kW DC (the middle half of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $600-1,000/kWh (planning estimate), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open.",
      "solar_usd_per_kw": [
       3131.0,
       4668.0
      ],
      "battery_usd_per_kwh": null,
-     "solar_price_basis": "25th-75th percentile of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
+     "solar_price_basis": "the middle half of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "solar_price_source_url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "efficiency_usd_per_kwh": {
       "standard": [
@@ -334,14 +334,14 @@
       0.62,
       0.88
      ],
-     "efficiency_price_basis": "25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
+     "efficiency_price_basis": "the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
      "efficiency_price_source_url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
      "battery_price_basis": null,
      "battery_price_source_url": null,
      "cost_items": [
       {
        "item": "Standard efficiency package",
-       "basis": "45,683-91,367 kWh saved a year (planning estimate 10-20%) x $1.17-4.02 per kWh saved (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx)",
+       "basis": "45,683-91,367 kWh saved a year (planning estimate 10-20%) x $1.17-4.02 per kWh saved (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx)",
        "usd": [
         53450.0,
         367295.0
@@ -418,13 +418,13 @@
      "solar_alone_reaches_goal": false,
      "solar_alone_exceeds_use": false,
      "goal_pct": 30.0,
-     "assumption_text": "Planning-level benchmark prices, not quotes: solar $3,131-4,668/kW DC (25th-75th percentile of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $600-1,000/kWh (planning estimate), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open.",
+     "assumption_text": "Planning-level benchmark prices, not quotes: solar $3,131-4,668/kW DC (the middle half of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $600-1,000/kWh (planning estimate), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open.",
      "solar_usd_per_kw": [
       3131.0,
       4668.0
      ],
      "battery_usd_per_kwh": null,
-     "solar_price_basis": "25th-75th percentile of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
+     "solar_price_basis": "the middle half of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "solar_price_source_url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "efficiency_usd_per_kwh": {
       "standard": [
@@ -440,14 +440,14 @@
       0.62,
       0.88
      ],
-     "efficiency_price_basis": "25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
+     "efficiency_price_basis": "the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
      "efficiency_price_source_url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
      "battery_price_basis": null,
      "battery_price_source_url": null,
      "cost_items": [
       {
        "item": "Standard efficiency package",
-       "basis": "45,683-91,367 kWh saved a year (planning estimate 10-20%) x $1.17-4.02 per kWh saved (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx)",
+       "basis": "45,683-91,367 kWh saved a year (planning estimate 10-20%) x $1.17-4.02 per kWh saved (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx)",
        "usd": [
         53450.0,
         367295.0
@@ -455,7 +455,7 @@
       },
       {
        "item": "Rooftop solar",
-       "basis": "85.5 kW DC x $3,131-4,668/kW (25th-75th percentile of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs)",
+       "basis": "85.5 kW DC x $3,131-4,668/kW (the middle half of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs)",
        "usd": [
         267700.0,
         399114.0
@@ -540,7 +540,7 @@
      "solar_alone_reaches_goal": false,
      "solar_alone_exceeds_use": false,
      "goal_pct": 30.0,
-     "assumption_text": "Planning-level benchmark prices, not quotes: solar $3,131-4,668/kW DC (25th-75th percentile of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open.",
+     "assumption_text": "Planning-level benchmark prices, not quotes: solar $3,131-4,668/kW DC (the middle half of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open.",
      "solar_usd_per_kw": [
       3131.0,
       4668.0
@@ -549,7 +549,7 @@
       546.0,
       812.0
      ],
-     "solar_price_basis": "25th-75th percentile of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
+     "solar_price_basis": "the middle half of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "solar_price_source_url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "efficiency_usd_per_kwh": {
       "standard": [
@@ -565,14 +565,14 @@
       0.62,
       0.88
      ],
-     "efficiency_price_basis": "25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
+     "efficiency_price_basis": "the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
      "efficiency_price_source_url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "battery_price_basis": "25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
+     "battery_price_basis": "the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
      "battery_price_source_url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
      "cost_items": [
       {
        "item": "Deep efficiency package",
-       "basis": "68,525-114,208 kWh saved a year (planning estimate 15-25%) x $1.09-3.83 per kWh saved (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx)",
+       "basis": "68,525-114,208 kWh saved a year (planning estimate 15-25%) x $1.09-3.83 per kWh saved (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx)",
        "usd": [
         74692.0,
         437419.0
@@ -580,7 +580,7 @@
       },
       {
        "item": "Rooftop solar",
-       "basis": "85.5 kW DC x $3,131-4,668/kW (25th-75th percentile of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs)",
+       "basis": "85.5 kW DC x $3,131-4,668/kW (the middle half of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs)",
        "usd": [
         267700.0,
         399114.0
@@ -588,7 +588,7 @@
       },
       {
        "item": "Backup battery",
-       "basis": "412 kWh x $546-812/kWh (25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy)",
+       "basis": "412 kWh x $546-812/kWh (the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy)",
        "usd": [
         224952.0,
         334544.0
@@ -669,7 +669,7 @@
       3131.0,
       4668.0
      ],
-     "basis": "25th-75th percentile of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
+     "basis": "the middle half of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "source_url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs"
     },
     "battery": {
@@ -677,7 +677,7 @@
       546.0,
       812.0
      ],
-     "basis": "25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
+     "basis": "the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
      "source_url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy"
     },
     "efficiency": {
@@ -691,14 +691,14 @@
        3.83
       ]
      },
-     "basis": "25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
+     "basis": "the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
      "source_url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx"
     },
     "efficiency_savings_realization": [
      0.62,
      0.88
     ],
-    "assumption_text": "Planning-level benchmark prices, not quotes: solar $3,131-4,668/kW DC (25th-75th percentile of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open."
+    "assumption_text": "Planning-level benchmark prices, not quotes: solar $3,131-4,668/kW DC (the middle half of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open."
    },
    "incentives": [
     {
@@ -908,7 +908,7 @@
     },
     {
      "id": "A9",
-     "text": "Planning-level benchmark prices, not quotes: solar $3,131-4,668/kW DC (25th-75th percentile of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $600-1,000/kWh (planning estimate), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open."
+     "text": "Planning-level benchmark prices, not quotes: solar $3,131-4,668/kW DC (the middle half of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $600-1,000/kWh (planning estimate), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open."
     }
    ],
    "referrals": [
@@ -1143,25 +1143,25 @@
     {
      "label": "NYSERDA solar project costs",
      "url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
-     "retrieved_at": "2026-10-17T08:58:44Z",
+     "retrieved_at": "2026-10-17T09:06:16Z",
      "sample": false
     },
     {
      "label": "NYSERDA completed efficiency project costs",
      "url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "retrieved_at": "2026-10-17T08:58:44Z",
+     "retrieved_at": "2026-10-17T09:06:16Z",
      "sample": false
     },
     {
      "label": "NYC DCAS Local Law 87 report (measured savings realization)",
      "url": "https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf",
-     "retrieved_at": "2026-10-17T08:58:44Z",
+     "retrieved_at": "2026-10-17T09:06:16Z",
      "sample": false
     },
     {
      "label": "NYSERDA battery storage project costs",
      "url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
-     "retrieved_at": "2026-10-17T08:58:44Z",
+     "retrieved_at": "2026-10-17T09:06:16Z",
      "sample": false
     }
    ],
@@ -2162,7 +2162,7 @@
      "tool": "run_financial_model",
      "mock": false,
      "source_url": "internal://run_financial_model",
-     "retrieved_at": "2026-10-17T08:58:44Z",
+     "retrieved_at": "2026-10-17T09:06:16Z",
      "dataset_version": "v5-simple-payback",
      "flags": []
     }
@@ -2490,7 +2490,7 @@
      "solar_alone_reaches_goal": true,
      "solar_alone_exceeds_use": true,
      "goal_pct": 30.0,
-     "assumption_text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open.",
+     "assumption_text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open.",
      "solar_usd_per_kw": [
       2528.0,
       3752.0
@@ -2499,7 +2499,7 @@
       546.0,
       812.0
      ],
-     "solar_price_basis": "25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
+     "solar_price_basis": "the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "solar_price_source_url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "efficiency_usd_per_kwh": {
       "standard": [
@@ -2515,14 +2515,14 @@
       0.62,
       0.88
      ],
-     "efficiency_price_basis": "25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
+     "efficiency_price_basis": "the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
      "efficiency_price_source_url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "battery_price_basis": "25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
+     "battery_price_basis": "the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
      "battery_price_source_url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
      "cost_items": [
       {
        "item": "Standard efficiency package",
-       "basis": "28,440-56,881 kWh saved a year (planning estimate 10-20%) x $1.17-4.02 per kWh saved (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx)",
+       "basis": "28,440-56,881 kWh saved a year (planning estimate 10-20%) x $1.17-4.02 per kWh saved (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx)",
        "usd": [
         33275.0,
         228660.0
@@ -2599,7 +2599,7 @@
      "solar_alone_reaches_goal": true,
      "solar_alone_exceeds_use": true,
      "goal_pct": 30.0,
-     "assumption_text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open.",
+     "assumption_text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open.",
      "solar_usd_per_kw": [
       2528.0,
       3752.0
@@ -2608,7 +2608,7 @@
       546.0,
       812.0
      ],
-     "solar_price_basis": "25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
+     "solar_price_basis": "the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "solar_price_source_url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "efficiency_usd_per_kwh": {
       "standard": [
@@ -2624,14 +2624,14 @@
       0.62,
       0.88
      ],
-     "efficiency_price_basis": "25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
+     "efficiency_price_basis": "the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
      "efficiency_price_source_url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "battery_price_basis": "25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
+     "battery_price_basis": "the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
      "battery_price_source_url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
      "cost_items": [
       {
        "item": "Standard efficiency package",
-       "basis": "28,440-56,881 kWh saved a year (planning estimate 10-20%) x $1.17-4.02 per kWh saved (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx)",
+       "basis": "28,440-56,881 kWh saved a year (planning estimate 10-20%) x $1.17-4.02 per kWh saved (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx)",
        "usd": [
         33275.0,
         228660.0
@@ -2639,7 +2639,7 @@
       },
       {
        "item": "Rooftop solar",
-       "basis": "99.0 kW DC x $2,528-3,752/kW (25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs)",
+       "basis": "99.0 kW DC x $2,528-3,752/kW (the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs)",
        "usd": [
         250199.0,
         371340.0
@@ -2724,7 +2724,7 @@
      "solar_alone_reaches_goal": true,
      "solar_alone_exceeds_use": true,
      "goal_pct": 30.0,
-     "assumption_text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open.",
+     "assumption_text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open.",
      "solar_usd_per_kw": [
       2528.0,
       3752.0
@@ -2733,7 +2733,7 @@
       546.0,
       812.0
      ],
-     "solar_price_basis": "25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
+     "solar_price_basis": "the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "solar_price_source_url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "efficiency_usd_per_kwh": {
       "standard": [
@@ -2749,14 +2749,14 @@
       0.62,
       0.88
      ],
-     "efficiency_price_basis": "25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
+     "efficiency_price_basis": "the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
      "efficiency_price_source_url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "battery_price_basis": "25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
+     "battery_price_basis": "the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
      "battery_price_source_url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
      "cost_items": [
       {
        "item": "Deep efficiency package",
-       "basis": "42,660-71,101 kWh saved a year (planning estimate 15-25%) x $1.09-3.83 per kWh saved (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx)",
+       "basis": "42,660-71,101 kWh saved a year (planning estimate 15-25%) x $1.09-3.83 per kWh saved (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx)",
        "usd": [
         46500.0,
         272316.0
@@ -2764,7 +2764,7 @@
       },
       {
        "item": "Rooftop solar",
-       "basis": "286.3 kW DC x $2,528-3,752/kW (25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs)",
+       "basis": "286.3 kW DC x $2,528-3,752/kW (the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs)",
        "usd": [
         723851.0,
         1074323.0
@@ -2772,7 +2772,7 @@
       },
       {
        "item": "Backup battery",
-       "basis": "526 kWh x $546-812/kWh (25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy)",
+       "basis": "526 kWh x $546-812/kWh (the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy)",
        "usd": [
         287196.0,
         427112.0
@@ -2853,7 +2853,7 @@
       2528.0,
       3752.0
      ],
-     "basis": "25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
+     "basis": "the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "source_url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs"
     },
     "battery": {
@@ -2861,7 +2861,7 @@
       546.0,
       812.0
      ],
-     "basis": "25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
+     "basis": "the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
      "source_url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy"
     },
     "efficiency": {
@@ -2875,14 +2875,14 @@
        3.83
       ]
      },
-     "basis": "25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
+     "basis": "the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
      "source_url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx"
     },
     "efficiency_savings_realization": [
      0.62,
      0.88
     ],
-    "assumption_text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open."
+    "assumption_text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open."
    },
    "incentives": [
     {
@@ -3046,7 +3046,7 @@
     },
     {
      "kind": "mismatch",
-     "text": "Your floor area sqft differs from the city record. You entered 55,860; the city record says 17,620."
+     "text": "Your floor area differs from the city record. You entered 55,860; the city record says 17,620."
     },
     {
      "kind": "flag",
@@ -3096,7 +3096,7 @@
     },
     {
      "id": "A9",
-     "text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open."
+     "text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open."
     }
    ],
    "referrals": [
@@ -3342,25 +3342,25 @@
     {
      "label": "NYSERDA solar project costs",
      "url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
-     "retrieved_at": "2026-10-17T08:58:45Z",
+     "retrieved_at": "2026-10-17T09:06:16Z",
      "sample": false
     },
     {
      "label": "NYSERDA battery storage project costs",
      "url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
-     "retrieved_at": "2026-10-17T08:58:45Z",
+     "retrieved_at": "2026-10-17T09:06:16Z",
      "sample": false
     },
     {
      "label": "NYSERDA completed efficiency project costs",
      "url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "retrieved_at": "2026-10-17T08:58:45Z",
+     "retrieved_at": "2026-10-17T09:06:16Z",
      "sample": false
     },
     {
      "label": "NYC DCAS Local Law 87 report (measured savings realization)",
      "url": "https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf",
-     "retrieved_at": "2026-10-17T08:58:45Z",
+     "retrieved_at": "2026-10-17T09:06:16Z",
      "sample": false
     }
    ],
@@ -4264,7 +4264,7 @@
      "tool": "run_financial_model",
      "mock": false,
      "source_url": "internal://run_financial_model",
-     "retrieved_at": "2026-10-17T08:58:45Z",
+     "retrieved_at": "2026-10-17T09:06:16Z",
      "dataset_version": "v5-simple-payback",
      "flags": []
     }
@@ -4589,7 +4589,7 @@
      "solar_alone_reaches_goal": true,
      "solar_alone_exceeds_use": false,
      "goal_pct": 30.0,
-     "assumption_text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open.",
+     "assumption_text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open.",
      "solar_usd_per_kw": [
       2528.0,
       3752.0
@@ -4598,7 +4598,7 @@
       546.0,
       812.0
      ],
-     "solar_price_basis": "25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
+     "solar_price_basis": "the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "solar_price_source_url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "efficiency_usd_per_kwh": {
       "standard": [
@@ -4614,14 +4614,14 @@
       0.62,
       0.88
      ],
-     "efficiency_price_basis": "25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
+     "efficiency_price_basis": "the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
      "efficiency_price_source_url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "battery_price_basis": "25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
+     "battery_price_basis": "the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
      "battery_price_source_url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
      "cost_items": [
       {
        "item": "Standard efficiency package",
-       "basis": "37,507-75,013 kWh saved a year (planning estimate 10-20%) x $1.17-4.02 per kWh saved (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx)",
+       "basis": "37,507-75,013 kWh saved a year (planning estimate 10-20%) x $1.17-4.02 per kWh saved (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx)",
        "usd": [
         43883.0,
         301553.0
@@ -4698,7 +4698,7 @@
      "solar_alone_reaches_goal": true,
      "solar_alone_exceeds_use": false,
      "goal_pct": 30.0,
-     "assumption_text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open.",
+     "assumption_text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open.",
      "solar_usd_per_kw": [
       2528.0,
       3752.0
@@ -4707,7 +4707,7 @@
       546.0,
       812.0
      ],
-     "solar_price_basis": "25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
+     "solar_price_basis": "the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "solar_price_source_url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "efficiency_usd_per_kwh": {
       "standard": [
@@ -4723,14 +4723,14 @@
       0.62,
       0.88
      ],
-     "efficiency_price_basis": "25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
+     "efficiency_price_basis": "the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
      "efficiency_price_source_url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "battery_price_basis": "25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
+     "battery_price_basis": "the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
      "battery_price_source_url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
      "cost_items": [
       {
        "item": "Standard efficiency package",
-       "basis": "37,507-75,013 kWh saved a year (planning estimate 10-20%) x $1.17-4.02 per kWh saved (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx)",
+       "basis": "37,507-75,013 kWh saved a year (planning estimate 10-20%) x $1.17-4.02 per kWh saved (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx)",
        "usd": [
         43883.0,
         301553.0
@@ -4738,7 +4738,7 @@
       },
       {
        "item": "Rooftop solar",
-       "basis": "119.5 kW DC x $2,528-3,752/kW (25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs)",
+       "basis": "119.5 kW DC x $2,528-3,752/kW (the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs)",
        "usd": [
         302152.0,
         448447.0
@@ -4823,7 +4823,7 @@
      "solar_alone_reaches_goal": true,
      "solar_alone_exceeds_use": false,
      "goal_pct": 30.0,
-     "assumption_text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open.",
+     "assumption_text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open.",
      "solar_usd_per_kw": [
       2528.0,
       3752.0
@@ -4832,7 +4832,7 @@
       546.0,
       812.0
      ],
-     "solar_price_basis": "25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
+     "solar_price_basis": "the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "solar_price_source_url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "efficiency_usd_per_kwh": {
       "standard": [
@@ -4848,14 +4848,14 @@
       0.62,
       0.88
      ],
-     "efficiency_price_basis": "25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
+     "efficiency_price_basis": "the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
      "efficiency_price_source_url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "battery_price_basis": "25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
+     "battery_price_basis": "the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
      "battery_price_source_url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
      "cost_items": [
       {
        "item": "Deep efficiency package",
-       "basis": "56,260-93,766 kWh saved a year (planning estimate 15-25%) x $1.09-3.83 per kWh saved (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx)",
+       "basis": "56,260-93,766 kWh saved a year (planning estimate 15-25%) x $1.09-3.83 per kWh saved (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx)",
        "usd": [
         61323.0,
         359126.0
@@ -4863,7 +4863,7 @@
       },
       {
        "item": "Rooftop solar",
-       "basis": "273.8 kW DC x $2,528-3,752/kW (25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs)",
+       "basis": "273.8 kW DC x $2,528-3,752/kW (the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs)",
        "usd": [
         692251.0,
         1027423.0
@@ -4871,7 +4871,7 @@
       },
       {
        "item": "Backup battery",
-       "basis": "255 kWh x $546-812/kWh (25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy)",
+       "basis": "255 kWh x $546-812/kWh (the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy)",
        "usd": [
         139230.0,
         207060.0
@@ -4952,7 +4952,7 @@
       2528.0,
       3752.0
      ],
-     "basis": "25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
+     "basis": "the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "source_url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs"
     },
     "battery": {
@@ -4960,7 +4960,7 @@
       546.0,
       812.0
      ],
-     "basis": "25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
+     "basis": "the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
      "source_url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy"
     },
     "efficiency": {
@@ -4974,14 +4974,14 @@
        3.83
       ]
      },
-     "basis": "25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
+     "basis": "the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
      "source_url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx"
     },
     "efficiency_savings_realization": [
      0.62,
      0.88
     ],
-    "assumption_text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open."
+    "assumption_text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open."
    },
    "incentives": [
     {
@@ -5144,7 +5144,7 @@
     },
     {
      "kind": "mismatch",
-     "text": "Your floor area sqft differs from the city record. You entered 27,069; the city record says 21,600."
+     "text": "Your floor area differs from the city record. You entered 27,069; the city record says 21,600."
     },
     {
      "kind": "flag",
@@ -5198,7 +5198,7 @@
     },
     {
      "id": "A9",
-     "text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open."
+     "text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $546-812/kWh (the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open."
     }
    ],
    "referrals": [
@@ -5455,25 +5455,25 @@
     {
      "label": "NYSERDA solar project costs",
      "url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
-     "retrieved_at": "2026-10-17T08:58:45Z",
+     "retrieved_at": "2026-10-17T09:06:17Z",
      "sample": false
     },
     {
      "label": "NYSERDA battery storage project costs",
      "url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
-     "retrieved_at": "2026-10-17T08:58:45Z",
+     "retrieved_at": "2026-10-17T09:06:17Z",
      "sample": false
     },
     {
      "label": "NYSERDA completed efficiency project costs",
      "url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "retrieved_at": "2026-10-17T08:58:45Z",
+     "retrieved_at": "2026-10-17T09:06:17Z",
      "sample": false
     },
     {
      "label": "NYC DCAS Local Law 87 report (measured savings realization)",
      "url": "https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf",
-     "retrieved_at": "2026-10-17T08:58:45Z",
+     "retrieved_at": "2026-10-17T09:06:17Z",
      "sample": false
     }
    ],
@@ -6469,7 +6469,7 @@
      "tool": "run_financial_model",
      "mock": false,
      "source_url": "internal://run_financial_model",
-     "retrieved_at": "2026-10-17T08:58:45Z",
+     "retrieved_at": "2026-10-17T09:06:17Z",
      "dataset_version": "v5-simple-payback",
      "flags": []
     }
@@ -6792,7 +6792,7 @@
     },
     {
      "kind": "gap",
-     "text": "calculate could not return data, so that part is missing."
+     "text": "The roof and solar math could not return data, so that part of the plan is missing."
     },
     {
      "kind": "flag",
@@ -6800,7 +6800,7 @@
     },
     {
      "kind": "gap",
-     "text": "get_utility_rates could not return data, so that part is missing."
+     "text": "The electricity price lookup could not return data, so that part of the plan is missing."
     },
     {
      "kind": "flag",
@@ -7992,13 +7992,13 @@
      "solar_alone_reaches_goal": false,
      "solar_alone_exceeds_use": false,
      "goal_pct": 30.0,
-     "assumption_text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $600-1,000/kWh (planning estimate), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open.",
+     "assumption_text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $600-1,000/kWh (planning estimate), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open.",
      "solar_usd_per_kw": [
       2528.0,
       3752.0
      ],
      "battery_usd_per_kwh": null,
-     "solar_price_basis": "25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
+     "solar_price_basis": "the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "solar_price_source_url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "efficiency_usd_per_kwh": {
       "standard": [
@@ -8014,14 +8014,14 @@
       0.62,
       0.88
      ],
-     "efficiency_price_basis": "25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
+     "efficiency_price_basis": "the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
      "efficiency_price_source_url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
      "battery_price_basis": null,
      "battery_price_source_url": null,
      "cost_items": [
       {
        "item": "Standard efficiency package",
-       "basis": "22,660-45,321 kWh saved a year (planning estimate 10-20%) x $1.17-4.02 per kWh saved (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx)",
+       "basis": "22,660-45,321 kWh saved a year (planning estimate 10-20%) x $1.17-4.02 per kWh saved (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx)",
        "usd": [
         26513.0,
         182190.0
@@ -8094,7 +8094,7 @@
       2528.0,
       3752.0
      ],
-     "basis": "25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
+     "basis": "the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
      "source_url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs"
     },
     "battery": {
@@ -8113,14 +8113,14 @@
        3.83
       ]
      },
-     "basis": "25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
+     "basis": "the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
      "source_url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx"
     },
     "efficiency_savings_realization": [
      0.62,
      0.88
     ],
-    "assumption_text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $600-1,000/kWh (planning estimate), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open."
+    "assumption_text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $600-1,000/kWh (planning estimate), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open."
    },
    "incentives": [
     {
@@ -8243,11 +8243,11 @@
     },
     {
      "kind": "gap",
-     "text": "get_solar_production could not return data, so that part is missing."
+     "text": "The solar output estimate could not return data, so that part of the plan is missing."
     },
     {
      "kind": "mismatch",
-     "text": "Your floor area sqft differs from the city record. You entered 115,325; the city record says 135,600."
+     "text": "Your floor area differs from the city record. You entered 115,325; the city record says 135,600."
     },
     {
      "kind": "flag",
@@ -8289,7 +8289,7 @@
     },
     {
      "id": "A9",
-     "text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $600-1,000/kWh (planning estimate), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open."
+     "text": "Planning-level benchmark prices, not quotes: solar $2,528-3,752/kW DC (the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs), battery $600-1,000/kWh (planning estimate), efficiency cost per kWh saved per year $1.17-4.02 (standard) and $1.09-3.83 (deep) (the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx), standard efficiency saving 10-20%, deep efficiency saving 15-25%; usable battery share 85%-100%; the efficiency savings percents are planning estimates, not yet backed by project data, but only 62%-88% of them is counted because the City's audited projects delivered that share (NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf); the 30% federal credit counts only when the incentives tool says the program is open."
     }
    ],
    "referrals": [
@@ -8523,19 +8523,19 @@
     {
      "label": "NYSERDA solar project costs",
      "url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
-     "retrieved_at": "2026-10-17T08:58:46Z",
+     "retrieved_at": "2026-10-17T09:06:17Z",
      "sample": false
     },
     {
      "label": "NYSERDA completed efficiency project costs",
      "url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "retrieved_at": "2026-10-17T08:58:46Z",
+     "retrieved_at": "2026-10-17T09:06:17Z",
      "sample": false
     },
     {
      "label": "NYC DCAS Local Law 87 report (measured savings realization)",
      "url": "https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf",
-     "retrieved_at": "2026-10-17T08:58:46Z",
+     "retrieved_at": "2026-10-17T09:06:17Z",
      "sample": false
     }
    ],
@@ -9357,7 +9357,7 @@
      "tool": "run_financial_model",
      "mock": false,
      "source_url": "internal://run_financial_model",
-     "retrieved_at": "2026-10-17T08:58:46Z",
+     "retrieved_at": "2026-10-17T09:06:17Z",
      "dataset_version": "v5-simple-payback",
      "flags": []
     }

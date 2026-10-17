@@ -45,7 +45,7 @@ def test_confirm_first_turns_flags_into_plain_sentences():
     items = confirm_first(["missing_field:roof_replaced_year", "intake_mismatch:floor_area_sqft", "battery_inputs_estimated", "tool_error:get_hazard_context", "unknown_flag"], records, {})
     texts = " ".join(i["text"] for i in items)
     assert "year the roof was last replaced" in texts and "55,860" in texts and "17,620" in texts
-    assert FLAG_TEXT["battery_inputs_estimated"] in texts and "get_hazard_context could not return data" in texts
+    assert FLAG_TEXT["battery_inputs_estimated"] in texts and "The flood-zone lookup could not return data" in texts and "Your floor area differs" in texts
     assert "unknown_flag" not in texts
 
 

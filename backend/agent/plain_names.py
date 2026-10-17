@@ -31,6 +31,20 @@ CALCULATION_FORMULAS = {
     "F-C": "Deeper efficiency, solar on the whole roof, and a backup battery",
 }
 
+# The tools by what they do, for the sentences that say a lookup failed.
+TOOL_NAMES = {
+    "get_building_profile": "Reading your building details",
+    "lookup_ny_building_records": "The city building-records lookup",
+    "get_solar_production": "The solar output estimate",
+    "get_utility_rates": "The electricity price lookup",
+    "get_utility_tariff": "The utility rate-schedule lookup",
+    "search_ny_incentives_and_rules": "The incentives and rules check",
+    "get_hazard_context": "The flood-zone lookup",
+    "optimize_solar_storage": "The battery sizing",
+    "calculate": "The roof and solar math",
+    "run_financial_model": "The cost and savings model",
+}
+
 _ID_PREFIX = re.compile(r"^\s*A\d{1,2}\s*[:\-.]\s*")
 
 
@@ -42,6 +56,11 @@ def calculation_name(calc_id: str) -> str:
 def calculation_formula(calc_id: str) -> str | None:
     """The plain-words formula for a calculation id, or None."""
     return CALCULATION_FORMULAS.get(calc_id)
+
+
+def tool_name(tool: str) -> str:
+    """What a tool does, in plain words; an unknown tool is shown with its underscores turned into spaces."""
+    return TOOL_NAMES.get(tool, tool.replace("_", " "))
 
 
 def strip_id_prefix(text: str) -> str:
