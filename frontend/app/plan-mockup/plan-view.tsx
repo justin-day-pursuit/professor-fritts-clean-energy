@@ -8,7 +8,7 @@
  */
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode, type SyntheticEvent } from "react";
 import { SAMPLE_BADGE_TEXT } from "./copy";
 import type { Claim, PlanSummary, Program, Scenario, Section } from "./plan-types";
 import { fieldLabel, fieldValue, isInternalField, plainify, toolLabel } from "./plain";
@@ -77,9 +77,17 @@ function KV({ data, skip = [] }: { data: Obj; skip?: string[] }) {
   );
 }
 
-function Detail({ title, note, children, open = false }: { title: string; note?: string; children: ReactNode; open?: boolean }) {
+/** True inside a report section that is open: the drop-downs within it then open too. */
+const OpenCtx = createContext(false);
+
+/**
+ * A drop-down. Left alone it follows its section: closed when the section is closed, open when the section is open. A report
+ * section passes `open` and `onToggle` itself, so the page can keep only one section open at a time.
+ */
+function Detail({ title, note, children, open, onToggle }: { title: string; note?: string; children: ReactNode; open?: boolean; onToggle?: (e: SyntheticEvent<HTMLDetailsElement>) => void }) {
+  const inherited = useContext(OpenCtx);
   return (
-    <details open={open} className="rounded-xl border border-[var(--fr-line)] bg-white p-4">
+    <details open={open ?? inherited} onToggle={onToggle} className="rounded-xl border border-[var(--fr-line)] bg-white p-4">
       <summary className="cursor-pointer font-semibold text-[var(--fr-ink)]">
         {title}
         {note && <span className="ml-2 text-xs font-normal text-[var(--fr-mute)]">{note}</span>}
@@ -239,6 +247,69 @@ function packageText(s?: Scenario): string {
   return parts.join(" + ");
 }
 
+/**
+ * The one plan a statement is about, from the plan letters in its own words ("Scenario B ...", "Plan C ...", "(A)"). A statement
+ * that names several plans, or none, is about all of them and is shown below the table instead.
+ */
+function planOf(claim: Claim): "A" | "B" | "C" | null {
+  const letters = new Set<string>();
+  for (const m of claim.text.matchAll(/\b(?:Scenarios?|Plans?)\s+([ABC])\b|\(([ABC])\)|\bfor\s+([ABC])\b/g)) letters.add(m[1] ?? m[2] ?? m[3]);
+  return letters.size === 1 ? ([...letters][0] as "A" | "B" | "C") : null;
+}
+
+/** A statement inside a table cell: the sentence, a tag only when it is not an estimate, and its source. */
+function CellNote({ claim }: { claim: Claim }) {
+  const { dev, calcNames } = useContext(PlainCtx);
+  return (
+    <li className="space-y-0.5">
+      <p className="text-[var(--fr-ink)]">{dev ? claim.text : plainify(claim.text)}</p>
+      <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-[var(--fr-mute)]">
+        {claim.label !== "ESTIMATE" && <Chip label={claim.label} />}
+        {claim.calc_id && <span>from: {calcNames[claim.calc_id] ?? claim.calc_id}</span>}
+        <SourceLink url={claim.source_url} />
+      </div>
+    </li>
+  );
+}
+
+/** Splits a section's statements into those about one plan (by plan) and the rest (general). */
+function splitByPlan(claims: Claim[]): { byPlan: Record<string, Claim[]>; general: Claim[] } {
+  const byPlan: Record<string, Claim[]> = { A: [], B: [], C: [] };
+  const general: Claim[] = [];
+  for (const c of claims) {
+    const id = planOf(c);
+    if (id) byPlan[id].push(c);
+    else general.push(c);
+  }
+  return { byPlan, general };
+}
+
+/** The statement rows of a plan table: what the written plan says about each plan, in that plan's column. */
+function StatementRow({ byPlan, recommended }: { byPlan: Record<string, Claim[]>; recommended: string | null }) {
+  if (PLAN_IDS.every((id) => byPlan[id].length === 0)) return null;
+  return (
+    <tr className="border-t-2 border-[var(--fr-line)]">
+      <th className={rowHead}>What the written plan says</th>
+      {PLAN_IDS.map((id) => (
+        <td key={id} className={`px-3 py-2.5 align-top text-xs ${recommended === id ? "bg-[var(--fr-soft)]" : ""}`}>
+          {byPlan[id].length ? <ul className="space-y-2">{byPlan[id].map((c) => <CellNote key={c.text} claim={c} />)}</ul> : <span className="text-[var(--fr-mute)]">Nothing specific to this plan.</span>}
+        </td>
+      ))}
+    </tr>
+  );
+}
+
+/** The statements that are about all the plans (or none in particular), shown in full under the table. */
+function GeneralStatements({ claims, title }: { claims: Claim[]; title: string }) {
+  if (claims.length === 0) return null;
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-teal)]">{title}</p>
+      <ul className="space-y-2">{claims.map((c) => <ClaimRow key={c.text} claim={c} />)}</ul>
+    </div>
+  );
+}
+
 /** The legend line above a table: one ESTIMATE tag instead of one on every figure. */
 function EstimateLegend({ children }: { children: ReactNode }) {
   return (
@@ -249,7 +320,8 @@ function EstimateLegend({ children }: { children: ReactNode }) {
 }
 
 /** Section 6: the three plans as columns and the questions a reader asks as rows. */
-function ComparisonTable({ sum, budget, recommended }: { sum: PlanSummary; budget: number; recommended: string | null }) {
+function ComparisonTable({ sum, budget, recommended, claims }: { sum: PlanSummary; budget: number; recommended: string | null; claims: Claim[] }) {
+  const { byPlan, general } = splitByPlan(claims);
   const by = (id: string) => sum.scenarios.find((x) => x.scenario_id === id);
   const goal = sum.scenarios[0]?.goal_pct ?? sum.baseline.goal_percent ?? 30;
   const col = (id: string) => (recommended === id ? "bg-[var(--fr-soft)]" : "");
@@ -297,15 +369,18 @@ function ComparisonTable({ sum, budget, recommended }: { sum: PlanSummary; budge
             <tr><th className={rowHead}>Pays back in</th>{cell((s) => <>{yearsRange(s.payback_years)}</>)}</tr>
             <tr><th className={rowHead}>Backup power</th>{cell((s) => (s.outage_hours[1] > 0 ? <>{hoursRange(s.outage_hours)} for the critical loads</> : <span className="text-[var(--fr-mute)]">None (solar panels shut off in an outage)</span>))}</tr>
             <tr><th className={rowHead}>Fits the {budget ? `$${budget.toLocaleString()} ` : ""}budget?</th>{cell(budgetCell)}</tr>
+            <StatementRow byPlan={byPlan} recommended={recommended} />
           </tbody>
         </table>
       </div>
+      <GeneralStatements claims={general} title="About all three plans" />
     </div>
   );
 }
 
 /** Section 7: each part of the bill as a row, the three plans as columns. */
-function CostTable({ sum, recommended }: { sum: PlanSummary; recommended: string | null }) {
+function CostTable({ sum, recommended, claims }: { sum: PlanSummary; recommended: string | null; claims: Claim[] }) {
+  const { byPlan, general } = splitByPlan(claims);
   const by = (id: string) => sum.scenarios.find((x) => x.scenario_id === id);
   const kind = (item: string) => (/efficiency/i.test(item) ? "Efficiency work" : /solar/i.test(item) ? "Rooftop solar" : /battery/i.test(item) ? "Backup battery" : /credit/i.test(item) ? "Federal credit" : item);
   const rows = Array.from(new Set(sum.scenarios.flatMap((s) => s.cost_items.map((c) => kind(c.item)))));
@@ -362,9 +437,11 @@ function CostTable({ sum, recommended }: { sum: PlanSummary; recommended: string
                 return <td key={id} className={`px-3 py-2.5 align-top ${col(id)}`}>{sc ? moneyRangeExact(sc.net_cost_usd) : "Not costed"}</td>;
               })}
             </tr>
+            <StatementRow byPlan={byPlan} recommended={recommended} />
           </tbody>
         </table>
       </div>
+      <GeneralStatements claims={general} title="Incentives, rules and other cost notes" />
     </div>
   );
 }
@@ -412,6 +489,8 @@ function priceText(kind: string, price: unknown): string {
 
 export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; plans: PlanView[]; onRestart: () => void; onPick: (id: string) => void }) {
   const [dev, setDev] = useState(false);
+  // Only one report section is open at a time; opening one closes the others and opens the drop-downs inside it.
+  const [openSection, setOpenSection] = useState<string | null>(null);
   const sum: PlanSummary = plan.plan;
   const ctx: PlainContext = { dev, calcNames: sum.calculation_names ?? {}, flagText: sum.flag_text ?? {} };
   const calcNames = ctx.calcNames;
@@ -420,6 +499,7 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
   const prod = sum.solar.production;
   const o = sum.outcome;
   const budget = Number(plan.profile.budget_amount) || 0;
+  const section = (id: string): Section | undefined => sum.sections.find((s) => s.section_id === id);
   // The data behind each report section: the records, prices, calculations and sources the written statements rest on.
   const data: Record<string, ReactNode> = {
     building: (
@@ -553,8 +633,8 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
   // Side-by-side tables that open sections 6 and 7; the section's written statements stay below them, folded.
   const top: Record<string, ReactNode> = {};
   if (sum.scenarios.length > 0) {
-    top["6"] = <ComparisonTable sum={sum} budget={budget} recommended={o.recommended} />;
-    top["7"] = <CostTable sum={sum} recommended={o.recommended} />;
+    top["6"] = <ComparisonTable sum={sum} budget={budget} recommended={o.recommended} claims={section("6")?.claims ?? []} />;
+    top["7"] = <CostTable sum={sum} recommended={o.recommended} claims={section("7")?.claims ?? []} />;
   }
   // Which data blocks sit under which report section (sections not listed have only their written statements).
   const SECTION_DATA: Record<string, string[]> = {
@@ -569,7 +649,6 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
   };
   const toneBg = o.tone === "good" ? "linear-gradient(135deg,#dff3ea,#fdf0cf)" : o.tone === "caution" ? "linear-gradient(135deg,#fdf0cf,#faf6ee)" : "linear-gradient(135deg,#e3ecf6,#faf6ee)";
   const byId = (id: string) => sum.scenarios.find((s) => s.scenario_id === id);
-  const section = (id: string): Section | undefined => sum.sections.find((s) => s.section_id === id);
   const allClaims = sum.sections.flatMap((s) => s.claims);
   const labelCounts = Object.fromEntries(Object.keys(LABELS).map((k) => [k, allClaims.filter((c) => c.label === k).length]));
   const total = allClaims.length || 1;
@@ -737,17 +816,25 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
             return (
               <Detail
                 key={s.section_id}
+                open={openSection === s.section_id}
+                onToggle={(e) => {
+                  const el = e.currentTarget;
+                  if (el.open && openSection !== s.section_id) {
+                    setOpenSection(s.section_id);
+                    // The sections above may have just closed, so bring this one to the top of the screen.
+                    requestAnimationFrame(() => el.scrollIntoView({ behavior: "smooth", block: "start" }));
+                  } else if (!el.open && openSection === s.section_id) {
+                    setOpenSection(null);
+                  }
+                }}
                 title={`${s.section_id}. ${SECTION_NAME[s.section_id] ?? s.title}`}
                 note={`${s.claims.length} statements${parts.length ? ` · ${parts.length} data block${parts.length === 1 ? "" : "s"}` : ""}`}
               >
-                {top[s.section_id] && <div>{top[s.section_id]}</div>}
-                {s.claims.length === 0 ? (
+                <OpenCtx.Provider value={openSection === s.section_id}>
+                {top[s.section_id] ? (
+                  <div>{top[s.section_id]}</div>
+                ) : s.claims.length === 0 ? (
                   <p className="text-sm text-[var(--fr-mute)]">Nothing was provided for this section.</p>
-                ) : top[s.section_id] ? (
-                  <details className="rounded-lg border border-[var(--fr-line)] p-3">
-                    <summary className="cursor-pointer text-sm font-semibold text-[var(--fr-ink)]">All {s.claims.length} written statements in this section</summary>
-                    <ul className="mt-3 space-y-2">{s.claims.map((c) => <ClaimRow key={c.text} claim={c} />)}</ul>
-                  </details>
                 ) : (
                   <ul className="space-y-2">{s.claims.map((c) => <ClaimRow key={c.text} claim={c} />)}</ul>
                 )}
@@ -757,6 +844,7 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
                     {parts.map((x) => <div key={x.k}>{x.node}</div>)}
                   </div>
                 )}
+                </OpenCtx.Provider>
               </Detail>
             );
           })}
