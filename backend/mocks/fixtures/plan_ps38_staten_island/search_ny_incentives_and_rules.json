@@ -1,0 +1,52 @@
+{
+  "tool": "search_ny_incentives_and_rules",
+  "data": {
+    "programs": [
+      {
+        "name": "Federal elective pay (direct pay) for governmental entities, solar investment credit (IRC 6417 / 48E)",
+        "status": "open",
+        "status_note": "Governmental entities can receive the credit as a direct payment. Solar property must be placed in service by 2027-12-31 (26 U.S.C. 48E(e)(4)(A), for facilities whose construction begins after 2026-07-04). Whether a particular school or agency qualifies is not confirmed here.",
+        "source_url": "https://www.irs.gov/credits-deductions/elective-pay-and-transferability",
+        "retrieved_at": "2026-10-17T07:34:24Z",
+        "deadline": "2027-12-31",
+        "statute_url": "https://www.law.cornell.edu/uscode/text/26/48E",
+        "quote": "Tax-exempt and governmental entities can benefit from certain clean energy investment and production credits using new options enabled by legislation enacted in 2022.",
+        "page_hash": "975a1301689e4905dcefe4674fd7d2f280e567e34bf78f103e2d755f5b1e2f31"
+      },
+      {
+        "name": "NYC Solar Schools program (DCAS, NYPA, NYC Public Schools): rooftop solar on DOE schools under power purchase agreements",
+        "status": "uncertain",
+        "status_note": "Ongoing: 130 installations done and more in progress per the city's release. The release describes no enrollment process, and it is not known whether this building is in the pipeline. Ask DCAS or the SCA.",
+        "source_url": "https://www.nyc.gov/site/dcas/news/010-26/nycps-dcas-complete-130-solar-installations-city-school-roofs-latest-completion-marie",
+        "retrieved_at": "2026-10-17T07:34:25Z",
+        "quote": "To date, DCAS and NYCPS have completed 130 solar installations on public schools, totaling 27.5 megawatts of added renewable power to the city’s portfolio, building on the city’s larger decarbonization efforts.",
+        "page_hash": "c80583528dd5ecb436ed35024ba8a851765ac6ac072c15a5cce01c430d681d8d"
+      },
+      {
+        "name": "NYSERDA NY-Sun commercial and industrial solar incentive (Con Edison region)",
+        "status": "uncertain",
+        "status_note": "The current incentive block status could not be read from an official page by a program: NYSERDA's dashboard blocks automated access. Check the dashboard in a browser before counting any incentive.",
+        "source_url": "https://www.nyserda.ny.gov/All-Programs/NY-Sun/Contractors/Dashboards-and-incentives/ConEd-Dashboard",
+        "retrieved_at": "2026-10-17T07:34:25Z"
+      },
+      {
+        "name": "NYC Local Laws 92 and 94 of 2019 (sustainable roofs): rule, not an incentive",
+        "status": "rule",
+        "status_note": "Applies to new buildings and existing buildings undergoing certain major roof renovations: the roof must have a solar photovoltaic system, a green roof system, or both, over any applicable roof.",
+        "source_url": "https://www.nyc.gov/site/buildings/dob/pr-sustainable-roof-requirements.page",
+        "retrieved_at": "2026-10-17T07:34:25Z",
+        "quote": "It is a huge step forward that all new buildings will have either a solar photovoltaic or green roof system.",
+        "page_hash": "e16c6a53adb762ec42246c86a37885d69b43f59134af2a50aa43203e44fbd4e6"
+      }
+    ]
+  },
+  "source_url": "https://www.irs.gov/credits-deductions/elective-pay-and-transferability",
+  "retrieved_at": "2026-10-17T07:34:26Z",
+  "dataset_version": "curated-register-live-verified",
+  "mock": false,
+  "stale": false,
+  "flags": [
+    "incentives_curated_register",
+    "incentive_status_uncertain"
+  ]
+}

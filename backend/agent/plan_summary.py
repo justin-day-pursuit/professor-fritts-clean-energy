@@ -127,7 +127,7 @@ def decide_outcome(scenarios: list[dict[str, Any]], site_context: dict[str, Any]
         }
     return {
         "code": "not_reached", "label": "Goal not reached", "tone": "caution",
-        "headline": f"None of the three plans reaches {goal:g}%.",
+        "headline": f"No plan reaches {goal:g}%." if len(scenarios) < 3 else f"None of the three plans reaches {goal:g}%.",
         "subhead": f"The best, Plan {nearest['scenario_id']}, cuts grid use {nearest['reduction_pct_of_use'][0]:g}-{nearest['reduction_pct_of_use'][1]:g}%.",
         "recommended": nearest["scenario_id"],
     }

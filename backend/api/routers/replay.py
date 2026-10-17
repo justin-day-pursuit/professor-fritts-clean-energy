@@ -25,18 +25,16 @@ router = APIRouter(prefix="/replay", tags=["replay"])
 # The saved demos, in the order the dropdown shows them. To add one, record a run with
 # `manage.py record_case` (or build a scripted case) and add a row here.
 REPLAY_CASES: list[dict[str, str]] = [
-    {"id": "live_ps236_bronx_v7", "label": "P.S. 236, Bronx: live run with city records", "kind": "recorded",
-     "tag": "Real Claude run (Oct 16): city energy and roof records, real solar and battery prices, itemized bill"},
-    {"id": "demo_ps236_bronx", "label": "P.S. 236, Bronx: the good case", "kind": "scripted",
-     "tag": "Goal reached within budget; backup power over budget (our script, real data)"},
-    {"id": "real3_ps38_staten_island", "label": "P.S. 38, Staten Island", "kind": "recorded",
-     "tag": "Surplus solar not counted; backup far over budget"},
-    {"id": "real2_red_hook_rec_center", "label": "Red Hook Recreation Center, Brooklyn", "kind": "recorded",
-     "tag": "Landmark on parkland, Sandy flood history, backup over budget"},
-    {"id": "real1_jefferson_market_library", "label": "Jefferson Market Library, Manhattan", "kind": "recorded",
+    {"id": "plan_ps236_bronx", "label": "P.S. 236, Bronx: the good case", "kind": "recorded",
+     "tag": "Goal reachable but over budget; the city rates the roof not solar ready"},
+    {"id": "plan_ps38_staten_island", "label": "P.S. 38, Staten Island", "kind": "recorded",
+     "tag": "Goal reached within budget; floor area differs from the city record"},
+    {"id": "plan_red_hook_rec_center", "label": "Red Hook Recreation Center, Brooklyn", "kind": "recorded",
+     "tag": "Landmark on parkland with a Sandy flood history"},
+    {"id": "plan_jefferson_market_library", "label": "Jefferson Market Library, Manhattan", "kind": "recorded",
      "tag": "Pitched roof: needs an engineer or roofer before solar is sized"},
-    {"id": "real4_ps24_bronx_existing_solar", "label": "P.S. 24, Bronx", "kind": "recorded",
-     "tag": "Roof already full of solar: efficiency only"},
+    {"id": "plan_ps24_bronx_existing_solar", "label": "P.S. 24, Bronx", "kind": "recorded",
+     "tag": "Roof already full of solar: efficiency only, goal not reached"},
 ]
 _BY_ID = {case["id"]: case for case in REPLAY_CASES}
 

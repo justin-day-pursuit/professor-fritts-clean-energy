@@ -1,0 +1,1063 @@
+{
+  "_comment": "Recording of live run 22 (status done); the plan is the model's own words.",
+  "steps": [
+    {
+      "type": "think",
+      "message": "Reviewing the intake and the question."
+    },
+    {
+      "type": "tool",
+      "name": "get_building_profile",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "lookup_ny_building_records",
+      "input": {
+        "address": "1871 Walton Avenue, Bronx, NY"
+      }
+    },
+    {
+      "type": "tool",
+      "name": "calculate",
+      "input": {
+        "formula": "C1",
+        "inputs": {
+          "roof_area_sqft": 10260
+        }
+      }
+    },
+    {
+      "type": "tool",
+      "name": "calculate",
+      "input": {
+        "formula": "C2",
+        "inputs": {
+          "usable_roof_sqft": 5643
+        }
+      }
+    },
+    {
+      "type": "tool",
+      "name": "get_solar_production",
+      "input": {
+        "system_kw": 85.5
+      }
+    },
+    {
+      "type": "tool",
+      "name": "get_utility_rates",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "calculate",
+      "input": {
+        "formula": "C4",
+        "inputs": {
+          "annual_solar_kwh": 101099.65,
+          "avg_rate_usd_per_kwh": 0.1981
+        }
+      }
+    },
+    {
+      "type": "tool",
+      "name": "calculate",
+      "input": {
+        "formula": "C4",
+        "inputs": {
+          "annual_solar_kwh": 111098.4,
+          "avg_rate_usd_per_kwh": 0.2418
+        }
+      }
+    },
+    {
+      "type": "tool",
+      "name": "calculate",
+      "input": {
+        "formula": "C3",
+        "inputs": {
+          "annual_solar_kwh": 106100.7,
+          "annual_use_kwh": 456834
+        }
+      }
+    },
+    {
+      "type": "tool",
+      "name": "search_ny_incentives_and_rules",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "get_hazard_context",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "get_utility_tariff",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "optimize_solar_storage",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "run_financial_model",
+      "input": {
+        "scenario_id": "A",
+        "floor_area_sqft": 43760,
+        "annual_use_kwh": 456834,
+        "budget_usd": 800000,
+        "full_array_kw_dc": 85.5,
+        "annual_solar_kwh_low": 101099.65,
+        "annual_solar_kwh_high": 111098.4,
+        "price_low_usd_per_kwh": 0.1981,
+        "price_high_usd_per_kwh": 0.2418,
+        "goal_fraction": 0.3,
+        "federal_credit_open": true
+      }
+    },
+    {
+      "type": "tool",
+      "name": "run_financial_model",
+      "input": {
+        "scenario_id": "B",
+        "floor_area_sqft": 43760,
+        "annual_use_kwh": 456834,
+        "budget_usd": 800000,
+        "full_array_kw_dc": 85.5,
+        "annual_solar_kwh_low": 101099.65,
+        "annual_solar_kwh_high": 111098.4,
+        "price_low_usd_per_kwh": 0.1981,
+        "price_high_usd_per_kwh": 0.2418,
+        "goal_fraction": 0.3,
+        "federal_credit_open": true
+      }
+    },
+    {
+      "type": "tool",
+      "name": "run_financial_model",
+      "input": {
+        "scenario_id": "C",
+        "floor_area_sqft": 43760,
+        "annual_use_kwh": 456834,
+        "budget_usd": 800000,
+        "full_array_kw_dc": 85.5,
+        "annual_solar_kwh_low": 101099.65,
+        "annual_solar_kwh_high": 111098.4,
+        "price_low_usd_per_kwh": 0.1981,
+        "price_high_usd_per_kwh": 0.2418,
+        "goal_fraction": 0.3,
+        "federal_credit_open": true,
+        "battery_kwh": 412,
+        "critical_load_kw": 43.8
+      }
+    },
+    {
+      "type": "final",
+      "name": "write_roadmap",
+      "input": {
+        "roadmap": {
+          "sections": [
+            {
+              "section_id": "1",
+              "title": "Summary and goal status",
+              "claims": [
+                {
+                  "text": "Your goal is to cut grid electricity 30% by 2030 on an $800,000 capital budget (budget year 2027), as entered in the intake.",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Rooftop solar alone covers only about 22-24% of annual use (central 23.2%), so it does not reach the 30% goal by itself.",
+                  "label": "ESTIMATE",
+                  "confidence": "medium",
+                  "source_url": null,
+                  "calc_id": "F-B",
+                  "assumption_id": null,
+                  "value_low": 22.1,
+                  "value_high": 24.3,
+                  "units": "% of annual use"
+                },
+                {
+                  "text": "Scenario A (efficiency only) cuts about 6.2-17.6% of annual use. It does not reach the goal and fits the budget.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": "F-A",
+                  "assumption_id": null,
+                  "value_low": 6.2,
+                  "value_high": 17.6,
+                  "units": "% of annual use"
+                },
+                {
+                  "text": "Scenario B (efficiency + whole-roof solar) cuts about 28.3-41.9% of annual use and fits the budget. The model's reaches_goal test uses the low end, so it is marked as not reaching the goal. The low end falls just short of 30%.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": "F-B",
+                  "assumption_id": null,
+                  "value_low": 28.3,
+                  "value_high": 41.9,
+                  "units": "% of annual use"
+                },
+                {
+                  "text": "Scenario C (deep efficiency + whole-roof solar + backup battery) cuts about 31.4-46.3% of annual use and reaches the goal even at the low end. It costs up to $371,077 more than your budget at the high end of the cost range.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": "F-C",
+                  "assumption_id": null,
+                  "value_low": 31.4,
+                  "value_high": 46.3,
+                  "units": "% of annual use"
+                },
+                {
+                  "text": "Meeting the goal with confidence may take more than the $800,000 budget. Whether to extend it is your decision, once you have compared the gap with the savings. Scenario B is close to the goal inside the budget. Scenario C adds a battery for resilience.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": null,
+                  "calc_id": "F-C",
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "The city's own Local Law 24 assessment lists this roof as Not Solar Ready, with a Fair condition and an age of 20 years or more. The roof needs a survey, and may need repair or replacement, before any solar. Roof work is not in any cost figure here.",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "https://data.cityofnewyork.us/City-Government/Solar-Readiness-Assessments-Local-Law-24/cfz5-6fvh",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "2",
+              "title": "Building profile and data provenance",
+              "claims": [
+                {
+                  "text": "P.S. 236 Langston Hughes (DOE building X173), 1871 Walton Avenue, Bronx. It is an elementary school of 43,760 sq ft built in 1994, with a flat roof of 10,260 sq ft and Con Edison as the utility. This is what you entered.",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Annual grid use is 456,834 kWh as you entered it. The city's Local Law 84 report for 2024 shows the same figure, so I treat it as measured. The goal baseline is the electricity the building buys from the grid.",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "https://data.cityofnewyork.us/Environment/NYC-Building-Energy-and-Water-Data-Disclosure-for-Local-Law-84/5zyy-y8am",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": 456834.0,
+                  "value_high": 456834.0,
+                  "units": "kWh/yr"
+                },
+                {
+                  "text": "You listed no existing renewables and no existing efficiency work, so the plan assumes none exist. Please tell me if the school already has LED lighting, controls or solar, because that lowers the savings.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "The city tax-lot record (PLUTO) shows a gross floor area of 46,700 sq ft against the 43,760 sq ft you entered. The Local Law 84 report also lists 43,760 sq ft. I kept your 43,760 sq ft. The record's address reads 1869 Walton Avenue, probably another frontage of the same lot. Please confirm both.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://data.cityofnewyork.us/City-Government/Primary-Land-Use-Tax-Lot-Output-PLUTO-/64uk-42ks",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": 43760.0,
+                  "value_high": 46700.0,
+                  "units": "sq ft"
+                },
+                {
+                  "text": "City building footprints show one building of 10,255 sq ft on the lot. That is close to your 10,260 sq ft roof. A footprint is ground area, not a measured roof, so have an engineer or roofer confirm the roof area.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://data.cityofnewyork.us/City-Government/Building-Footprints/5zhs-2jue",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": 10255.0,
+                  "value_high": 10255.0,
+                  "units": "sq ft"
+                },
+                {
+                  "text": "Local Law 84 shows the school also burns natural gas (893,000 kBtu) and fuel oil (69,276 kBtu). Heating fuel is outside an electricity-use goal, so the 30% target covers grid electricity only.",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "https://data.cityofnewyork.us/Environment/NYC-Building-Energy-and-Water-Data-Disclosure-for-Local-Law-84/5zyy-y8am",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "3",
+              "title": "Assumptions register",
+              "claims": [
+                {
+                  "text": "System losses of 18% (low) to 10% (high) around PVWatts' 14% default; weather is typical-year data.",
+                  "label": "ASSUMPTION",
+                  "confidence": "medium",
+                  "source_url": null,
+                  "calc_id": null,
+                  "assumption_id": "A1",
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Usable roof setback factor of 0.55 (C1).",
+                  "label": "ASSUMPTION",
+                  "confidence": "medium",
+                  "source_url": null,
+                  "calc_id": "C1",
+                  "assumption_id": "A2",
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Array density of 66 sq ft per kW DC (C2).",
+                  "label": "ASSUMPTION",
+                  "confidence": "medium",
+                  "source_url": null,
+                  "calc_id": "C2",
+                  "assumption_id": "A3",
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Critical load was not given, so it is estimated at 1.0 W per sq ft x 43,760 sq ft = 43.8 kW (a team placeholder, not metered). Backup length was not given, so 8 hours is assumed. Battery energy = kW x hours / 0.85 round-trip efficiency = 412 kWh.",
+                  "label": "ASSUMPTION",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": null,
+                  "assumption_id": "A4",
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Efficiency measures (LED and controls) save 10-20% of annual use. This is a team planning placeholder, not a cited benchmark and not a building model.",
+                  "label": "ASSUMPTION",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": null,
+                  "assumption_id": "A7",
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Planning-level benchmark prices, not quotes. Solar is $3,131-4,668/kW DC and the battery is $546-812/kWh, both from NYSERDA data on completed NYC projects. Efficiency costs $1.17-4.02 per kWh saved a year (standard) and $1.09-3.83 (deep). Standard efficiency saves 10-20% and deep saves 15-25% (team placeholders), but only 62-88% of those savings is counted, because the City's audited projects delivered that share (NYC DCAS Local Law 87 report FY2022).",
+                  "label": "ASSUMPTION",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": "F-C",
+                  "assumption_id": "A9",
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "4",
+              "title": "Baseline and efficiency opportunities",
+              "claims": [
+                {
+                  "text": "Baseline is 456,834 kWh a year bought from the grid, with no existing solar or efficiency work listed.",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": 456834.0,
+                  "value_high": 456834.0,
+                  "units": "kWh/yr"
+                },
+                {
+                  "text": "A standard efficiency package (such as lighting and controls) is estimated to cut 28,324-80,403 kWh a year (6.2-17.6% of use). That counts only 62-88% of the 10-20% placeholder savings (A7, A9), because the City's audited projects delivered that share. It is not a building audit.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": "F-A",
+                  "assumption_id": null,
+                  "value_low": 28324.0,
+                  "value_high": 80403.0,
+                  "units": "kWh/yr"
+                },
+                {
+                  "text": "A deep efficiency package (Scenario C) is estimated to cut part of the 31.4-46.3% total together with solar. The 15-25% savings are a team placeholder (A7), and the same 62-88% realization is applied (A9).",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": "F-C",
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "The intake does not say what lighting, controls or cooling the school has. Please send the lighting type and year, whether it has building controls, and the cooling type. Do not install LED again if it is already in place. A DOE building audit would replace the placeholder percentages.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "5",
+              "title": "Solar assessment with calculations",
+              "claims": [
+                {
+                  "text": "Usable roof is about 5,643 sq ft (10,260 sq ft x 0.55 setback factor), assumption A2.",
+                  "label": "ESTIMATE",
+                  "confidence": "medium",
+                  "source_url": null,
+                  "calc_id": "C1",
+                  "assumption_id": null,
+                  "value_low": 5643.0,
+                  "value_high": 5643.0,
+                  "units": "sq ft"
+                },
+                {
+                  "text": "The array that fits is about 85.5 kW DC (5,643 sq ft / 66 sq ft per kW), assumption A3.",
+                  "label": "ESTIMATE",
+                  "confidence": "medium",
+                  "source_url": null,
+                  "calc_id": "C2",
+                  "assumption_id": null,
+                  "value_low": 85.5,
+                  "value_high": 85.5,
+                  "units": "kW DC"
+                },
+                {
+                  "text": "PVWatts estimates 101,100-111,098 kWh a year (central 106,101). This uses the A1 loss band: system losses of 18% (low) to 10% (high) around PVWatts' 14% default; weather is typical-year data. The address match used a fallback geocode (confidence 0.8).",
+                  "label": "ESTIMATE",
+                  "confidence": "medium",
+                  "source_url": "https://developer.nlr.gov/docs/solar/pvwatts/v8/",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": 101100.0,
+                  "value_high": 111098.0,
+                  "units": "kWh/yr"
+                },
+                {
+                  "text": "Solar would offset about 23.2% of annual use at the central output.",
+                  "label": "ESTIMATE",
+                  "confidence": "medium",
+                  "source_url": null,
+                  "calc_id": "C3",
+                  "assumption_id": null,
+                  "value_low": 23.2,
+                  "value_high": 23.2,
+                  "units": "% of annual use"
+                },
+                {
+                  "text": "Solar bill savings are about $20,028-$26,864 a year, from the low kWh at the low price to the high kWh at the high price. The price is the New York commercial average from the EIA ($0.1981-$0.2418 per kWh), not this school's own tariff.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": "https://www.eia.gov/electricity/data/browser/",
+                  "calc_id": "C4",
+                  "assumption_id": null,
+                  "value_low": 20028.0,
+                  "value_high": 26864.0,
+                  "units": "USD/yr"
+                },
+                {
+                  "text": "The roof is 20 years or more old and listed as Fair and Not Solar Ready. A roof condition survey and a structural check must come before solar, and the roof may need replacement. I cannot certify that the roof can hold panels.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "https://data.cityofnewyork.us/City-Government/Solar-Readiness-Assessments-Local-Law-24/cfz5-6fvh",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "6",
+              "title": "Scenario comparison table",
+              "claims": [
+                {
+                  "text": "Scenario A, efficiency only: the share of the goal is 21-59%, which is 6.2-17.6% of annual use. It does not reach the goal.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": "F-A",
+                  "assumption_id": null,
+                  "value_low": 21.0,
+                  "value_high": 59.0,
+                  "units": "% of goal"
+                },
+                {
+                  "text": "Scenario A upfront and net cost are $53,450-$367,295 (no incentive counted). Simple payback is 2.7-65.5 years, and the cost fits the budget (7-46% of it). Outage backup is 0 hours.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": "F-A",
+                  "assumption_id": null,
+                  "value_low": 53450.0,
+                  "value_high": 367295.0,
+                  "units": "USD"
+                },
+                {
+                  "text": "Scenario B, efficiency + whole-roof solar (85.5 kW): the share of the goal is 94-140%, which is 28.3-41.9% of annual use. The low end falls just short of 30%, so the model marks it as not reaching the goal.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": "F-B",
+                  "assumption_id": null,
+                  "value_low": 94.0,
+                  "value_high": 140.0,
+                  "units": "% of goal"
+                },
+                {
+                  "text": "Scenario B upfront cost is $321,150-$766,409. Net cost is $240,840-$646,674 after the federal credit, counted because the tool reported the program open. Simple payback is 5.2-25.2 years. The cost fits the budget (40-96% of it). Outage backup is 0 hours.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": "F-B",
+                  "assumption_id": null,
+                  "value_low": 240840.0,
+                  "value_high": 646674.0,
+                  "units": "USD net cost"
+                },
+                {
+                  "text": "Scenario C, deep efficiency + whole-roof solar + 412 kWh battery: the share of the goal is 105-154%, which is 31.4-46.3% of annual use. It reaches the goal even at the low end.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": "F-C",
+                  "assumption_id": null,
+                  "value_low": 105.0,
+                  "value_high": 154.0,
+                  "units": "% of goal"
+                },
+                {
+                  "text": "Scenario C upfront cost is $567,345-$1,171,077. Net cost is $419,549-$950,979 after the federal credit. Simple payback is 8.2-33.4 years. Budget strain is 'may exceed budget'. Outage backup is 8.0-9.4 hours for the critical loads.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": "F-C",
+                  "assumption_id": null,
+                  "value_low": 419549.0,
+                  "value_high": 950979.0,
+                  "units": "USD net cost"
+                },
+                {
+                  "text": "Budget note for C: it reaches the goal, but the estimated cost is up to $371,077 more than your budget. Reaching the goal may take more than the amount set aside. Compare that gap with the savings before deciding whether to extend it.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": "F-C",
+                  "assumption_id": null,
+                  "value_low": 0.0,
+                  "value_high": 371077.0,
+                  "units": "USD above budget"
+                },
+                {
+                  "text": "Rooftop solar alone is about 22-24% of annual use and does not reach the goal without efficiency. The model treats the $800,000 as one total upfront figure, and payback is a simple payback, not the full SAM model.",
+                  "label": "ESTIMATE",
+                  "confidence": "medium",
+                  "source_url": null,
+                  "calc_id": "F-B",
+                  "assumption_id": null,
+                  "value_low": 22.1,
+                  "value_high": 24.3,
+                  "units": "% of annual use"
+                },
+                {
+                  "text": "Annual bill savings are $5,611-$19,441 (A), $25,639-$46,305 (B) and $28,444-$51,165 (C). They use the EIA state-average price, not this building's tariff.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": "F-C",
+                  "assumption_id": null,
+                  "value_low": 5611.0,
+                  "value_high": 51165.0,
+                  "units": "USD/yr"
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "7",
+              "title": "Cost, financing and incentives",
+              "claims": [
+                {
+                  "text": "Scenario B, efficiency line: standard package, 45,683-91,367 kWh saved a year (placeholder 10-20%) x $1.17-4.02 per kWh saved (25th-75th percentile of completed NYC public-sector projects, NYSERDA data). Cost is $53,450-$367,295.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
+                  "calc_id": "F-B",
+                  "assumption_id": null,
+                  "value_low": 53450.0,
+                  "value_high": 367295.0,
+                  "units": "USD"
+                },
+                {
+                  "text": "Scenario B, solar line: 85.5 kW DC x $3,131-4,668 per kW (25th-75th percentile of 558 completed NYC non-residential projects of 25-100 kW since 2022, NYSERDA data). Cost is $267,700-$399,114.",
+                  "label": "ESTIMATE",
+                  "confidence": "medium",
+                  "source_url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
+                  "calc_id": "F-B",
+                  "assumption_id": null,
+                  "value_low": 267700.0,
+                  "value_high": 399114.0,
+                  "units": "USD"
+                },
+                {
+                  "text": "Scenario B, federal credit line: 30% of solar, -$80,310 to -$119,734, counted only because the incentives tool reported the program open. See the next claim.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": "https://www.irs.gov/credits-deductions/elective-pay-and-transferability",
+                  "calc_id": "F-B",
+                  "assumption_id": null,
+                  "value_low": -119734.0,
+                  "value_high": -80310.0,
+                  "units": "USD"
+                },
+                {
+                  "text": "Scenario C, deep efficiency line: 68,525-114,208 kWh saved a year (placeholder 15-25%) x $1.09-3.83 per kWh saved (NYSERDA data on completed NYC public-sector projects). Cost is $74,692-$437,419.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
+                  "calc_id": "F-C",
+                  "assumption_id": null,
+                  "value_low": 74692.0,
+                  "value_high": 437419.0,
+                  "units": "USD"
+                },
+                {
+                  "text": "Scenario C, solar line: 85.5 kW DC x $3,131-4,668 per kW (NYSERDA data on completed NYC projects). Cost is $267,700-$399,114.",
+                  "label": "ESTIMATE",
+                  "confidence": "medium",
+                  "source_url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
+                  "calc_id": "F-C",
+                  "assumption_id": null,
+                  "value_low": 267700.0,
+                  "value_high": 399114.0,
+                  "units": "USD"
+                },
+                {
+                  "text": "Scenario C, backup battery line: 412 kWh x $546-812 per kWh (25th-75th percentile of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data). Cost is $224,952-$334,544. The size comes from an estimated critical load (A4).",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
+                  "calc_id": "F-C",
+                  "assumption_id": null,
+                  "value_low": 224952.0,
+                  "value_high": 334544.0,
+                  "units": "USD"
+                },
+                {
+                  "text": "Scenario C, federal credit line: 30% of solar and battery, -$147,796 to -$220,097.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": "https://www.irs.gov/credits-deductions/elective-pay-and-transferability",
+                  "calc_id": "F-C",
+                  "assumption_id": null,
+                  "value_low": -220097.0,
+                  "value_high": -147796.0,
+                  "units": "USD"
+                },
+                {
+                  "text": "Federal elective pay (direct pay) for governmental entities: status open, retrieved 2026-10-17. The solar property must be placed in service by 2027-12-31. The register does not confirm that this school or agency qualifies. Confirm with DCAS or counsel before relying on it. It is paid back after the project is built, so you must still fund the upfront cost. Upfront costs, before the credit, are in the F-B and F-C figures above.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://www.irs.gov/credits-deductions/elective-pay-and-transferability",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "The NYC Solar Schools program (rooftop solar on DOE schools under power purchase agreements) is uncertain: it is not known whether this building is in the pipeline. It is left out of net cost. Ask DCAS or the SCA.",
+                  "label": "FACT",
+                  "confidence": "low",
+                  "source_url": "https://www.nyc.gov/site/dcas/news/010-26/nycps-dcas-complete-130-solar-installations-city-school-roofs-latest-completion-marie",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "The NYSERDA NY-Sun commercial solar incentive is uncertain: its block status could not be read from the official dashboard. It is left out of net cost. Check the dashboard in a browser.",
+                  "label": "FACT",
+                  "confidence": "low",
+                  "source_url": "https://www.nyserda.ny.gov/All-Programs/NY-Sun/Contractors/Dashboards-and-incentives/ConEd-Dashboard",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "NYC Local Laws 92 and 94 of 2019 are a rule, not an incentive. Existing buildings undergoing certain major roof renovations must have a solar PV system, a green roof, or both. This may apply if the aged roof is replaced.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://www.nyc.gov/site/buildings/dob/pr-sustainable-roof-requirements.page",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Roof repair or replacement, engineering fees, interconnection costs and structural reinforcement are not in any figure above. They would come out of the same $800,000.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": null,
+                  "calc_id": "F-C",
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "8",
+              "title": "Priority roadmap",
+              "claims": [
+                {
+                  "text": "Phase 0, confirm data and budget: send recent Con Edison bills, the roof replacement year, lighting and controls details, and whether the $800,000 capital budget in 2027 is one total sum. Confirm the tariff on a bill. Confirm the 43,760 vs 46,700 sq ft floor area and the roof area.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Phase 1, professional reviews: a structural PE/RA analysis and a roof condition survey, given the 20-year-plus Fair roof rated Not Solar Ready. Decide on roof repair or replacement before solar.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "https://data.cityofnewyork.us/City-Government/Solar-Readiness-Assessments-Local-Law-24/cfz5-6fvh",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Phase 2, efficiency measures: get an audit and install the measures that pay back fastest (lighting and controls, if not already done), through DCAS or the SCA. This is the cheapest share of the goal (F-A).",
+                  "label": "RECOMMENDATION",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": "F-A",
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Phase 3, permits and interconnection: a licensed electrician, DOB permits, FDNY rooftop access review and the Con Edison interconnection application. Start early because the federal credit needs the solar in service by 2027-12-31.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "https://www.irs.gov/credits-deductions/elective-pay-and-transferability",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Phase 4, solar installation: the whole-roof array of about 85.5 kW DC is the Scenario B/C size. It must be confirmed after the structural and roof reviews. Ask DCAS whether the Solar Schools program covers this roof first.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": "F-B",
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Phase 5, battery, commissioning and verification: decide on the battery once the real critical load is metered, then commission and check results against Con Edison bills. The battery adds $224,952-$334,544 and is not needed to reach the 30% goal. Ask for a re-run without it.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": "F-C",
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "9",
+              "title": "Resilience and reliability plan",
+              "claims": [
+                {
+                  "text": "Scenario C gives about 8.0-9.4 hours of backup for critical loads. Scenarios A and B give no backup power, because solar panels shut off in an outage without a battery.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": "F-C",
+                  "assumption_id": null,
+                  "value_low": 8.0,
+                  "value_high": 9.4,
+                  "units": "hours"
+                },
+                {
+                  "text": "Critical loads are emergency lighting and communications, as you entered. The battery size (43.8 kW, 412 kWh, 8 hours) is an estimate from a placeholder load of 1 W per sq ft, not a metered load. A measured critical load would likely allow a smaller, cheaper battery.",
+                  "label": "ASSUMPTION",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": null,
+                  "assumption_id": "A4",
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "FEMA's current effective map puts the address in Zone X, an area of minimal flood hazard. Heat and winter-storm ratings were not looked up. The 2015 preliminary flood map was not checked, and NYC code uses the more restrictive map. No flood-zone review is triggered by this result.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "10",
+              "title": "Required professional reviews and permits",
+              "claims": [
+                {
+                  "text": "Structural analysis by a licensed PE or RA is required. I cannot certify that the roof can hold panels.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "https://data.cityofnewyork.us/City-Government/Solar-Readiness-Assessments-Local-Law-24/cfz5-6fvh",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "A roof condition survey is needed, covering repair or replacement, before solar. Please also verify the usable roof area (size, shading, structure) with an engineer or roofer.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "https://data.cityofnewyork.us/City-Government/Solar-Readiness-Assessments-Local-Law-24/cfz5-6fvh",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "A licensed electrician, an FDNY rooftop access review and a Con Edison utility interconnection review are required. Check the DOB sustainable roof requirement if the roof is replaced.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "https://www.nyc.gov/site/buildings/dob/pr-sustainable-roof-requirements.page",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "This is a DOE school, so the approval route runs through DCAS, NYC Public Schools or the SCA. The list at the end of the plan has the contact links. The building is not a landmark, and no parkland flag was returned.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "https://data.cityofnewyork.us/City-Government/Primary-Land-Use-Tax-Lot-Output-PLUTO-/64uk-42ks",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "11",
+              "title": "Path to net-zero and learning resources",
+              "claims": [
+                {
+                  "text": "Even Scenario C leaves a share of electricity bought from the grid (31-46% cut). Net-zero would need more efficiency, other roof or site solar, and moving heating off gas and oil. That is a separate electrification study, outside this electricity-use goal.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": "F-C",
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Ask DCAS and the SCA about the NYC Solar Schools program and school decarbonization work. The NYSERDA and DCAS pages in the source list are good starting points.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "low",
+                  "source_url": "https://www.nyc.gov/site/dcas/news/010-26/nycps-dcas-complete-130-solar-installations-city-school-roofs-latest-completion-marie",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "12",
+              "title": "Gaps, conflicts and confidence summary",
+              "claims": [
+                {
+                  "text": "Flag city_roof_not_solar_ready: the city's Local Law 24 record says Not Solar Ready, roof Fair, 20+ years. I lowered confidence on all solar and cost claims, and roof work is not costed.",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "https://data.cityofnewyork.us/City-Government/Solar-Readiness-Assessments-Local-Law-24/cfz5-6fvh",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Flag missing_field:roof_replaced_year, plus other blank intake fields (lighting type, heating fuel, cooling type, building controls, critical load kW, backup hours, goal type). Efficiency savings and battery size therefore rest on placeholders. Please fill these in.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Flag statewide_average_rate: savings use the New York commercial average from the EIA, not this building's tariff.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://www.eia.gov/electricity/data/browser/",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Flag tariff_needs_user_confirmation: Con Edison publishes several NYC general-service tariffs (SC-2 and SC-9 variants, effective 2025-02-01). The building's own tariff must be confirmed on a bill. I have not picked one.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://openei.org/wiki/Utility_Rate_Database",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Flags incentives_curated_register and incentive_status_uncertain: a person keeps the incentive list and the system verifies each official page. NY-Sun and Solar Schools are uncertain and left out of net cost. Federal elective pay is open, but this school's eligibility is not confirmed. If it does not qualify, net costs in B and C rise by $80,310-$119,734 and $147,796-$220,097.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://www.irs.gov/credits-deductions/elective-pay-and-transferability",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Flag hazard_partial: only the current FEMA flood zone (X) was read. Heat and winter-storm ratings were not looked up and the 2015 preliminary map was not checked.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Flag battery_inputs_estimated: the battery is sized from a placeholder load and an assumed 8 hours (A4).",
+                  "label": "ASSUMPTION",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": null,
+                  "assumption_id": "A4",
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Overall confidence is low to medium. Efficiency savings are team placeholders (A7, A9). Scenario B's low end of 28.3% is just under the 30% goal, so it is not certain to reach it. The budget is treated as one total upfront figure, not an annual one. No tool failed and no retrieved page carried hidden instructions.",
+                  "label": "ESTIMATE",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": "F-B",
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "13",
+              "title": "Sources",
+              "claims": [],
+              "stand_in_note": null
+            }
+          ],
+          "footer_note": "All figures are planning-level ESTIMATE ranges, not quotes, and nothing here is a guarantee of savings. Simple payback is not the full SAM model. Only a licensed PE or RA can certify that the roof can carry solar panels."
+        }
+      }
+    }
+  ]
+}

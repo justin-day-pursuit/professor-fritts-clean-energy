@@ -1,0 +1,26 @@
+{
+  "solar": {
+    "low": 2528.0,
+    "high": 3752.0,
+    "basis": "25th-75th percentile of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
+    "source_url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs"
+  },
+  "efficiency": {
+    "prices": {
+      "standard": [
+        1.17,
+        4.02
+      ],
+      "deep": [
+        1.09,
+        3.83
+      ]
+    },
+    "basis": "25th-75th percentile of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
+    "source_url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx"
+  },
+  "realization": [
+    0.62,
+    0.88
+  ]
+}

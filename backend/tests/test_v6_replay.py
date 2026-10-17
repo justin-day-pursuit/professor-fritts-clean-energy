@@ -18,21 +18,20 @@ from mocks.mock_mode import get_tool_mode
 
 
 def test_the_menu_lists_every_saved_demo_with_whether_it_is_a_recording(api_client):
-    """The list has the five saved demos; the good case is marked scripted (our words), the rest recorded (Claude's)."""
+    """The list has the five saved demos, every one a recording of a real Claude run."""
     cases = api_client.get("/api/replay/cases").json()["cases"]
     assert [c["id"] for c in cases] == [c["id"] for c in REPLAY_CASES]
     kinds = {c["id"]: c["kind"] for c in cases}
-    assert kinds["demo_ps236_bronx"] == "scripted"
-    assert all(kind == "recorded" for case_id, kind in kinds.items() if case_id != "demo_ps236_bronx")
+    assert all(kind == "recorded" for kind in kinds.values())
     assert all(c["question"] and c["label"] and c["tag"] for c in cases)
 
 
 @pytest.mark.parametrize(("case_id", "status"), [
-    ("demo_ps236_bronx", "done"),
-    ("real3_ps38_staten_island", "done"),
-    ("real2_red_hook_rec_center", "done"),
-    ("real1_jefferson_market_library", "partial"),
-    ("real4_ps24_bronx_existing_solar", "partial"),
+    ("plan_ps236_bronx", "done"),
+    ("plan_ps38_staten_island", "done"),
+    ("plan_red_hook_rec_center", "done"),
+    ("plan_jefferson_market_library", "partial"),
+    ("plan_ps24_bronx_existing_solar", "partial"),
 ])
 def test_each_saved_demo_replays_to_its_recorded_outcome(api_client, case_id, status):
     """Each replay returns the session, the assistant plan message, and a run with its full event log."""
@@ -56,7 +55,7 @@ def test_a_replay_never_calls_claude_or_a_live_service_even_on_a_live_server(api
 
     monkeypatch.setattr(anthropic, "Anthropic", forbidden)
     monkeypatch.setattr(httpx, "get", forbidden)
-    body = api_client.post("/api/replay/real3_ps38_staten_island").json()
+    body = api_client.post("/api/replay/plan_ps38_staten_island").json()
     assert body["run"]["status"] == "done"
     assert body["run"]["llm_provider"] == "scripted" and body["run"]["tool_mode"] == "mock"
     assert not [e for e in body["run"]["events"] if e["kind"] == "usage"]  # no model call, so no spend entries
@@ -66,7 +65,7 @@ def test_the_forced_mock_mode_does_not_leak_to_other_requests(api_client, monkey
     """After a replay the server's own tool mode is exactly what it was, so live runs are unaffected."""
     monkeypatch.setattr(settings, "TOOL_MODE", "live")
     assert get_tool_mode() == "live"
-    api_client.post("/api/replay/real2_red_hook_rec_center")
+    api_client.post("/api/replay/plan_red_hook_rec_center")
     assert get_tool_mode() == "live"
 
 

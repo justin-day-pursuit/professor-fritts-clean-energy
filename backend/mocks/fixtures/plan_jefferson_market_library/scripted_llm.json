@@ -1,0 +1,701 @@
+{
+  "_comment": "Recording of live run 28 (status partial); the plan is the model's own words.",
+  "steps": [
+    {
+      "type": "think",
+      "message": "Reviewing the intake and the question."
+    },
+    {
+      "type": "tool",
+      "name": "get_building_profile",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "lookup_ny_building_records",
+      "input": {
+        "address": "425 6th Avenue, Manhattan, NY"
+      }
+    },
+    {
+      "type": "tool",
+      "name": "calculate",
+      "input": {
+        "formula": "C1",
+        "inputs": {
+          "roof_area_sqft": 7020
+        }
+      }
+    },
+    {
+      "type": "tool",
+      "name": "get_hazard_context",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "get_hazard_context",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "get_utility_rates",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "get_utility_rates",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "search_ny_incentives_and_rules",
+      "input": {}
+    },
+    {
+      "type": "tool",
+      "name": "get_utility_tariff",
+      "input": {}
+    },
+    {
+      "type": "final",
+      "name": "write_roadmap",
+      "input": {
+        "roadmap": {
+          "sections": [
+            {
+              "section_id": "1",
+              "title": "Summary and goal status",
+              "claims": [
+                {
+                  "text": "Goal entered: cut grid electricity 30% by 2030 on a $500,000 capital budget (budget year 2027).",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": 30.0,
+                  "value_high": 30.0,
+                  "units": "% of annual grid use"
+                },
+                {
+                  "text": "Can you put solar on the roof? It may be possible, but I cannot size it yet. The roof is pitched, the city's own Local Law 24 record lists the library as 'Not Solar Ready', and the building is flagged as a landmark. The city record says nothing about the roof's condition or age.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://data.cityofnewyork.us/City-Government/Solar-Readiness-Assessments-Local-Law-24/cfz5-6fvh",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Because the roof is not flat, the sizing tool refused to estimate usable area, array size or output. Scenarios B and C depend on that number, so they were not costed. Have an engineer or roofer verify the usable roof area (size, pitch, direction, structure, shading), enter it in the intake as verified_usable_roof_sqft, and I can re-plan.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Efficiency work alone is planned at 10-20% of annual use, which is below your 30% goal. Rooftop solar on a pitched, landmark roof is uncertain, so the 30% goal cannot be confirmed as reachable on $500,000 from this run. Meeting it may take more than the budget or a different mix of measures; whether to extend the budget is your decision.",
+                  "label": "ASSUMPTION",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": null,
+                  "assumption_id": "A7",
+                  "value_low": 10.0,
+                  "value_high": 20.0,
+                  "units": "% of annual use"
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "2",
+              "title": "Building profile and data provenance",
+              "claims": [
+                {
+                  "text": "Jefferson Market Library (NYPL), 425 6th Avenue, Manhattan; library built 1877; floor area 18,643 sq ft; pitched roof; roof area typed as 7,020 sq ft; Con Edison customer. Critical loads you named: reading room cooling and lighting.",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": 18643.0,
+                  "value_high": 18643.0,
+                  "units": "sq ft"
+                },
+                {
+                  "text": "Existing systems: you entered no existing renewables and no existing efficiency work, so this plan takes none into account. Please confirm; if any LED, controls or solar already exist, savings and confidence change.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Annual grid use is 268,331 kWh. The city's Local Law 84 report (2024) shows the same figure (268,331 kWh), so your number and the city's agree. This is the baseline the goal is measured against: electricity the building buys from the grid.",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "https://data.cityofnewyork.us/Environment/NYC-Building-Energy-and-Water-Data-Disclosure-for-Local-Law-84/5zyy-y8am",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": 268331.0,
+                  "value_high": 268331.0,
+                  "units": "kWh/yr"
+                },
+                {
+                  "text": "Floor area: you entered 18,643 sq ft, which matches the Local Law 84 report. The PLUTO tax-lot record lists 19,800 sq ft gross floor area. I kept your 18,643 sq ft; please confirm which is correct.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://data.cityofnewyork.us/City-Government/Primary-Land-Use-Tax-Lot-Output-PLUTO-/64uk-42ks",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": 18643.0,
+                  "value_high": 19800.0,
+                  "units": "sq ft"
+                },
+                {
+                  "text": "The city lists this lot at 421 Avenue of the Americas (6th Avenue's official name); the geocoder matched 425 6 Avenue. It may be another frontage of the same lot; please confirm the records are for your building.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://data.cityofnewyork.us/City-Government/Primary-Land-Use-Tax-Lot-Output-PLUTO-/64uk-42ks",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "City building footprints show one building of 7,019 sq ft on the lot, close to your roof area of 7,020 sq ft. A footprint is the ground area under the building, not a measured roof, and the roof is pitched. I kept your 7,020 sq ft as the working figure; confirm it with an engineer or roofer.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://data.cityofnewyork.us/City-Government/Building-Footprints/5zhs-2jue",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": 7019.0,
+                  "value_high": 7020.0,
+                  "units": "sq ft"
+                },
+                {
+                  "text": "The roof condition and age are 'Unknown' in the city record, and your intake has no roof replacement year.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://data.cityofnewyork.us/City-Government/Solar-Readiness-Assessments-Local-Law-24/cfz5-6fvh",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "3",
+              "title": "Assumptions register",
+              "claims": [
+                {
+                  "text": "A7: Efficiency measures (LED and controls) save 10-20% of annual use. This is a team planning placeholder, not a cited benchmark and not a building model.",
+                  "label": "ASSUMPTION",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": null,
+                  "assumption_id": "A7",
+                  "value_low": 10.0,
+                  "value_high": 20.0,
+                  "units": "% of annual use"
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "4",
+              "title": "Baseline and efficiency opportunities",
+              "claims": [
+                {
+                  "text": "Baseline is the 268,331 kWh the building bought from the grid in the 2024 Local Law 84 report; I treat it as measured, not a benchmark.",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "https://data.cityofnewyork.us/Environment/NYC-Building-Energy-and-Water-Data-Disclosure-for-Local-Law-84/5zyy-y8am",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": 268331.0,
+                  "value_high": 268331.0,
+                  "units": "kWh/yr"
+                },
+                {
+                  "text": "The same report shows 1,041,151 kBtu of natural gas, so the building appears to heat with gas. Gas heating is outside an electricity-use goal, so cutting it would not count toward your 30%. Heating fuel is not in your intake; please confirm.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://data.cityofnewyork.us/Environment/NYC-Building-Energy-and-Water-Data-Disclosure-for-Local-Law-84/5zyy-y8am",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": 1041151.0,
+                  "value_high": 1041151.0,
+                  "units": "kBtu/yr"
+                },
+                {
+                  "text": "Efficiency planning figure: LED and controls at 10-20% of annual use (team placeholder). The cost model was not run, so no efficiency cost, realization share or dollar savings is given. You entered no lighting type or controls information, so I cannot tell whether LED is already installed; confirm before pricing it as new.",
+                  "label": "ASSUMPTION",
+                  "confidence": "low",
+                  "source_url": null,
+                  "calc_id": null,
+                  "assumption_id": "A7",
+                  "value_low": 10.0,
+                  "value_high": 20.0,
+                  "units": "% of annual use"
+                },
+                {
+                  "text": "Ask for an energy audit of cooling, lighting, controls and the building envelope; as a landmark, envelope changes need LPC review. Cooling and controls information (cooling_type, has_building_controls) is blank in your intake.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "5",
+              "title": "Solar assessment with calculations",
+              "claims": [
+                {
+                  "text": "The roof-sizing calculation (C1/C2) was refused because the roof is pitched, so there is no usable roof area, array size, solar kWh or solar savings in this plan. I did not estimate any of them.",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Have an engineer or roofer verify the usable roof area (size, pitch, direction, structure, shading) and enter it as verified_usable_roof_sqft, then re-run the plan. Output on a pitched roof depends on its pitch and direction, so confidence stays lower than for a flat roof.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "The city lists the library as 'Not Solar Ready' with unknown roof condition and age. Check the roof, and consider repair or replacement, before solar.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://data.cityofnewyork.us/City-Government/Solar-Readiness-Assessments-Local-Law-24/cfz5-6fvh",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "If the roof gets a major renovation, NYC Local Laws 92 and 94 of 2019 require a solar PV system, a green roof, or both over the applicable roof. This is a rule, not an incentive.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://www.nyc.gov/site/buildings/dob/pr-sustainable-roof-requirements.page",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Rooftop solar alone would be only part of a 30% cut, and its share could not be estimated here.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "6",
+              "title": "Scenario comparison table",
+              "claims": [
+                {
+                  "text": "Scenarios A (efficiency only), B (efficiency plus solar within budget) and C (deep efficiency, full roof array and battery) were not run. The financial model needs solar output and electricity prices, and the solar sizing tool refused the pitched roof and the rates tool timed out twice. No share of goal, upfront cost, net cost, payback or budget strain is given for any scenario.",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Reaching 30% may cost more than $500,000. I cannot show the gap yet. Once the roof area is verified and prices are available, I will compare all three scenarios and show any amount above your budget; extending the budget would then be your decision.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "7",
+              "title": "Cost, financing and incentives (with status and retrieval date)",
+              "claims": [
+                {
+                  "text": "No net-cost figure is given because the cost model was not run. No incentive is counted in any net cost.",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Federal elective pay (direct pay) for governmental entities: status open as of 2026-10-17, with solar required to be placed in service by 2027-12-31. Whether this library or its owner qualifies is not confirmed, so it is left out of net cost until confirmed.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://www.irs.gov/credits-deductions/elective-pay-and-transferability",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "NYSERDA NY-Sun commercial solar incentive for the Con Edison region: status uncertain (retrieved 2026-10-17). The official dashboard could not be read automatically, so it is left out of net cost. Check the dashboard in a browser.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://www.nyserda.ny.gov/All-Programs/NY-Sun/Contractors/Dashboards-and-incentives/ConEd-Dashboard",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Your budget is a capital amount for 2027. The model would treat it as one total upfront figure.",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": 500000.0,
+                  "value_high": 500000.0,
+                  "units": "USD"
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "8",
+              "title": "Priority roadmap",
+              "claims": [
+                {
+                  "text": "Phase 0, confirm data and budget: confirm floor area (18,643 vs 19,800 sq ft), owner agency, heating fuel, roof replacement year, existing systems, the budget year and type, and the Con Edison tariff from a bill.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Phase 1, professional reviews: structural PE/RA analysis and a roof condition survey that also verifies usable roof area, pitch, direction and shading for the pitched roof.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "https://data.cityofnewyork.us/City-Government/Solar-Readiness-Assessments-Local-Law-24/cfz5-6fvh",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Phase 2, efficiency measures: energy audit, then lighting, controls and cooling measures not already in place, since these are planned at 10-20% of use (A7). Gas heating sits outside this electricity goal.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "https://data.cityofnewyork.us/Environment/NYC-Building-Energy-and-Water-Data-Disclosure-for-Local-Law-84/5zyy-y8am",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Phase 3, permits and interconnection: LPC review first, then DOB permits, a licensed electrician, FDNY rooftop access review and the Con Edison interconnection application.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "https://www.nyc.gov/site/buildings/dob/pr-sustainable-roof-requirements.page",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Phase 4, solar installation: only if the roof passes the structural, condition and LPC reviews; size from the verified roof area. Check the federal 2027-12-31 in-service date against the schedule.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "https://www.irs.gov/credits-deductions/elective-pay-and-transferability",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Phase 5, battery, commissioning and verification: size any battery from your critical loads and backup hours, then compare measured use against utility bills.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "9",
+              "title": "Resilience and reliability plan",
+              "claims": [
+                {
+                  "text": "Critical loads you named are reading room cooling and lighting. The battery sizing tool was not run, so no battery size or outage hours are given. Your intake has no critical load kW or backup hours wanted; please provide them.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Solar panels without a battery shut off in a grid outage, so efficiency only or solar without storage gives no backup power.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "FEMA's current effective flood map puts the address in Zone X (minimal flood hazard), not a special flood hazard area. NYC code uses the more restrictive of the effective and 2015 preliminary maps, and I did not check the preliminary map. Heat and winter-storm ratings were not looked up. Confirm the preliminary map before placing a battery or switchgear.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "10",
+              "title": "Required professional reviews and permits",
+              "claims": [
+                {
+                  "text": "Landmark: the city record flags this lot as a landmark (you describe it as in the Greenwich Village Historic District). Get a Landmarks Preservation Commission permit review before any rooftop or exterior work, including panels, rooftop equipment and envelope changes. I could not confirm district status from the data pulled.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "https://data.cityofnewyork.us/City-Government/Primary-Land-Use-Tax-Lot-Output-PLUTO-/64uk-42ks",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Structural: a licensed PE or RA must analyze the roof structure. I cannot certify that the roof can hold panels.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Roof condition survey by a qualified roofer, covering the unknown roof age and condition. The roof may need repair or replacement before solar; a major roof renovation would trigger Local Laws 92/94.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "https://www.nyc.gov/site/buildings/dob/pr-sustainable-roof-requirements.page",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Licensed electrician for design and installation; FDNY rooftop access and clearance review; Con Edison utility interconnection review and application; DOB permits.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "https://www.nyc.gov/site/buildings/dob/pr-sustainable-roof-requirements.page",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Owner and approval route: the city record names NYPL as the owning agency; owner_agency is blank in your intake. Confirm the approval route with NYPL and the city agency that manages capital projects. The list at the end of this plan links the contact pages. Parkland was not flagged in the records, so no parkland review is added; tell me if the site sits on parkland.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "medium",
+                  "source_url": "https://data.cityofnewyork.us/City-Government/Solar-Readiness-Assessments-Local-Law-24/cfz5-6fvh",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "11",
+              "title": "Path to net-zero and learning resources",
+              "claims": [
+                {
+                  "text": "A realistic path: verify the roof, do efficiency first, add solar only if the roof and landmark reviews allow it, and consider the gas heating (about 1.04 million kBtu a year) separately, since an electricity goal does not cover it.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "low",
+                  "source_url": "https://data.cityofnewyork.us/Environment/NYC-Building-Energy-and-Water-Data-Disclosure-for-Local-Law-84/5zyy-y8am",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "12",
+              "title": "Gaps, conflicts and confidence summary",
+              "claims": [
+                {
+                  "text": "Tool failure, calculate (roof sizing C1): the tool refused because the roof is pitched. Missing because of it: usable roof area, array size, solar kWh, solar savings, and the costs of scenarios B and C. Next step: enter verified_usable_roof_sqft and re-run. This lowers the confidence of every solar-dependent statement.",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Tool failure, get_utility_rates: the electricity price call timed out twice (the second was a retry) and returned no data. Missing because of it: the price range, dollar savings and payback. Together with the missing solar inputs, this meant the three-scenario financial model was not run. Next step: re-run once get_utility_rates is available and the roof area is verified.",
+                  "label": "FACT",
+                  "confidence": "high",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Tool failure, get_hazard_context: the flood-zone call failed once and a retry worked. Only the current FEMA zone (X) was read (hazard_partial); the 2015 preliminary map, heat and winter-storm ratings were not checked.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Tariff: the building's own tariff must be confirmed on a bill. Con Edison lists several general-service tariffs for NYC (SC-2 and SC-9 variants, effective 2025-02-01); I have not picked one. Savings, when computed, would use the EIA state average, not this building's tariff.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://openei.org/wiki/Utility_Rate_Database",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Incentives come from a curated register that a person keeps and the system verifies page by page. The NY-Sun status is uncertain and the federal eligibility is unconfirmed, so neither is counted in any net cost.",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://www.irs.gov/credits-deductions/elective-pay-and-transferability",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Data conflicts and gaps: floor area 18,643 (yours and Local Law 84) vs 19,800 sq ft (PLUTO); address listed as 421 Avenue of the Americas vs your 425 6th Avenue; roof area 7,020 sq ft (yours) vs a 7,019 sq ft footprint; roof replacement year, roof condition, owner agency, heating fuel, lighting, cooling, controls, critical load kW and backup hours are blank. Efficiency percentages are team placeholders (A7).",
+                  "label": "FACT",
+                  "confidence": "medium",
+                  "source_url": "https://data.cityofnewyork.us/City-Government/Primary-Land-Use-Tax-Lot-Output-PLUTO-/64uk-42ks",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                },
+                {
+                  "text": "Your goal is a percent cut in grid electricity, which is the type this tool models. I cannot guarantee any savings; every figure here is an estimate or assumption.",
+                  "label": "RECOMMENDATION",
+                  "confidence": "high",
+                  "source_url": "session://profile",
+                  "calc_id": null,
+                  "assumption_id": null,
+                  "value_low": null,
+                  "value_high": null,
+                  "units": null
+                }
+              ],
+              "stand_in_note": null
+            },
+            {
+              "section_id": "13",
+              "title": "Sources",
+              "claims": [],
+              "stand_in_note": null
+            }
+          ],
+          "footer_note": "This is a partial roadmap. Solar sizing, the three-scenario cost model and the electricity price could not be produced in this run, so no solar kWh, dollar savings, payback or net cost is given. Every figure here is an estimate or assumption, not a promise of results. I cannot certify that the roof can hold panels; a licensed PE or RA must do that analysis."
+        }
+      }
+    }
+  ]
+}

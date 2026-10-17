@@ -1,0 +1,23 @@
+{
+  "city": "New York",
+  "state": "NY",
+  "utility": "Con Edison",
+  "goal": "Cut grid electricity 30% by 2030",
+  "target_year": 2030,
+  "building_name": "P.S. 38 (R038)",
+  "address": "421 Lincoln Avenue",
+  "borough": "Staten Island",
+  "building_type": "elementary school",
+  "floor_area_sqft": 55860,
+  "year_built": 1955,
+  "roof_type": "flat",
+  "roof_area_sqft": 34360,
+  "annual_kwh": 284403,
+  "budget_amount": 600000,
+  "budget_year": 2027,
+  "budget_type": "capital",
+  "critical_loads": "emergency lighting and communications",
+  "existing_renewables": "none",
+  "existing_efficiency": "none",
+  "goal_percent": 30
+}
