@@ -220,6 +220,38 @@ def _check_roof_formula(formula: str, inputs: dict[str, Any], profile: dict[str,
             )
 
 
+def _with_real_solar_price(inp: Any) -> tuple[Any, list[str]]:
+    """
+    In live mode, replace the placeholder solar price with real NYC project costs (NYSERDA data, tools/solar_costs.py).
+
+    The model's solar range becomes the 25th to 75th percentile cost per kW of comparable completed projects.
+    If the lookup fails or has too few projects, the placeholder stays and a flag says so. Mock mode is left alone
+    so saved demos replay with the same numbers.
+    """
+    from mocks.mock_mode import get_tool_mode
+    from tools.solar_costs import SolarCostError, fetch_solar_cost_range
+
+    if get_tool_mode() != "live" or inp.solar_usd_per_kw_low:
+        return inp, []
+    try:
+        found = fetch_solar_cost_range(inp.full_array_kw_dc)
+    except SolarCostError:
+        found = None
+    if not found:
+        return inp, ["solar_price_placeholder"]
+    low, high = found["band_kw"]
+    basis = (
+        f"25th-75th percentile of {found['projects']} completed NYC non-residential projects of "
+        f"{low:g}-{high:g} kW since {found['since'][:4]}, NYSERDA data {found['source_url']}"
+    )
+    updated = inp.model_copy(update={
+        "solar_usd_per_kw_low": float(found["p25_usd_per_kw"]),
+        "solar_usd_per_kw_high": float(found["p75_usd_per_kw"]),
+        "solar_price_basis": basis,
+    })
+    return updated, []
+
+
 def _goal_fraction_from_profile(profile: dict[str, Any]) -> float | None:
     """The intake's goal percent (5 to 100) as a fraction, or None when it is blank or not a usable number."""
     try:
@@ -264,7 +296,11 @@ def execute_tool(
         goal_pct = _goal_fraction_from_profile(session_profile)
         if goal_pct is not None:
             validated = validated.model_copy(update={"goal_fraction": goal_pct})
-        return run_financial_model(validated)
+        validated, price_flags = _with_real_solar_price(validated)
+        result = run_financial_model(validated)
+        if price_flags:
+            result = result.model_copy(update={"flags": list(result.flags) + price_flags})
+        return result
     if name == "get_utility_rates":
         return get_utility_rates(fixture_case, session_profile)
     if name == "get_utility_tariff":

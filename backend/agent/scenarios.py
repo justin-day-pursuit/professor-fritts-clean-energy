@@ -48,6 +48,9 @@ class FinancialModelInput(BaseModel):
     battery_kwh: float = Field(default=0, ge=0, description="Battery size from optimize_solar_storage; used by scenario C only")
     critical_load_kw: float = Field(default=0, ge=0, description="Critical load from optimize_solar_storage")
     goal_fraction: float = Field(default=0.30, gt=0, le=1, description="Reduction goal as a fraction, 0.30 for 30%")
+    solar_usd_per_kw_low: float | None = Field(default=None, gt=0, description="Set by the system from real NYC project costs; leave blank")
+    solar_usd_per_kw_high: float | None = Field(default=None, gt=0, description="Set by the system from real NYC project costs; leave blank")
+    solar_price_basis: str = Field(default="", description="Set by the system; where the solar price came from")
     federal_credit_open: bool = Field(
         default=False,
         description="True ONLY if search_ny_incentives_and_rules reported the federal credit as open",
@@ -64,7 +67,8 @@ def build_package(scenario_id: str, inp: FinancialModelInput) -> Package:
         # (high) prices are used so the scenario stays within budget even if costs come in high.
         eff_cost_high = inp.floor_area_sqft * EFFICIENCY_LEVELS["standard"]["usd_per_sqft"][1]
         left = max(0.0, inp.budget_usd - eff_cost_high) if inp.budget_usd > 0 else 0.0
-        affordable_kw = left / COST_BENCHMARKS["solar_usd_per_kw_dc"][1]
+        high_price = inp.solar_usd_per_kw_high or COST_BENCHMARKS["solar_usd_per_kw_dc"][1]
+        affordable_kw = left / high_price
         return Package(efficiency_level="standard", solar_kw_dc=min(inp.full_array_kw_dc, affordable_kw))
     if sid == "C":
         return Package(
@@ -102,6 +106,12 @@ def run_financial_model(inp: FinancialModelInput) -> ToolResult:
         critical_load_kw=inp.critical_load_kw,
         goal_fraction=inp.goal_fraction,
         federal_credit_open=inp.federal_credit_open,
+        solar_usd_per_kw=(
+            (inp.solar_usd_per_kw_low, inp.solar_usd_per_kw_high)
+            if inp.solar_usd_per_kw_low and inp.solar_usd_per_kw_high
+            else None
+        ),
+        solar_price_basis=inp.solar_price_basis,
     )
     result = model_package(package, site)
 
@@ -119,7 +129,8 @@ def run_financial_model(inp: FinancialModelInput) -> ToolResult:
         # Solar sized for the whole roof can out-produce the building's use (v6); the part above 100% is surplus.
         "solar_alone_exceeds_use": solar_alone[1] > 100.0,
         "goal_pct": inp.goal_fraction * 100.0,
-        "assumption_text": benchmark_assumption_text(),
+        "assumption_text": benchmark_assumption_text(site.solar_usd_per_kw, inp.solar_price_basis),
+        "solar_price_basis": inp.solar_price_basis or None,
         **result,
     }
     return ToolResult(

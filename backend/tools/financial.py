@@ -36,18 +36,26 @@ ITC_RATE = 0.30
 BATTERY_USABLE_FRACTION = (0.85, 1.0)
 
 
-def benchmark_assumption_text() -> str:
-    """The one sentence behind assumption A9, built from the tables above."""
+def benchmark_assumption_text(solar_price: tuple[float, float] | None = None, solar_basis: str = "") -> str:
+    """
+    The one sentence behind assumption A9, built from the tables above.
+
+    When real solar prices were found (solar_price, with solar_basis naming the source) the sentence quotes them
+    instead of the placeholder range, so the plan says where the solar price came from.
+    """
     std, deep = EFFICIENCY_LEVELS["standard"], EFFICIENCY_LEVELS["deep"]
+    solar = solar_price or COST_BENCHMARKS["solar_usd_per_kw_dc"]
+    solar_text = f"solar ${solar[0]:,.0f}-{solar[1]:,.0f}/kW DC" + (f" ({solar_basis})" if solar_basis else " (placeholder)")
     return (
         "Planning-level benchmark prices, not quotes: "
-        f"solar ${COST_BENCHMARKS['solar_usd_per_kw_dc'][0]:,.0f}-{COST_BENCHMARKS['solar_usd_per_kw_dc'][1]:,.0f}/kW DC, "
+        f"{solar_text}, "
         f"battery ${COST_BENCHMARKS['battery_usd_per_kwh'][0]:,.0f}-{COST_BENCHMARKS['battery_usd_per_kwh'][1]:,.0f}/kWh, "
         f"standard efficiency ${std['usd_per_sqft'][0]:.0f}-{std['usd_per_sqft'][1]:.0f}/sq ft saving "
         f"{std['savings_pct'][0]:.0f}-{std['savings_pct'][1]:.0f}%, "
         f"deep efficiency ${deep['usd_per_sqft'][0]:.0f}-{deep['usd_per_sqft'][1]:.0f}/sq ft saving "
         f"{deep['savings_pct'][0]:.0f}-{deep['savings_pct'][1]:.0f}%; "
         f"usable battery share {BATTERY_USABLE_FRACTION[0]:.0%}-{BATTERY_USABLE_FRACTION[1]:.0%}; "
+        "battery and efficiency prices and savings are team placeholders, not yet sourced; "
         "the 30% federal credit counts only when the incentives tool says the program is open."
     )
 
@@ -77,6 +85,10 @@ class Site:
     critical_load_kw: float = 0.0
     goal_fraction: float = 0.30
     federal_credit_open: bool = False
+    # Solar price per kW DC as (low, high). Real project costs replace the placeholder when they were found.
+    solar_usd_per_kw: tuple[float, float] | None = None
+    # Where that price came from, quoted in the itemized bill; blank means the placeholder was used.
+    solar_price_basis: str = ""
 
 
 def _round_pair(low: float, high: float, digits: int = 0) -> list[float]:
@@ -116,7 +128,8 @@ def model_package(package: Package, site: Site) -> dict:
 
     # --- upfront cost (low, high) ---
     eff_cost = [site.floor_area_sqft * p for p in eff["usd_per_sqft"]]
-    solar_cost = [package.solar_kw_dc * p for p in COST_BENCHMARKS["solar_usd_per_kw_dc"]]
+    solar_price = site.solar_usd_per_kw or COST_BENCHMARKS["solar_usd_per_kw_dc"]
+    solar_cost = [package.solar_kw_dc * p for p in solar_price]
     battery_cost = [package.battery_kwh * p for p in COST_BENCHMARKS["battery_usd_per_kwh"]]
     upfront = [eff_cost[i] + solar_cost[i] + battery_cost[i] for i in (0, 1)]
 
@@ -185,7 +198,36 @@ def model_package(package: Package, site: Site) -> dict:
         # No battery: solar panels shut off in an outage, so there is no backup.
         outage_hours = [0.0, 0.0]
 
+    # The itemized bill: each line is what it costs at the low and high price, and what the price is based on.
+    cost_items: list[dict] = []
+    if package.efficiency_level != "none":
+        cost_items.append({
+            "item": f"{package.efficiency_level.title()} efficiency package",
+            "basis": f"{site.floor_area_sqft:,.0f} sq ft x ${eff['usd_per_sqft'][0]:.0f}-{eff['usd_per_sqft'][1]:.0f}/sq ft (team placeholder)",
+            "usd": _round_pair(*eff_cost),
+        })
+    if package.solar_kw_dc > 0:
+        cost_items.append({
+            "item": "Rooftop solar",
+            "basis": f"{package.solar_kw_dc:,.1f} kW DC x ${solar_price[0]:,.0f}-{solar_price[1]:,.0f}/kW"
+            + (f" ({site.solar_price_basis})" if site.solar_price_basis else " (team placeholder)"),
+            "usd": _round_pair(*solar_cost),
+        })
+    if package.battery_kwh > 0:
+        cost_items.append({
+            "item": "Backup battery",
+            "basis": f"{package.battery_kwh:,.0f} kWh x ${COST_BENCHMARKS['battery_usd_per_kwh'][0]:,.0f}-{COST_BENCHMARKS['battery_usd_per_kwh'][1]:,.0f}/kWh (team placeholder)",
+            "usd": _round_pair(*battery_cost),
+        })
+    if credit[1] > 0:
+        cost_items.append({
+            "item": "Federal credit (30% of solar and battery)",
+            "basis": "Counted only because the incentives tool reported the program open",
+            "usd": _round_pair(-credit[0], -credit[1]),
+        })
+
     return {
+        "cost_items": cost_items,
         "package": {
             "efficiency_level": package.efficiency_level,
             "solar_kw_dc": round(package.solar_kw_dc, 1),
