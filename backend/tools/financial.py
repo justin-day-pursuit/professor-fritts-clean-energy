@@ -86,7 +86,7 @@ def benchmark_assumption_text(
     """
     std, deep = EFFICIENCY_LEVELS["standard"], EFFICIENCY_LEVELS["deep"]
     solar = solar_price or COST_BENCHMARKS["solar_usd_per_kw_dc"]
-    solar_text = f"solar ${solar[0]:,.0f}-{solar[1]:,.0f}/kW DC" + (f" ({solar_basis})" if solar_basis else " (placeholder)")
+    solar_text = f"solar ${solar[0]:,.0f}-{solar[1]:,.0f}/kW DC" + (f" ({solar_basis})" if solar_basis else " (planning estimate)")
     battery = battery_price or COST_BENCHMARKS["battery_usd_per_kwh"]
     if efficiency_prices:
         efficiency_text = (
@@ -96,10 +96,10 @@ def benchmark_assumption_text(
     else:
         efficiency_text = (
             f"standard efficiency ${std['usd_per_sqft'][0]:.0f}-{std['usd_per_sqft'][1]:.0f}/sq ft and "
-            f"deep efficiency ${deep['usd_per_sqft'][0]:.0f}-{deep['usd_per_sqft'][1]:.0f}/sq ft (placeholders), "
+            f"deep efficiency ${deep['usd_per_sqft'][0]:.0f}-{deep['usd_per_sqft'][1]:.0f}/sq ft (planning estimates), "
         )
     battery_text = f"battery ${battery[0]:,.0f}-{battery[1]:,.0f}/kWh" + (
-        f" ({battery_basis})" if battery_basis else " (placeholder)"
+        f" ({battery_basis})" if battery_basis else " (planning estimate)"
     )
     return (
         "Planning-level benchmark prices, not quotes: "
@@ -111,7 +111,7 @@ def benchmark_assumption_text(
         f"deep efficiency saving "
         f"{deep['savings_pct'][0]:.0f}-{deep['savings_pct'][1]:.0f}%; "
         f"usable battery share {BATTERY_USABLE_FRACTION[0]:.0%}-{BATTERY_USABLE_FRACTION[1]:.0%}; "
-        "the efficiency savings percents are team placeholders, not yet sourced"
+        "the efficiency savings percents are planning estimates, not yet backed by project data"
         + (
             f", but only {realization[0]:.0%}-{realization[1]:.0%} of them is counted because the City's audited "
             f"projects delivered that share ({EFFICIENCY_REALIZATION_SOURCE})"
@@ -282,11 +282,11 @@ def model_package(package: Package, site: Site) -> dict:
             "item": f"{package.efficiency_level.title()} efficiency package",
             "basis": (
                 f"{site.annual_use_kwh * eff['savings_pct'][0] / 100:,.0f}-{site.annual_use_kwh * eff['savings_pct'][1] / 100:,.0f} kWh "
-                f"saved a year (placeholder {eff['savings_pct'][0]:.0f}-{eff['savings_pct'][1]:.0f}%) x "
+                f"saved a year (planning estimate {eff['savings_pct'][0]:.0f}-{eff['savings_pct'][1]:.0f}%) x "
                 f"${site.efficiency_usd_per_kwh[package.efficiency_level][0]:.2f}-{site.efficiency_usd_per_kwh[package.efficiency_level][1]:.2f} "
                 f"per kWh saved ({site.efficiency_price_basis})"
                 if site.efficiency_usd_per_kwh and package.efficiency_level in site.efficiency_usd_per_kwh
-                else f"{site.floor_area_sqft:,.0f} sq ft x ${eff['usd_per_sqft'][0]:.0f}-{eff['usd_per_sqft'][1]:.0f}/sq ft (team placeholder)"
+                else f"{site.floor_area_sqft:,.0f} sq ft x ${eff['usd_per_sqft'][0]:.0f}-{eff['usd_per_sqft'][1]:.0f}/sq ft (planning estimate)"
             ),
             "usd": _round_pair(*eff_cost),
         })
@@ -294,14 +294,14 @@ def model_package(package: Package, site: Site) -> dict:
         cost_items.append({
             "item": "Rooftop solar",
             "basis": f"{package.solar_kw_dc:,.1f} kW DC x ${solar_price[0]:,.0f}-{solar_price[1]:,.0f}/kW"
-            + (f" ({site.solar_price_basis})" if site.solar_price_basis else " (team placeholder)"),
+            + (f" ({site.solar_price_basis})" if site.solar_price_basis else " (planning estimate)"),
             "usd": _round_pair(*solar_cost),
         })
     if package.battery_kwh > 0:
         cost_items.append({
             "item": "Backup battery",
             "basis": f"{package.battery_kwh:,.0f} kWh x ${battery_price[0]:,.0f}-{battery_price[1]:,.0f}/kWh"
-            + (f" ({site.battery_price_basis})" if site.battery_price_basis else " (team placeholder)"),
+            + (f" ({site.battery_price_basis})" if site.battery_price_basis else " (planning estimate)"),
             "usd": _round_pair(*battery_cost),
         })
     if credit[1] > 0:

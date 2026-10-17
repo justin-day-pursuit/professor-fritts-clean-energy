@@ -221,7 +221,7 @@ class AgentNotes(BaseModel):
             # A7 (v2): until a building model exists (phase 2), efficiency savings are a benchmark range.
             self.assumptions.setdefault(
                 "A7",
-                "Efficiency measures (LED and controls) save 10-20% of annual use. This is a team planning placeholder, not a cited benchmark and not a building model.",
+                "Efficiency measures (LED and controls) save 10-20% of annual use. This is a planning estimate, not a cited benchmark and not a building model.",
             )
             # The user chose annual funding, but the model treats the amount as one upfront total. Say so.
             if str(result.data.get("profile", {}).get("budget_type") or "").strip().lower() in ("annual", "per year", "yearly"):
@@ -234,7 +234,7 @@ class AgentNotes(BaseModel):
                     "A8",
                     "No bills uploaded: annual use is a benchmark of 9 kWh per sq ft"
                     + (f" x {floor_area} sq ft" if floor_area else "")
-                    + " (a team placeholder for a typical NYC public building, not measured use).",
+                    + " (a planning estimate for a typical NYC public building, not measured use).",
                 )
 
         # Check 4 only accepts an ASSUMPTION whose id is already in this register.

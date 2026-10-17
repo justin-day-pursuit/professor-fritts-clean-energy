@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import re
 
+from agent.plain_names import calculation_name, strip_id_prefix
 from agent.claims import SECTION_TITLES, Claim, RoadmapPayload, RoadmapSection
 
 # What a reader sees when the model gave nothing for a section.
@@ -53,9 +54,9 @@ def _format_claim(claim: Claim, *, section_id: str = "") -> str:
         extra = ""
         if claim.source_url or claim.calc_id:
             opt = claim.calc_id or claim.source_url
-            extra = f" — optional source/calc: `{opt}`"
+            extra = f" — based on: {calculation_name(opt) if claim.calc_id else opt}"
         return (
-            f"- **{claim.label}** ({claim.confidence}) [{claim.assumption_id}]: {claim.text}"
+            f"- **{claim.label}** ({claim.confidence}): {strip_id_prefix(claim.text)}"
             f"{value_part}{extra}"
         )
     _ = section_id  # reserved for section-specific layout later
@@ -74,7 +75,7 @@ def _trace_text(claim: Claim) -> str:
     """
     parts: list[str] = []
     if claim.calc_id:
-        parts.append(f"calculation `{claim.calc_id}`")
+        parts.append(f"from the {calculation_name(claim.calc_id).lower()}")
     url = claim.source_url or ""
     if url.startswith(("http://", "https://")):
         parts.append(f"[source]({url})")

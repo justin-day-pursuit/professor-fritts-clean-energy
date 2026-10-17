@@ -291,7 +291,7 @@ def _with_real_efficiency_price(inp: Any) -> tuple[Any, list[str]]:
         return inp, ["efficiency_price_placeholder"]
     standard, deep = found["standard"], found["deep"]
     basis = (
-        f"25th-75th percentile of {standard['projects']} LED-lighting and {deep['projects']} comprehensive completed "
+        f"the middle half of {standard['projects']} LED-lighting and {deep['projects']} comprehensive completed "
         f"NYC public-sector projects since {found['since']}, NYSERDA data {found['source_url']}"
     )
     return inp.model_copy(update={
@@ -312,7 +312,7 @@ def _with_real_battery_price(inp: Any) -> tuple[Any, list[str]]:
     if not found:
         return inp, ["battery_price_placeholder"]
     basis = (
-        f"25th-75th percentile of {found['projects']} completed or approved NYC commercial-scale storage projects, "
+        f"the middle half of {found['projects']} completed or approved NYC commercial-scale storage projects, "
         f"NYSERDA data {found['source_url']}"
     )
     return inp.model_copy(update={
@@ -335,7 +335,7 @@ def _with_real_solar_only(inp: Any) -> tuple[Any, list[str]]:
         return inp, ["solar_price_placeholder"]
     low, high = found["band_kw"]
     basis = (
-        f"25th-75th percentile of {found['projects']} completed NYC non-residential projects of "
+        f"the middle half of {found['projects']} completed NYC non-residential projects of "
         f"{low:g}-{high:g} kW since {found['since'][:4]}, NYSERDA data {found['source_url']}"
     )
     updated = inp.model_copy(update={

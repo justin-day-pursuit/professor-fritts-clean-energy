@@ -90,7 +90,7 @@ def size_battery_from_profile(profile: dict[str, Any]) -> ToolResult:
         flags.append("battery_inputs_estimated")
         parts.append(
             f"Critical load not given, so estimated at {ESTIMATED_CRITICAL_WATTS_PER_SQFT} W per sq ft x "
-            f"{floor_area:g} sq ft = {kw} kW (a team placeholder, not metered)."
+            f"{floor_area:g} sq ft = {kw} kW (a planning estimate, not metered)."
         )
     else:
         parts.append(f"Critical load of {kw:g} kW as entered by the user.")

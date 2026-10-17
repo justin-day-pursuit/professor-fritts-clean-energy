@@ -790,6 +790,33 @@ def _law_link_issues(payload: RoadmapPayload) -> list[str]:
     return issues
 
 
+_SNAKE_CASE = re.compile(r"\b[a-z]{2,}(?:_[a-z0-9]+)+\b")
+_INTERNAL_ID = re.compile(r"\b(?:A[1-9]\d?|C[1-4]|F-[ABC])\b")
+_TEAM_WORDS = re.compile(r"\bteam (?:placeholder|estimate|figure)s?\b|\bplaceholder\b", re.I)
+
+
+def _plain_language_issues(payload: RoadmapPayload) -> list[str]:
+    """
+    v7: a plan written for a facilities manager must not use the code's own words.
+
+    Rejected in any claim: internal field and flag names (words_with_underscores) and "team placeholder" / "placeholder".
+    Rejected in claims that are not assumptions: internal ids (A7, C1, F-B); the id belongs in the claim's assumption_id or
+    calc_id field, not in its sentence. An assumption sentence may begin with its id ("A4: ..."), which the screen strips.
+    Enforced for live runs only, so saved recordings made before this rule still replay as they were.
+    """
+    issues: list[str] = []
+    for section in payload.sections:
+        for claim in section.claims:
+            text = claim.text
+            if _SNAKE_CASE.search(text):
+                issues.append(f"Internal field or flag name in the text (write it in plain words): {text[:80]}")
+            if _TEAM_WORDS.search(text):
+                issues.append(f"Say 'planning estimate', not 'team placeholder' or 'placeholder': {text[:80]}")
+            if claim.label != "ASSUMPTION" and _INTERNAL_ID.search(text):
+                issues.append(f"Internal id (like A7, C1 or F-B) in the text; put it in the id field instead: {text[:80]}")
+    return issues
+
+
 def _intake_detail_issues(payload: RoadmapPayload, notes: AgentNotes, claims: list[Claim]) -> list[str]:
     """
     v7 rules for the optional intake answers (owner, roof condition, lighting, heating fuel, goal type, budget type).
@@ -903,6 +930,7 @@ def run_check4(
     user_message: str = "",
     require_all_sections: bool = True,
     notes: AgentNotes | None = None,
+    plain_language: bool = False,
 ) -> CheckResult:
     """
     Share gate: labels, sections, NYC-only rules, referrals, and no closed program in net cost.
@@ -956,6 +984,8 @@ def run_check4(
 
     if notes is not None and require_all_sections:
         issues.extend(_run_context_issues(payload, notes))
+    if plain_language:
+        issues.extend(_plain_language_issues(payload))
 
     promises = _has_promise_words(payload)
     if promises:

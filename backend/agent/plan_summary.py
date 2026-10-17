@@ -13,7 +13,9 @@ from __future__ import annotations
 
 from typing import Any
 
-SUMMARY_VERSION = 1
+from agent.plain_names import calculation_formula, calculation_name
+
+SUMMARY_VERSION = 2
 
 # Plain-language text for each flag the tools raise. A flag with no entry is shown under its own name.
 FLAG_TEXT = {
@@ -230,7 +232,13 @@ def build_plan_summary(run: Any, output: dict[str, Any], next_steps: list[dict[s
         "incentives": (data.get("search_ny_incentives_and_rules") or {}).get("programs") or [],
         "battery": results.get("optimize_solar_storage") or None,
         "hazards": results.get("get_hazard_context") or None,
-        "calculations": {key: value for key, value in calculations.items() if not key.startswith("F-")},
+        "calculations": {
+            key: {**value, "name": calculation_name(key), "plain_formula": calculation_formula(key)}
+            for key, value in calculations.items()
+            if not key.startswith("F-")
+        },
+        "calculation_names": {key: calculation_name(key) for key in ("C1", "C2", "C3", "C4", "F-A", "F-B", "F-C")},
+        "flag_text": FLAG_TEXT,
         "confirm_first": confirm_first(flags, records, site),
         "assumptions": [{"id": key, "text": text} for key, text in (notes.get("assumptions") or {}).items()],
         "referrals": referrals,

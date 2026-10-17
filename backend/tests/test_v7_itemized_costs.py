@@ -48,7 +48,7 @@ def test_itemized_bill_adds_up_to_upfront_cost():
     assert [i["item"] for i in data["cost_items"]][:2] == ["Standard efficiency package", "Rooftop solar"]
     low = sum(i["usd"][0] for i in data["cost_items"] if i["usd"][0] > 0)
     assert abs(low - data["upfront_usd"][0]) <= len(data["cost_items"])
-    assert "placeholder" in data["cost_items"][0]["basis"]
+    assert "planning estimate" in data["cost_items"][0]["basis"]
 
 
 def test_real_price_replaces_placeholder_and_is_quoted():
@@ -57,7 +57,7 @@ def test_real_price_replaces_placeholder_and_is_quoted():
     solar = [i for i in data["cost_items"] if i["item"] == "Rooftop solar"][0]
     assert "$2,500-3,500/kW" in solar["basis"] and "NYSERDA test" in solar["basis"]
     assert "NYSERDA test" in data["assumption_text"]
-    assert "placeholder" in data["assumption_text"]  # battery and efficiency are still placeholders, and say so
+    assert "planning estimate" in data["assumption_text"]  # efficiency is still an estimate, and says so
 
 
 def test_live_mode_fills_price_and_mock_mode_does_not(monkeypatch):
@@ -194,9 +194,9 @@ def test_the_bill_and_assumption_quote_the_real_efficiency_prices():
     priced = _inp(efficiency_usd_per_kwh={"standard": [1.17, 4.02], "deep": [1.09, 3.83]}, efficiency_price_basis="NYSERDA eff test")
     data = run_financial_model(priced).data
     line = data["cost_items"][0]
-    assert "NYSERDA eff test" in line["basis"] and "$1.17-4.02 per kWh saved" in line["basis"] and "placeholder 10-20%" in line["basis"]
+    assert "NYSERDA eff test" in line["basis"] and "$1.17-4.02 per kWh saved" in line["basis"] and "planning estimate 10-20%" in line["basis"]
     assert "NYSERDA eff test" in data["assumption_text"]
-    assert "savings percents are team placeholders" in data["assumption_text"]
+    assert "savings percents are planning estimates" in data["assumption_text"]
     assert "and so are the efficiency prices" not in data["assumption_text"]
 
 

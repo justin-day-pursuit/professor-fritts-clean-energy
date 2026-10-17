@@ -506,6 +506,7 @@ def run_harness(
                         assumptions_register=notes.assumptions,
                         user_message=user_message,
                         require_all_sections=False,
+                        plain_language=provider != "scripted",
                     )
                 else:
                     wr = WriteRoadmapInput.model_validate(step.tool_input or {})
@@ -517,6 +518,7 @@ def run_harness(
                         user_message=user_message,
                         require_all_sections=True,
                         notes=notes,
+                        plain_language=provider != "scripted",
                     )
             except ValidationError as exc:
                 # A missing label never becomes a Claim. Treat that as a Check 4 miss so the

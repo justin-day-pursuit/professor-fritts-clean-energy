@@ -140,7 +140,7 @@ def test_plan_markdown_links_sources_and_ends_with_the_link_list():
 
     plan = _plan(s7=[_claim("Federal credit is open.", source_url="https://www.irs.gov/x", calc_id="F-B")])
     md = render_roadmap_markdown(plan, [{"label": "IRS", "url": "https://www.irs.gov/x", "retrieved_at": "2026-10-16T00:00:00Z", "sample": False}])
-    assert "calculation `F-B` and [source](https://www.irs.gov/x)" in md
+    assert "from the plan b costs and savings and [source](https://www.irs.gov/x)" in md
     assert "## Source links" in md and "[IRS](https://www.irs.gov/x), retrieved 2026-10-16" in md
 
 
