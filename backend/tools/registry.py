@@ -231,8 +231,44 @@ def _with_real_solar_price(inp: Any) -> tuple[Any, list[str]]:
     from mocks.mock_mode import get_tool_mode
     from tools.solar_costs import SolarCostError, fetch_solar_cost_range
 
-    if get_tool_mode() != "live" or inp.solar_usd_per_kw_low:
+    if get_tool_mode() != "live":
         return inp, []
+    flags: list[str] = []
+    if not inp.solar_usd_per_kw_low:
+        inp, solar_flags = _with_real_solar_only(inp)
+        flags += solar_flags
+    if inp.battery_kwh > 0 and not inp.battery_usd_per_kwh_low:
+        inp, battery_flags = _with_real_battery_price(inp)
+        flags += battery_flags
+    return inp, flags
+
+
+def _with_real_battery_price(inp: Any) -> tuple[Any, list[str]]:
+    """Fill the battery price from NYSERDA's NYC storage projects; keep the placeholder (and flag it) if unavailable."""
+    from tools.solar_costs import SolarCostError, fetch_storage_cost_range
+
+    try:
+        found = fetch_storage_cost_range()
+    except SolarCostError:
+        found = None
+    if not found:
+        return inp, ["battery_price_placeholder"]
+    basis = (
+        f"25th-75th percentile of {found['projects']} completed or approved NYC commercial-scale storage projects, "
+        f"NYSERDA data {found['source_url']}"
+    )
+    return inp.model_copy(update={
+        "battery_usd_per_kwh_low": float(found["p25_usd_per_kwh"]),
+        "battery_usd_per_kwh_high": float(found["p75_usd_per_kwh"]),
+        "battery_price_basis": basis,
+        "battery_price_source_url": found["source_url"],
+    }), []
+
+
+def _with_real_solar_only(inp: Any) -> tuple[Any, list[str]]:
+    """Fill the solar price from NYSERDA's NYC projects; keep the placeholder (and flag it) if unavailable."""
+    from tools.solar_costs import SolarCostError, fetch_solar_cost_range
+
     try:
         found = fetch_solar_cost_range(inp.full_array_kw_dc)
     except SolarCostError:

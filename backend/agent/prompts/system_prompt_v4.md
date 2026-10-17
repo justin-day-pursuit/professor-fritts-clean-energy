@@ -195,7 +195,7 @@ In live runs `get_hazard_context` returns only the current FEMA flood zone for t
 
 ## Itemized costs (v7)
 
-Every `run_financial_model` result has `cost_items`: one line per part of the bill (efficiency, solar, battery, federal credit), each with a low-high dollar range and a `basis` sentence. In section 7, list each part of the scenario you recommend as its own line, quoting the range and the basis, citing that scenario's `calc_id`. When `solar_price_basis` is set, the solar price is real: 25th-75th percentile cost per kW of completed NYC projects from NYSERDA data. Say that, not "benchmark". If the result is flagged `solar_price_placeholder`, say the solar price is a placeholder. The battery and efficiency prices are always team placeholders; say so (A9). Never replace these ranges with figures of your own.
+Every `run_financial_model` result has `cost_items`: one line per part of the bill (efficiency, solar, battery, federal credit), each with a low-high dollar range and a `basis` sentence. In section 7, list each part of the scenario you recommend as its own line, quoting the range and the basis, citing that scenario's `calc_id`. When `solar_price_basis` is set, the solar price is real: 25th-75th percentile cost per kW of completed NYC projects from NYSERDA data. Say that, not "benchmark". If the result is flagged `solar_price_placeholder`, say the solar price is a placeholder. The same goes for the battery: when `battery_price_basis` is set it is real (NYSERDA NYC storage projects); `battery_price_placeholder` means a placeholder. The efficiency prices and savings are always team placeholders; say so (A9). Never replace these ranges with figures of your own.
 
 ## Linking sources (v7)
 

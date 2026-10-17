@@ -8,7 +8,7 @@ Researched Oct 16, 2026. Update this file whenever a number changes or a new sou
 | Number | Status | Source |
 | --- | --- | --- |
 | Solar cost per kW DC | **Real, live.** Pulled at run time | NYSERDA project data (below) |
-| Battery cost per kWh ($600-1,000) | **Placeholder.** Not yet sourced | See "Battery" |
+| Battery cost per kWh | **Real, live.** NYSERDA NYC storage projects (placeholder $600-1,000 only if the lookup fails) | See "Battery" |
 | Efficiency cost per sq ft ($4-8 standard, $10-16 deep) | **Placeholder.** No source found | See "Efficiency" |
 | Efficiency savings (10-20% standard, 15-25% deep) | **Placeholder.** Sources found suggest the right size, but none is a typical figure for NYC public buildings | See "Efficiency" |
 | Federal credit 30% | Rule, applied only when the incentives tool says the program is open | IRS / program rules |
@@ -25,16 +25,14 @@ Researched Oct 16, 2026. Update this file whenever a number changes or a new sou
   - over 500 kW: $1,996 / $2,356 / $2,930 (35 projects)
 - Limits: these are costs of past projects, not quotes. Fewer than 20 projects in a band means the old placeholder is used and flagged.
 
-## Battery: not yet sourced
+## Battery: real, from NYSERDA (in the code), cross-checked with NREL
 
-What the search found (read these from the source before using any number):
-
-- NREL Annual Technology Baseline (ATB), commercial battery storage: https://atb.nlr.gov/electricity/2025/commercial_battery_storage (older editions at atb.nrel.gov). The 2025 page shows its capital cost only as an image and points to a downloadable ATB data spreadsheet. **No dollar figure was read from it.** Next step: download that spreadsheet and read the commercial battery rows.
-- The 2024 ATB edition was reported (by a search summary, not read directly) as listing ex-factory lithium-ion prices of about $164-215 per kWh in 2022 dollars, depending on duration. That is equipment only, not installed, so it is not usable as our price.
-- A 2021 ATB edition was reported as $480 per kWh for a commercial building-scale system (2019 dollars). It is old and predates recent price changes.
-- Not usable: BloombergNEF's global figure is for utility-scale projects in $/MWh.
-
-Until the ATB spreadsheet is read, the battery price stays a labeled placeholder.
+- Dataset: Residential, Retail and Bulk Energy Storage Incentive Programs Reported by NYSERDA, https://data.ny.gov/resource/ugya-enpy.
+- The code (`backend/tools/solar_costs.py`, `fetch_storage_cost_range`) uses "Retail Storage" (commercial-scale) projects in the five boroughs with status Completed or Approved and a cost above 0, and takes the 25th to 75th percentile of total project cost per kWh AC. Fewer than 20 projects means the placeholder is used and flagged.
+- Checked Oct 16, 2026: **$546 / $687 / $812 per kWh** (25th / 50th / 75th percentile, 56 NYC projects).
+- Cross-check, NREL Annual Technology Baseline 2025, Commercial Battery Storage, lithium-ion, "Moderate" scenario, 2025 capital cost (installed, national, 2024 dollars not stated in the file): 1 hr $786/kWh, 2 hr $528/kWh, 4 hr $400/kWh, 6 hr $357/kWh, 8 hr $335/kWh (the file gives $/kW: 785.7, 1056.8, 1599.1, 2141.4, 2683.7). NYC projects cost more than the national figure and are mostly short-duration, so the NYC numbers above are the ones used.
+- NREL data file (no need to re-download the web pages): https://oedi-data-lake.s3.amazonaws.com/ATB/electricity/csv/2025/v1.0.0/ATBe.csv (320 MB; filter `technology_alias` = "Commercial Battery Storage", `core_metric_parameter` = "CAPEX", `scenario` = "Moderate"). Page: https://atb.nlr.gov/electricity/2025/commercial_battery_storage.
+- Limits: these are past project costs (some Approved projects carry estimated costs), not quotes. The price per kWh does not change with how many hours of backup the system gives; NREL shows short systems cost more per kWh.
 
 ## Efficiency: placeholders; partial evidence
 
@@ -45,6 +43,7 @@ What the search found:
 - DOE project page: 20-30% potential for small and medium commercial buildings with low-cost sensors and retrofit building automation. https://www.energy.gov/eere/buildings/articles/advanced-building-control-solutions
 - NYC Local Law 87 (energy audits and retro-commissioning for city buildings): DCAS reports implemented measures dropped energy use by 10% in projects operating a year or more (FY2014 report). A 7-year simple payback is the law's threshold. Reports: https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf (other years are at the same path). This is the closest evidence to our 10-20% standard range, and it points to the low end.
 - NYSERDA case study (one building, Brockport): LED retrofit cut connected load about 61%, cost $69,143, payback 1.34 years with incentives. One building; not a typical figure.
+- DCAS Local Law 87 annual report PDFs could not be read as text by the fetch tool (compressed PDF); read them in a PDF viewer to get cost and payback tables.
 - **Cost per sq ft: no reliable source found.** The figures seen came from low-quality generic or industrial guides. Do not use them.
 
 What this means: the 10-20% standard range is plausible but unproven for NYC public buildings, and the cost per sq ft has no source. Best next sources to read directly: the DCAS Local Law 87 annual reports (cost and savings tables), and NYSERDA's commercial lighting and controls program pages.

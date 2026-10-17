@@ -100,3 +100,67 @@ def fetch_solar_cost_range(kw: float) -> dict[str, Any] | None:
         result["source_url"] = NYSERDA_SOURCE_URL
     _cache[band] = (time.time(), result)
     return result
+
+
+# ---- battery storage: NYSERDA's energy-storage incentive data (same idea as the solar prices above) ----
+
+STORAGE_URL = "https://data.ny.gov/resource/ugya-enpy.json"
+STORAGE_SOURCE_URL = "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy"
+_storage_cache: tuple[float, dict[str, Any] | None] | None = None
+
+
+def storage_percentiles(rows: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """
+    Cost per kWh (25th, 50th, 75th percentile) of NYC retail (commercial-scale) storage projects, or None when too few.
+
+    Each project's cost per kWh is its total project cost divided by its installed energy capacity (kWh AC).
+    Projects with no cost or no capacity are skipped.
+    """
+    values = []
+    for row in rows:
+        try:
+            cost, kwh = float(row["total_project_cost"]), float(row["installed_energy_storage_kwhac"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if cost > 0 and kwh > 0:
+            values.append(cost / kwh)
+    if len(values) < MIN_PROJECTS:
+        return None
+    values.sort()
+    n = len(values)
+
+    def pick(q: float) -> float:
+        return round(values[min(n - 1, int(n * q))])
+
+    return {"p25_usd_per_kwh": pick(0.25), "p50_usd_per_kwh": pick(0.50), "p75_usd_per_kwh": pick(0.75), "projects": n}
+
+
+def fetch_storage_cost_range() -> dict[str, Any] | None:
+    """Real NYC cost per kWh of battery projects from NYSERDA's retail storage data; cached for a day."""
+    global _storage_cache
+    if _storage_cache and time.time() - _storage_cache[0] < CACHE_SECONDS:
+        return _storage_cache[1]
+    counties = ",".join(f"'{c}'" for c in NYC_COUNTIES)
+    params = {
+        "$select": "total_project_cost,installed_energy_storage_kwhac",
+        "$where": (
+            f"program_type='Retail Storage' AND county in({counties}) AND project_status in('Completed','Approved') "
+            "AND total_project_cost>0 AND installed_energy_storage_kwhac>0"
+        ),
+        "$limit": 5000,
+    }
+    headers = {"X-App-Token": os.environ["SODA_APP_TOKEN"].strip()} if os.environ.get("SODA_APP_TOKEN", "").strip() else {}
+    try:
+        response = get_with_retry(STORAGE_URL, params=params, headers=headers, timeout=TIMEOUT_SECONDS)
+        if response.status_code != 200:
+            raise SolarCostError(f"NYSERDA storage data error (HTTP {response.status_code}).")
+        rows = list(response.json())
+    except SolarCostError:
+        raise
+    except Exception as exc:
+        raise SolarCostError(f"NYSERDA storage cost request failed: {exc}") from exc
+    result = storage_percentiles(rows)
+    if result:
+        result["source_url"] = STORAGE_SOURCE_URL
+    _storage_cache = (time.time(), result)
+    return result

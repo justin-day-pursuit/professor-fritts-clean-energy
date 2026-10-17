@@ -81,3 +81,60 @@ def test_failed_lookup_keeps_placeholder_and_flags_it(monkeypatch):
     with forced_tool_mode("live"):
         same, flags = _with_real_solar_price(_inp())
     assert same.solar_usd_per_kw_low is None and flags == ["solar_price_placeholder"]
+
+
+# ---- battery price from NYSERDA's NYC storage projects ----
+
+from tools.solar_costs import storage_percentiles
+
+
+def _storage_rows(n, kwh=200.0, per_kwh=500.0):
+    """n storage projects whose cost per kWh runs from per_kwh up to twice that."""
+    return [
+        {"total_project_cost": str(kwh * per_kwh * (1 + i / n)), "installed_energy_storage_kwhac": str(kwh)}
+        for i in range(n)
+    ]
+
+
+def test_storage_percentiles_are_ordered_and_need_enough_projects():
+    out = storage_percentiles(_storage_rows(40))
+    assert out["p25_usd_per_kwh"] < out["p50_usd_per_kwh"] < out["p75_usd_per_kwh"] and out["projects"] == 40
+    assert storage_percentiles(_storage_rows(5)) is None
+    assert storage_percentiles(_storage_rows(30) + [{"total_project_cost": "0", "installed_energy_storage_kwhac": "5"}, {}])["projects"] == 30
+
+
+def test_battery_price_appears_in_the_bill_and_the_assumption():
+    priced = _inp(
+        scenario_id="C", battery_kwh=500, critical_load_kw=60,
+        battery_usd_per_kwh_low=530.0, battery_usd_per_kwh_high=800.0, battery_price_basis="NYSERDA storage test",
+    )
+    data = run_financial_model(priced).data
+    battery = [i for i in data["cost_items"] if i["item"] == "Backup battery"][0]
+    assert "$530-800/kWh" in battery["basis"] and "NYSERDA storage test" in battery["basis"]
+    assert "NYSERDA storage test" in data["assumption_text"]
+
+
+def test_live_mode_fills_battery_price_or_flags_the_placeholder(monkeypatch):
+    found = {"p25_usd_per_kwh": 533, "p75_usd_per_kwh": 800, "projects": 69, "source_url": "https://data.ny.gov/s"}
+    monkeypatch.setattr(solar_costs, "fetch_storage_cost_range", lambda: found)
+    monkeypatch.setattr(solar_costs, "fetch_solar_cost_range", lambda kw: None)
+    with forced_tool_mode("live"):
+        updated, flags = _with_real_solar_price(_inp(scenario_id="C", battery_kwh=500, critical_load_kw=60))
+    assert updated.battery_usd_per_kwh_low == 533 and updated.battery_usd_per_kwh_high == 800
+    assert updated.battery_price_source_url == "https://data.ny.gov/s"
+    assert flags == ["solar_price_placeholder"]  # solar had no data here, battery did
+
+    monkeypatch.setattr(solar_costs, "fetch_storage_cost_range", lambda: None)
+    with forced_tool_mode("live"):
+        same, flags = _with_real_solar_price(_inp(scenario_id="C", battery_kwh=500, critical_load_kw=60))
+    assert same.battery_usd_per_kwh_low is None and "battery_price_placeholder" in flags
+
+
+def test_no_battery_lookup_when_the_scenario_has_no_battery(monkeypatch):
+    def boom():
+        raise AssertionError("should not be called")
+
+    monkeypatch.setattr(solar_costs, "fetch_storage_cost_range", boom)
+    monkeypatch.setattr(solar_costs, "fetch_solar_cost_range", lambda kw: None)
+    with forced_tool_mode("live"):
+        _with_real_solar_price(_inp())

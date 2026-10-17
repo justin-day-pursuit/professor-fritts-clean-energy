@@ -52,6 +52,10 @@ class FinancialModelInput(BaseModel):
     solar_usd_per_kw_high: float | None = Field(default=None, gt=0, description="Set by the system from real NYC project costs; leave blank")
     solar_price_basis: str = Field(default="", description="Set by the system; where the solar price came from")
     solar_price_source_url: str = Field(default="", description="Set by the system; web page of the solar price data")
+    battery_usd_per_kwh_low: float | None = Field(default=None, gt=0, description="Set by the system from real NYC project costs; leave blank")
+    battery_usd_per_kwh_high: float | None = Field(default=None, gt=0, description="Set by the system from real NYC project costs; leave blank")
+    battery_price_basis: str = Field(default="", description="Set by the system; where the battery price came from")
+    battery_price_source_url: str = Field(default="", description="Set by the system; web page of the battery price data")
     federal_credit_open: bool = Field(
         default=False,
         description="True ONLY if search_ny_incentives_and_rules reported the federal credit as open",
@@ -113,6 +117,12 @@ def run_financial_model(inp: FinancialModelInput) -> ToolResult:
             else None
         ),
         solar_price_basis=inp.solar_price_basis,
+        battery_usd_per_kwh=(
+            (inp.battery_usd_per_kwh_low, inp.battery_usd_per_kwh_high)
+            if inp.battery_usd_per_kwh_low and inp.battery_usd_per_kwh_high
+            else None
+        ),
+        battery_price_basis=inp.battery_price_basis,
     )
     result = model_package(package, site)
 
@@ -130,9 +140,13 @@ def run_financial_model(inp: FinancialModelInput) -> ToolResult:
         # Solar sized for the whole roof can out-produce the building's use (v6); the part above 100% is surplus.
         "solar_alone_exceeds_use": solar_alone[1] > 100.0,
         "goal_pct": inp.goal_fraction * 100.0,
-        "assumption_text": benchmark_assumption_text(site.solar_usd_per_kw, inp.solar_price_basis),
+        "assumption_text": benchmark_assumption_text(
+            site.solar_usd_per_kw, inp.solar_price_basis, site.battery_usd_per_kwh, inp.battery_price_basis
+        ),
         "solar_price_basis": inp.solar_price_basis or None,
         "solar_price_source_url": inp.solar_price_source_url or None,
+        "battery_price_basis": inp.battery_price_basis or None,
+        "battery_price_source_url": inp.battery_price_source_url or None,
         **result,
     }
     return ToolResult(
