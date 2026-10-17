@@ -167,106 +167,137 @@
    },
    "solar": {
     "production": {
-     "system_kw_dc": 85.5,
-     "annual_ac_kwh": 106100.7120587212,
-     "annual_ac_kwh_low": 101099.6543370472,
-     "annual_ac_kwh_high": 111098.4036110822,
-     "range_assumption": "ASSUMPTION: system losses of 18% (low) to 10% (high) around PVWatts' 14% default; weather is typical-year data.",
-     "capacity_factor": 0.1416602740510047,
-     "solar_radiation_kwh_m2_day": 4.421094011550492,
-     "monthly_ac_kwh": [
-      5407.303952890388,
-      6960.772125437044,
-      9200.391442333237,
-      9409.47687705745,
-      11957.85861387832,
-      11992.13670000596,
-      12274.94995285621,
-      10882.16861721299,
-      9312.31889597993,
-      7805.414019535975,
-      5932.63432794018,
-      4965.286533593821
-     ],
-     "pvwatts_inputs": {
-      "lat": 40.848888,
-      "lon": -73.90984,
-      "system_capacity": 85.5,
-      "module_type": 0,
-      "losses": 14,
-      "array_type": 1,
-      "tilt": 10,
-      "azimuth": 180
+     "tool": "get_solar_production",
+     "data": {
+      "system_kw_dc": 85.5,
+      "annual_ac_kwh": 106100.7120587212,
+      "annual_ac_kwh_low": 101099.6543370472,
+      "annual_ac_kwh_high": 111098.4036110822,
+      "range_assumption": "ASSUMPTION: system losses of 18% (low) to 10% (high) around PVWatts' 14% default; weather is typical-year data.",
+      "capacity_factor": 0.1416602740510047,
+      "solar_radiation_kwh_m2_day": 4.421094011550492,
+      "monthly_ac_kwh": [
+       5407.303952890388,
+       6960.772125437044,
+       9200.391442333237,
+       9409.47687705745,
+       11957.85861387832,
+       11992.13670000596,
+       12274.94995285621,
+       10882.16861721299,
+       9312.31889597993,
+       7805.414019535975,
+       5932.63432794018,
+       4965.286533593821
+      ],
+      "pvwatts_inputs": {
+       "lat": 40.848888,
+       "lon": -73.90984,
+       "system_capacity": 85.5,
+       "module_type": 0,
+       "losses": 14,
+       "array_type": 1,
+       "tilt": 10,
+       "azimuth": 180
+      },
+      "location": {
+       "label": "1871 WALTON AVENUE, Bronx, NY, USA",
+       "borough": "Bronx",
+       "postalcode": "10453",
+       "match_type": "fallback",
+       "confidence": 0.8,
+       "bbl": "2028510021",
+       "lat": 40.848888,
+       "lon": -73.90984
+      },
+      "weather_data_source": "NSRDB PSM V3 GOES tmy-2020 3.2.0"
      },
-     "location": {
-      "label": "1871 WALTON AVENUE, Bronx, NY, USA",
-      "borough": "Bronx",
-      "postalcode": "10453",
-      "match_type": "fallback",
-      "confidence": 0.8,
-      "bbl": "2028510021",
-      "lat": 40.848888,
-      "lon": -73.90984
-     },
-     "weather_data_source": "NSRDB PSM V3 GOES tmy-2020 3.2.0"
+     "source_url": "https://developer.nlr.gov/docs/solar/pvwatts/v8/",
+     "retrieved_at": "2026-10-17T07:32:04Z",
+     "dataset_version": "pvwatts-v8.5.0",
+     "mock": false,
+     "stale": false,
+     "flags": []
     }
    },
    "prices": {
     "electricity": {
-     "utility": "Con Edison",
-     "tariff_name": "EIA New York commercial average (not the building's own tariff)",
-     "avg_energy_charge_usd_per_kwh": 0.222,
-     "price_low_usd_per_kwh": 0.1981,
-     "price_high_usd_per_kwh": 0.2418,
-     "latest_month_usd_per_kwh": 0.2418,
-     "latest_month": "2026-07",
-     "months_averaged": 12,
-     "period_start": "2025-08",
-     "effective_date": "2026-07",
-     "price_units": "cents per kilowatt-hour"
+     "tool": "get_utility_rates",
+     "data": {
+      "utility": "Con Edison",
+      "tariff_name": "EIA New York commercial average (not the building's own tariff)",
+      "avg_energy_charge_usd_per_kwh": 0.222,
+      "price_low_usd_per_kwh": 0.1981,
+      "price_high_usd_per_kwh": 0.2418,
+      "latest_month_usd_per_kwh": 0.2418,
+      "latest_month": "2026-07",
+      "months_averaged": 12,
+      "period_start": "2025-08",
+      "effective_date": "2026-07",
+      "price_units": "cents per kilowatt-hour"
+     },
+     "source_url": "https://www.eia.gov/electricity/data/browser/",
+     "retrieved_at": "2026-10-17T07:32:06Z",
+     "dataset_version": "eia-retail-sales-2026-07",
+     "mock": false,
+     "stale": false,
+     "flags": [
+      "statewide_average_rate"
+     ]
     },
     "tariff": {
-     "utility": "Consolidated Edison Co-NY Inc",
-     "candidate_tariffs": [
-      {
-       "tariff_name": "SC-2 - General Small [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 33,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b6352c787e577df40aaced"
-      },
-      {
-       "tariff_name": "SC-2 - General Small Time-Of-Day [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 33,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b63a48f6edc47fde0ceaa0"
-      },
-      {
-       "tariff_name": "SC-9 - General Large High Tension Service [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 71,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b7814168be0da29d0777a5"
-      },
-      {
-       "tariff_name": "SC-9 - General Large Low Tension Service [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 71,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b784a868be0da29d0777a8"
-      },
-      {
-       "tariff_name": "SC-9 - General Large TOD Service [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 500,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b787dc68be0da29d0777ab"
-      },
-      {
-       "tariff_name": "SC-9 - General Large Voluntary TOD Service [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 71,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b78aa07498a04dc1005c32"
-      }
-     ],
-     "note": "These are the current general-service tariffs the utility publishes for New York City. Which one applies depends on peak demand, voltage and meter, so the building's own tariff is not chosen here and no energy price is taken from this list. Savings use the EIA state average instead.",
-     "needs_user_confirmation": true
+     "tool": "get_utility_tariff",
+     "data": {
+      "utility": "Consolidated Edison Co-NY Inc",
+      "candidate_tariffs": [
+       {
+        "tariff_name": "SC-2 - General Small [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 33,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b6352c787e577df40aaced"
+       },
+       {
+        "tariff_name": "SC-2 - General Small Time-Of-Day [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 33,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b63a48f6edc47fde0ceaa0"
+       },
+       {
+        "tariff_name": "SC-9 - General Large High Tension Service [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 71,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b7814168be0da29d0777a5"
+       },
+       {
+        "tariff_name": "SC-9 - General Large Low Tension Service [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 71,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b784a868be0da29d0777a8"
+       },
+       {
+        "tariff_name": "SC-9 - General Large TOD Service [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 500,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b787dc68be0da29d0777ab"
+       },
+       {
+        "tariff_name": "SC-9 - General Large Voluntary TOD Service [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 71,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b78aa07498a04dc1005c32"
+       }
+      ],
+      "note": "These are the current general-service tariffs the utility publishes for New York City. Which one applies depends on peak demand, voltage and meter, so the building's own tariff is not chosen here and no energy price is taken from this list. Savings use the EIA state average instead.",
+      "needs_user_confirmation": true
+     },
+     "source_url": "https://openei.org/wiki/Utility_Rate_Database",
+     "retrieved_at": "2026-10-17T07:32:23Z",
+     "dataset_version": "openei-usrdb-v8",
+     "mock": false,
+     "stale": false,
+     "flags": [
+      "tariff_needs_user_confirmation"
+     ]
     }
    },
    "scenarios": [
@@ -708,18 +739,40 @@
     }
    ],
    "battery": {
-    "battery_kw": 43.8,
-    "battery_kwh": 412,
-    "critical_load_kw": 43.8,
-    "critical_load_hours": 8.0,
-    "notes": "Critical load not given, so estimated at 1.0 W per sq ft x 43760 sq ft = 43.8 kW (a team placeholder, not metered). Backup length not given, so 8 hours assumed. Battery energy = kW x hours / 0.85 round-trip efficiency = 412 kWh."
+    "tool": "optimize_solar_storage",
+    "data": {
+     "battery_kw": 43.8,
+     "battery_kwh": 412,
+     "critical_load_kw": 43.8,
+     "critical_load_hours": 8.0,
+     "notes": "Critical load not given, so estimated at 1.0 W per sq ft x 43760 sq ft = 43.8 kW (a team placeholder, not metered). Backup length not given, so 8 hours assumed. Battery energy = kW x hours / 0.85 round-trip efficiency = 412 kWh."
+    },
+    "source_url": "internal://optimize_solar_storage",
+    "retrieved_at": "2026-10-17T07:32:25Z",
+    "dataset_version": "battery-sizing-v1",
+    "mock": false,
+    "stale": false,
+    "flags": [
+     "battery_inputs_estimated"
+    ]
    },
    "hazards": {
-    "flood_zone": "X",
-    "zone_subtype": "AREA OF MINIMAL FLOOD HAZARD",
-    "special_flood_hazard_area": false,
-    "notes": "FEMA effective flood map (current), read at the address point. NYC code uses the more restrictive of the effective and 2015 preliminary maps; the preliminary map was not checked. Heat and winter-storm ratings were not looked up.",
-    "geocoder_match": "1871 WALTON AVENUE, Bronx, NY, USA"
+    "tool": "get_hazard_context",
+    "data": {
+     "flood_zone": "X",
+     "zone_subtype": "AREA OF MINIMAL FLOOD HAZARD",
+     "special_flood_hazard_area": false,
+     "notes": "FEMA effective flood map (current), read at the address point. NYC code uses the more restrictive of the effective and 2015 preliminary maps; the preliminary map was not checked. Heat and winter-storm ratings were not looked up.",
+     "geocoder_match": "1871 WALTON AVENUE, Bronx, NY, USA"
+    },
+    "source_url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
+    "retrieved_at": "2026-10-17T07:32:20Z",
+    "dataset_version": "fema-nfhl-effective",
+    "mock": false,
+    "stale": false,
+    "flags": [
+     "hazard_partial"
+    ]
    },
    "calculations": {
     "C1": {
@@ -1057,25 +1110,25 @@
     {
      "label": "NYSERDA solar project costs",
      "url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
-     "retrieved_at": "2026-10-17T07:46:04Z",
+     "retrieved_at": "2026-10-17T08:46:37Z",
      "sample": false
     },
     {
      "label": "NYSERDA completed efficiency project costs",
      "url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "retrieved_at": "2026-10-17T07:46:04Z",
+     "retrieved_at": "2026-10-17T08:46:37Z",
      "sample": false
     },
     {
      "label": "NYC DCAS Local Law 87 report (measured savings realization)",
      "url": "https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf",
-     "retrieved_at": "2026-10-17T07:46:04Z",
+     "retrieved_at": "2026-10-17T08:46:37Z",
      "sample": false
     },
     {
      "label": "NYSERDA battery storage project costs",
      "url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
-     "retrieved_at": "2026-10-17T07:46:04Z",
+     "retrieved_at": "2026-10-17T08:46:37Z",
      "sample": false
     }
    ],
@@ -2076,7 +2129,7 @@
      "tool": "run_financial_model",
      "mock": false,
      "source_url": "internal://run_financial_model",
-     "retrieved_at": "2026-10-17T07:46:04Z",
+     "retrieved_at": "2026-10-17T08:46:37Z",
      "dataset_version": "v5-simple-payback",
      "flags": []
     }
@@ -2259,106 +2312,137 @@
    },
    "solar": {
     "production": {
-     "system_kw_dc": 286.3333,
-     "annual_ac_kwh": 354876.1533266063,
-     "annual_ac_kwh_low": 338147.3439416802,
-     "annual_ac_kwh_high": 371605.1221305011,
-     "range_assumption": "ASSUMPTION: system losses of 18% (low) to 10% (high) around PVWatts' 14% default; weather is typical-year data.",
-     "capacity_factor": 0.1414818898365881,
-     "solar_radiation_kwh_m2_day": 4.426414113749777,
-     "monthly_ac_kwh": [
-      18481.42299688025,
-      24624.06762847011,
-      30745.51895796832,
-      34483.26926547766,
-      39898.09333878585,
-      39880.93350814129,
-      41317.31043245155,
-      34568.02262622374,
-      31061.68578738275,
-      24506.60640483282,
-      19425.5581835329,
-      15883.66419645855
-     ],
-     "pvwatts_inputs": {
-      "lat": 40.574815,
-      "lon": -74.099371,
-      "system_capacity": 286.3333,
-      "module_type": 0,
-      "losses": 14,
-      "array_type": 1,
-      "tilt": 10,
-      "azimuth": 180
+     "tool": "get_solar_production",
+     "data": {
+      "system_kw_dc": 286.3333,
+      "annual_ac_kwh": 354876.1533266063,
+      "annual_ac_kwh_low": 338147.3439416802,
+      "annual_ac_kwh_high": 371605.1221305011,
+      "range_assumption": "ASSUMPTION: system losses of 18% (low) to 10% (high) around PVWatts' 14% default; weather is typical-year data.",
+      "capacity_factor": 0.1414818898365881,
+      "solar_radiation_kwh_m2_day": 4.426414113749777,
+      "monthly_ac_kwh": [
+       18481.42299688025,
+       24624.06762847011,
+       30745.51895796832,
+       34483.26926547766,
+       39898.09333878585,
+       39880.93350814129,
+       41317.31043245155,
+       34568.02262622374,
+       31061.68578738275,
+       24506.60640483282,
+       19425.5581835329,
+       15883.66419645855
+      ],
+      "pvwatts_inputs": {
+       "lat": 40.574815,
+       "lon": -74.099371,
+       "system_capacity": 286.3333,
+       "module_type": 0,
+       "losses": 14,
+       "array_type": 1,
+       "tilt": 10,
+       "azimuth": 180
+      },
+      "location": {
+       "label": "421 LINCOLN AVENUE, Staten Island, NY, USA",
+       "borough": "Staten Island",
+       "postalcode": "10306",
+       "match_type": "fallback",
+       "confidence": 0.8,
+       "bbl": "5037320006",
+       "lat": 40.574815,
+       "lon": -74.099371
+      },
+      "weather_data_source": "NSRDB PSM V3 GOES tmy-2020 3.2.0"
      },
-     "location": {
-      "label": "421 LINCOLN AVENUE, Staten Island, NY, USA",
-      "borough": "Staten Island",
-      "postalcode": "10306",
-      "match_type": "fallback",
-      "confidence": 0.8,
-      "bbl": "5037320006",
-      "lat": 40.574815,
-      "lon": -74.099371
-     },
-     "weather_data_source": "NSRDB PSM V3 GOES tmy-2020 3.2.0"
+     "source_url": "https://developer.nlr.gov/docs/solar/pvwatts/v8/",
+     "retrieved_at": "2026-10-17T07:34:15Z",
+     "dataset_version": "pvwatts-v8.5.0",
+     "mock": false,
+     "stale": false,
+     "flags": []
     }
    },
    "prices": {
     "electricity": {
-     "utility": "Con Edison",
-     "tariff_name": "EIA New York commercial average (not the building's own tariff)",
-     "avg_energy_charge_usd_per_kwh": 0.222,
-     "price_low_usd_per_kwh": 0.1981,
-     "price_high_usd_per_kwh": 0.2418,
-     "latest_month_usd_per_kwh": 0.2418,
-     "latest_month": "2026-07",
-     "months_averaged": 12,
-     "period_start": "2025-08",
-     "effective_date": "2026-07",
-     "price_units": "cents per kilowatt-hour"
+     "tool": "get_utility_rates",
+     "data": {
+      "utility": "Con Edison",
+      "tariff_name": "EIA New York commercial average (not the building's own tariff)",
+      "avg_energy_charge_usd_per_kwh": 0.222,
+      "price_low_usd_per_kwh": 0.1981,
+      "price_high_usd_per_kwh": 0.2418,
+      "latest_month_usd_per_kwh": 0.2418,
+      "latest_month": "2026-07",
+      "months_averaged": 12,
+      "period_start": "2025-08",
+      "effective_date": "2026-07",
+      "price_units": "cents per kilowatt-hour"
+     },
+     "source_url": "https://www.eia.gov/electricity/data/browser/",
+     "retrieved_at": "2026-10-17T07:34:17Z",
+     "dataset_version": "eia-retail-sales-2026-07",
+     "mock": false,
+     "stale": false,
+     "flags": [
+      "statewide_average_rate"
+     ]
     },
     "tariff": {
-     "utility": "Consolidated Edison Co-NY Inc",
-     "candidate_tariffs": [
-      {
-       "tariff_name": "SC-2 - General Small [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 33,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b6352c787e577df40aaced"
-      },
-      {
-       "tariff_name": "SC-2 - General Small Time-Of-Day [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 33,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b63a48f6edc47fde0ceaa0"
-      },
-      {
-       "tariff_name": "SC-9 - General Large High Tension Service [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 71,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b7814168be0da29d0777a5"
-      },
-      {
-       "tariff_name": "SC-9 - General Large Low Tension Service [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 71,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b784a868be0da29d0777a8"
-      },
-      {
-       "tariff_name": "SC-9 - General Large TOD Service [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 500,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b787dc68be0da29d0777ab"
-      },
-      {
-       "tariff_name": "SC-9 - General Large Voluntary TOD Service [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 71,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b78aa07498a04dc1005c32"
-      }
-     ],
-     "note": "These are the current general-service tariffs the utility publishes for New York City. Which one applies depends on peak demand, voltage and meter, so the building's own tariff is not chosen here and no energy price is taken from this list. Savings use the EIA state average instead.",
-     "needs_user_confirmation": true
+     "tool": "get_utility_tariff",
+     "data": {
+      "utility": "Consolidated Edison Co-NY Inc",
+      "candidate_tariffs": [
+       {
+        "tariff_name": "SC-2 - General Small [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 33,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b6352c787e577df40aaced"
+       },
+       {
+        "tariff_name": "SC-2 - General Small Time-Of-Day [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 33,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b63a48f6edc47fde0ceaa0"
+       },
+       {
+        "tariff_name": "SC-9 - General Large High Tension Service [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 71,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b7814168be0da29d0777a5"
+       },
+       {
+        "tariff_name": "SC-9 - General Large Low Tension Service [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 71,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b784a868be0da29d0777a8"
+       },
+       {
+        "tariff_name": "SC-9 - General Large TOD Service [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 500,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b787dc68be0da29d0777ab"
+       },
+       {
+        "tariff_name": "SC-9 - General Large Voluntary TOD Service [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 71,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b78aa07498a04dc1005c32"
+       }
+      ],
+      "note": "These are the current general-service tariffs the utility publishes for New York City. Which one applies depends on peak demand, voltage and meter, so the building's own tariff is not chosen here and no energy price is taken from this list. Savings use the EIA state average instead.",
+      "needs_user_confirmation": true
+     },
+     "source_url": "https://openei.org/wiki/Utility_Rate_Database",
+     "retrieved_at": "2026-10-17T07:34:34Z",
+     "dataset_version": "openei-usrdb-v8",
+     "mock": false,
+     "stale": false,
+     "flags": [
+      "tariff_needs_user_confirmation"
+     ]
     }
    },
    "scenarios": [
@@ -2806,18 +2890,40 @@
     }
    ],
    "battery": {
-    "battery_kw": 55.9,
-    "battery_kwh": 526,
-    "critical_load_kw": 55.9,
-    "critical_load_hours": 8.0,
-    "notes": "Critical load not given, so estimated at 1.0 W per sq ft x 55860 sq ft = 55.9 kW (a team placeholder, not metered). Backup length not given, so 8 hours assumed. Battery energy = kW x hours / 0.85 round-trip efficiency = 526 kWh."
+    "tool": "optimize_solar_storage",
+    "data": {
+     "battery_kw": 55.9,
+     "battery_kwh": 526,
+     "critical_load_kw": 55.9,
+     "critical_load_hours": 8.0,
+     "notes": "Critical load not given, so estimated at 1.0 W per sq ft x 55860 sq ft = 55.9 kW (a team placeholder, not metered). Backup length not given, so 8 hours assumed. Battery energy = kW x hours / 0.85 round-trip efficiency = 526 kWh."
+    },
+    "source_url": "internal://optimize_solar_storage",
+    "retrieved_at": "2026-10-17T07:34:29Z",
+    "dataset_version": "battery-sizing-v1",
+    "mock": false,
+    "stale": false,
+    "flags": [
+     "battery_inputs_estimated"
+    ]
    },
    "hazards": {
-    "flood_zone": "X",
-    "zone_subtype": "AREA OF MINIMAL FLOOD HAZARD",
-    "special_flood_hazard_area": false,
-    "notes": "FEMA effective flood map (current), read at the address point. NYC code uses the more restrictive of the effective and 2015 preliminary maps; the preliminary map was not checked. Heat and winter-storm ratings were not looked up.",
-    "geocoder_match": "421 LINCOLN AVENUE, Staten Island, NY, USA"
+    "tool": "get_hazard_context",
+    "data": {
+     "flood_zone": "X",
+     "zone_subtype": "AREA OF MINIMAL FLOOD HAZARD",
+     "special_flood_hazard_area": false,
+     "notes": "FEMA effective flood map (current), read at the address point. NYC code uses the more restrictive of the effective and 2015 preliminary maps; the preliminary map was not checked. Heat and winter-storm ratings were not looked up.",
+     "geocoder_match": "421 LINCOLN AVENUE, Staten Island, NY, USA"
+    },
+    "source_url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
+    "retrieved_at": "2026-10-17T07:34:31Z",
+    "dataset_version": "fema-nfhl-effective",
+    "mock": false,
+    "stale": false,
+    "flags": [
+     "hazard_partial"
+    ]
    },
    "calculations": {
     "C1": {
@@ -3170,25 +3276,25 @@
     {
      "label": "NYSERDA solar project costs",
      "url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
-     "retrieved_at": "2026-10-17T07:46:06Z",
+     "retrieved_at": "2026-10-17T08:46:38Z",
      "sample": false
     },
     {
      "label": "NYSERDA battery storage project costs",
      "url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
-     "retrieved_at": "2026-10-17T07:46:06Z",
+     "retrieved_at": "2026-10-17T08:46:38Z",
      "sample": false
     },
     {
      "label": "NYSERDA completed efficiency project costs",
      "url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "retrieved_at": "2026-10-17T07:46:06Z",
+     "retrieved_at": "2026-10-17T08:46:38Z",
      "sample": false
     },
     {
      "label": "NYC DCAS Local Law 87 report (measured savings realization)",
      "url": "https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf",
-     "retrieved_at": "2026-10-17T07:46:06Z",
+     "retrieved_at": "2026-10-17T08:46:38Z",
      "sample": false
     }
    ],
@@ -4092,7 +4198,7 @@
      "tool": "run_financial_model",
      "mock": false,
      "source_url": "internal://run_financial_model",
-     "retrieved_at": "2026-10-17T07:46:06Z",
+     "retrieved_at": "2026-10-17T08:46:38Z",
      "dataset_version": "v5-simple-payback",
      "flags": []
     }
@@ -4272,106 +4378,137 @@
    },
    "solar": {
     "production": {
-     "system_kw_dc": 273.8333,
-     "annual_ac_kwh": 344031.201445883,
-     "annual_ac_kwh_low": 327821.541237396,
-     "annual_ac_kwh_high": 360188.5490151246,
-     "range_assumption": "ASSUMPTION: system losses of 18% (low) to 10% (high) around PVWatts' 14% default; weather is typical-year data.",
-     "capacity_factor": 0.1434192561736822,
-     "solar_radiation_kwh_m2_day": 4.381658825054564,
-     "monthly_ac_kwh": [
-      18217.01092037385,
-      21907.69109129924,
-      32157.68533343902,
-      30807.03390860381,
-      38578.97839044028,
-      38563.84714824866,
-      39958.95507155441,
-      34079.98534978367,
-      30752.68906109116,
-      24818.26673357185,
-      19289.05385234335,
-      14900.00458513361
-     ],
-     "pvwatts_inputs": {
-      "lat": 40.672436,
-      "lon": -74.004228,
-      "system_capacity": 273.8333,
-      "module_type": 0,
-      "losses": 14,
-      "array_type": 1,
-      "tilt": 10,
-      "azimuth": 180
+     "tool": "get_solar_production",
+     "data": {
+      "system_kw_dc": 273.8333,
+      "annual_ac_kwh": 344031.201445883,
+      "annual_ac_kwh_low": 327821.541237396,
+      "annual_ac_kwh_high": 360188.5490151246,
+      "range_assumption": "ASSUMPTION: system losses of 18% (low) to 10% (high) around PVWatts' 14% default; weather is typical-year data.",
+      "capacity_factor": 0.1434192561736822,
+      "solar_radiation_kwh_m2_day": 4.381658825054564,
+      "monthly_ac_kwh": [
+       18217.01092037385,
+       21907.69109129924,
+       32157.68533343902,
+       30807.03390860381,
+       38578.97839044028,
+       38563.84714824866,
+       39958.95507155441,
+       34079.98534978367,
+       30752.68906109116,
+       24818.26673357185,
+       19289.05385234335,
+       14900.00458513361
+      ],
+      "pvwatts_inputs": {
+       "lat": 40.672436,
+       "lon": -74.004228,
+       "system_capacity": 273.8333,
+       "module_type": 0,
+       "losses": 14,
+       "array_type": 1,
+       "tilt": 10,
+       "azimuth": 180
+      },
+      "location": {
+       "label": "155 BAY STREET, Brooklyn, NY, USA",
+       "borough": "Brooklyn",
+       "postalcode": "11231",
+       "match_type": "fallback",
+       "confidence": 0.8,
+       "bbl": "3005820001",
+       "lat": 40.672436,
+       "lon": -74.004228
+      },
+      "weather_data_source": "NSRDB PSM V3 GOES tmy-2020 3.2.0"
      },
-     "location": {
-      "label": "155 BAY STREET, Brooklyn, NY, USA",
-      "borough": "Brooklyn",
-      "postalcode": "11231",
-      "match_type": "fallback",
-      "confidence": 0.8,
-      "bbl": "3005820001",
-      "lat": 40.672436,
-      "lon": -74.004228
-     },
-     "weather_data_source": "NSRDB PSM V3 GOES tmy-2020 3.2.0"
+     "source_url": "https://developer.nlr.gov/docs/solar/pvwatts/v8/",
+     "retrieved_at": "2026-10-17T07:36:22Z",
+     "dataset_version": "pvwatts-v8.5.0",
+     "mock": false,
+     "stale": false,
+     "flags": []
     }
    },
    "prices": {
     "electricity": {
-     "utility": "Con Edison",
-     "tariff_name": "EIA New York commercial average (not the building's own tariff)",
-     "avg_energy_charge_usd_per_kwh": 0.222,
-     "price_low_usd_per_kwh": 0.1981,
-     "price_high_usd_per_kwh": 0.2418,
-     "latest_month_usd_per_kwh": 0.2418,
-     "latest_month": "2026-07",
-     "months_averaged": 12,
-     "period_start": "2025-08",
-     "effective_date": "2026-07",
-     "price_units": "cents per kilowatt-hour"
+     "tool": "get_utility_rates",
+     "data": {
+      "utility": "Con Edison",
+      "tariff_name": "EIA New York commercial average (not the building's own tariff)",
+      "avg_energy_charge_usd_per_kwh": 0.222,
+      "price_low_usd_per_kwh": 0.1981,
+      "price_high_usd_per_kwh": 0.2418,
+      "latest_month_usd_per_kwh": 0.2418,
+      "latest_month": "2026-07",
+      "months_averaged": 12,
+      "period_start": "2025-08",
+      "effective_date": "2026-07",
+      "price_units": "cents per kilowatt-hour"
+     },
+     "source_url": "https://www.eia.gov/electricity/data/browser/",
+     "retrieved_at": "2026-10-17T07:36:24Z",
+     "dataset_version": "eia-retail-sales-2026-07",
+     "mock": false,
+     "stale": false,
+     "flags": [
+      "statewide_average_rate"
+     ]
     },
     "tariff": {
-     "utility": "Consolidated Edison Co-NY Inc",
-     "candidate_tariffs": [
-      {
-       "tariff_name": "SC-2 - General Small [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 33,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b6352c787e577df40aaced"
-      },
-      {
-       "tariff_name": "SC-2 - General Small Time-Of-Day [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 33,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b63a48f6edc47fde0ceaa0"
-      },
-      {
-       "tariff_name": "SC-9 - General Large High Tension Service [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 71,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b7814168be0da29d0777a5"
-      },
-      {
-       "tariff_name": "SC-9 - General Large Low Tension Service [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 71,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b784a868be0da29d0777a8"
-      },
-      {
-       "tariff_name": "SC-9 - General Large TOD Service [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 500,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b787dc68be0da29d0777ab"
-      },
-      {
-       "tariff_name": "SC-9 - General Large Voluntary TOD Service [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 71,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b78aa07498a04dc1005c32"
-      }
-     ],
-     "note": "These are the current general-service tariffs the utility publishes for New York City. Which one applies depends on peak demand, voltage and meter, so the building's own tariff is not chosen here and no energy price is taken from this list. Savings use the EIA state average instead.",
-     "needs_user_confirmation": true
+     "tool": "get_utility_tariff",
+     "data": {
+      "utility": "Consolidated Edison Co-NY Inc",
+      "candidate_tariffs": [
+       {
+        "tariff_name": "SC-2 - General Small [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 33,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b6352c787e577df40aaced"
+       },
+       {
+        "tariff_name": "SC-2 - General Small Time-Of-Day [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 33,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b63a48f6edc47fde0ceaa0"
+       },
+       {
+        "tariff_name": "SC-9 - General Large High Tension Service [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 71,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b7814168be0da29d0777a5"
+       },
+       {
+        "tariff_name": "SC-9 - General Large Low Tension Service [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 71,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b784a868be0da29d0777a8"
+       },
+       {
+        "tariff_name": "SC-9 - General Large TOD Service [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 500,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b787dc68be0da29d0777ab"
+       },
+       {
+        "tariff_name": "SC-9 - General Large Voluntary TOD Service [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 71,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b78aa07498a04dc1005c32"
+       }
+      ],
+      "note": "These are the current general-service tariffs the utility publishes for New York City. Which one applies depends on peak demand, voltage and meter, so the building's own tariff is not chosen here and no energy price is taken from this list. Savings use the EIA state average instead.",
+      "needs_user_confirmation": true
+     },
+     "source_url": "https://openei.org/wiki/Utility_Rate_Database",
+     "retrieved_at": "2026-10-17T07:36:38Z",
+     "dataset_version": "openei-usrdb-v8",
+     "mock": false,
+     "stale": false,
+     "flags": [
+      "tariff_needs_user_confirmation"
+     ]
     }
    },
    "scenarios": [
@@ -4810,18 +4947,40 @@
     }
    ],
    "battery": {
-    "battery_kw": 27.1,
-    "battery_kwh": 255,
-    "critical_load_kw": 27.1,
-    "critical_load_hours": 8.0,
-    "notes": "Critical load not given, so estimated at 1.0 W per sq ft x 27069 sq ft = 27.1 kW (a team placeholder, not metered). Backup length not given, so 8 hours assumed. Battery energy = kW x hours / 0.85 round-trip efficiency = 255 kWh."
+    "tool": "optimize_solar_storage",
+    "data": {
+     "battery_kw": 27.1,
+     "battery_kwh": 255,
+     "critical_load_kw": 27.1,
+     "critical_load_hours": 8.0,
+     "notes": "Critical load not given, so estimated at 1.0 W per sq ft x 27069 sq ft = 27.1 kW (a team placeholder, not metered). Backup length not given, so 8 hours assumed. Battery energy = kW x hours / 0.85 round-trip efficiency = 255 kWh."
+    },
+    "source_url": "internal://optimize_solar_storage",
+    "retrieved_at": "2026-10-17T07:36:39Z",
+    "dataset_version": "battery-sizing-v1",
+    "mock": false,
+    "stale": false,
+    "flags": [
+     "battery_inputs_estimated"
+    ]
    },
    "hazards": {
-    "flood_zone": "AE",
-    "zone_subtype": null,
-    "special_flood_hazard_area": true,
-    "notes": "FEMA effective flood map (current), read at the address point. NYC code uses the more restrictive of the effective and 2015 preliminary maps; the preliminary map was not checked. Heat and winter-storm ratings were not looked up.",
-    "geocoder_match": "155 BAY STREET, Brooklyn, NY, USA"
+    "tool": "get_hazard_context",
+    "data": {
+     "flood_zone": "AE",
+     "zone_subtype": null,
+     "special_flood_hazard_area": true,
+     "notes": "FEMA effective flood map (current), read at the address point. NYC code uses the more restrictive of the effective and 2015 preliminary maps; the preliminary map was not checked. Heat and winter-storm ratings were not looked up.",
+     "geocoder_match": "155 BAY STREET, Brooklyn, NY, USA"
+    },
+    "source_url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
+    "retrieved_at": "2026-10-17T07:36:35Z",
+    "dataset_version": "fema-nfhl-effective",
+    "mock": false,
+    "stale": false,
+    "flags": [
+     "hazard_partial"
+    ]
    },
    "calculations": {
     "C1": {
@@ -5197,25 +5356,25 @@
     {
      "label": "NYSERDA solar project costs",
      "url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
-     "retrieved_at": "2026-10-17T07:46:08Z",
+     "retrieved_at": "2026-10-17T08:46:38Z",
      "sample": false
     },
     {
      "label": "NYSERDA battery storage project costs",
      "url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
-     "retrieved_at": "2026-10-17T07:46:08Z",
+     "retrieved_at": "2026-10-17T08:46:38Z",
      "sample": false
     },
     {
      "label": "NYSERDA completed efficiency project costs",
      "url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "retrieved_at": "2026-10-17T07:46:08Z",
+     "retrieved_at": "2026-10-17T08:46:38Z",
      "sample": false
     },
     {
      "label": "NYC DCAS Local Law 87 report (measured savings realization)",
      "url": "https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf",
-     "retrieved_at": "2026-10-17T07:46:08Z",
+     "retrieved_at": "2026-10-17T08:46:38Z",
      "sample": false
     }
    ],
@@ -6211,7 +6370,7 @@
      "tool": "run_financial_model",
      "mock": false,
      "source_url": "internal://run_financial_model",
-     "retrieved_at": "2026-10-17T07:46:09Z",
+     "retrieved_at": "2026-10-17T08:46:38Z",
      "dataset_version": "v5-simple-payback",
      "flags": []
     }
@@ -6389,47 +6548,58 @@
    "prices": {
     "electricity": null,
     "tariff": {
-     "utility": "Consolidated Edison Co-NY Inc",
-     "candidate_tariffs": [
-      {
-       "tariff_name": "SC-2 - General Small [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 33,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b6352c787e577df40aaced"
-      },
-      {
-       "tariff_name": "SC-2 - General Small Time-Of-Day [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 33,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b63a48f6edc47fde0ceaa0"
-      },
-      {
-       "tariff_name": "SC-9 - General Large High Tension Service [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 71,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b7814168be0da29d0777a5"
-      },
-      {
-       "tariff_name": "SC-9 - General Large Low Tension Service [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 71,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b784a868be0da29d0777a8"
-      },
-      {
-       "tariff_name": "SC-9 - General Large TOD Service [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 500,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b787dc68be0da29d0777ab"
-      },
-      {
-       "tariff_name": "SC-9 - General Large Voluntary TOD Service [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 71,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b78aa07498a04dc1005c32"
-      }
-     ],
-     "note": "These are the current general-service tariffs the utility publishes for New York City. Which one applies depends on peak demand, voltage and meter, so the building's own tariff is not chosen here and no energy price is taken from this list. Savings use the EIA state average instead.",
-     "needs_user_confirmation": true
+     "tool": "get_utility_tariff",
+     "data": {
+      "utility": "Consolidated Edison Co-NY Inc",
+      "candidate_tariffs": [
+       {
+        "tariff_name": "SC-2 - General Small [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 33,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b6352c787e577df40aaced"
+       },
+       {
+        "tariff_name": "SC-2 - General Small Time-Of-Day [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 33,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b63a48f6edc47fde0ceaa0"
+       },
+       {
+        "tariff_name": "SC-9 - General Large High Tension Service [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 71,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b7814168be0da29d0777a5"
+       },
+       {
+        "tariff_name": "SC-9 - General Large Low Tension Service [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 71,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b784a868be0da29d0777a8"
+       },
+       {
+        "tariff_name": "SC-9 - General Large TOD Service [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 500,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b787dc68be0da29d0777ab"
+       },
+       {
+        "tariff_name": "SC-9 - General Large Voluntary TOD Service [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 71,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b78aa07498a04dc1005c32"
+       }
+      ],
+      "note": "These are the current general-service tariffs the utility publishes for New York City. Which one applies depends on peak demand, voltage and meter, so the building's own tariff is not chosen here and no energy price is taken from this list. Savings use the EIA state average instead.",
+      "needs_user_confirmation": true
+     },
+     "source_url": "https://openei.org/wiki/Utility_Rate_Database",
+     "retrieved_at": "2026-10-17T07:40:40Z",
+     "dataset_version": "openei-usrdb-v8",
+     "mock": false,
+     "stale": false,
+     "flags": [
+      "tariff_needs_user_confirmation"
+     ]
     }
    },
    "scenarios": [],
@@ -6465,11 +6635,22 @@
    ],
    "battery": null,
    "hazards": {
-    "flood_zone": "X",
-    "zone_subtype": "AREA OF MINIMAL FLOOD HAZARD",
-    "special_flood_hazard_area": false,
-    "notes": "FEMA effective flood map (current), read at the address point. NYC code uses the more restrictive of the effective and 2015 preliminary maps; the preliminary map was not checked. Heat and winter-storm ratings were not looked up.",
-    "geocoder_match": "425 6 AVENUE, New York, NY, USA"
+    "tool": "get_hazard_context",
+    "data": {
+     "flood_zone": "X",
+     "zone_subtype": "AREA OF MINIMAL FLOOD HAZARD",
+     "special_flood_hazard_area": false,
+     "notes": "FEMA effective flood map (current), read at the address point. NYC code uses the more restrictive of the effective and 2015 preliminary maps; the preliminary map was not checked. Heat and winter-storm ratings were not looked up.",
+     "geocoder_match": "425 6 AVENUE, New York, NY, USA"
+    },
+    "source_url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
+    "retrieved_at": "2026-10-17T07:39:28Z",
+    "dataset_version": "fema-nfhl-effective",
+    "mock": false,
+    "stale": false,
+    "flags": [
+     "hazard_partial"
+    ]
    },
    "calculations": {},
    "confirm_first": [
@@ -7597,60 +7778,82 @@
    },
    "prices": {
     "electricity": {
-     "utility": "Con Edison",
-     "tariff_name": "EIA New York commercial average (not the building's own tariff)",
-     "avg_energy_charge_usd_per_kwh": 0.222,
-     "price_low_usd_per_kwh": 0.1981,
-     "price_high_usd_per_kwh": 0.2418,
-     "latest_month_usd_per_kwh": 0.2418,
-     "latest_month": "2026-07",
-     "months_averaged": 12,
-     "period_start": "2025-08",
-     "effective_date": "2026-07",
-     "price_units": "cents per kilowatt-hour"
+     "tool": "get_utility_rates",
+     "data": {
+      "utility": "Con Edison",
+      "tariff_name": "EIA New York commercial average (not the building's own tariff)",
+      "avg_energy_charge_usd_per_kwh": 0.222,
+      "price_low_usd_per_kwh": 0.1981,
+      "price_high_usd_per_kwh": 0.2418,
+      "latest_month_usd_per_kwh": 0.2418,
+      "latest_month": "2026-07",
+      "months_averaged": 12,
+      "period_start": "2025-08",
+      "effective_date": "2026-07",
+      "price_units": "cents per kilowatt-hour"
+     },
+     "source_url": "https://www.eia.gov/electricity/data/browser/",
+     "retrieved_at": "2026-10-17T07:42:40Z",
+     "dataset_version": "eia-retail-sales-2026-07",
+     "mock": false,
+     "stale": false,
+     "flags": [
+      "statewide_average_rate"
+     ]
     },
     "tariff": {
-     "utility": "Consolidated Edison Co-NY Inc",
-     "candidate_tariffs": [
-      {
-       "tariff_name": "SC-2 - General Small [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 33,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b6352c787e577df40aaced"
-      },
-      {
-       "tariff_name": "SC-2 - General Small Time-Of-Day [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 33,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b63a48f6edc47fde0ceaa0"
-      },
-      {
-       "tariff_name": "SC-9 - General Large High Tension Service [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 71,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b7814168be0da29d0777a5"
-      },
-      {
-       "tariff_name": "SC-9 - General Large Low Tension Service [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 71,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b784a868be0da29d0777a8"
-      },
-      {
-       "tariff_name": "SC-9 - General Large TOD Service [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 500,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b787dc68be0da29d0777ab"
-      },
-      {
-       "tariff_name": "SC-9 - General Large Voluntary TOD Service [NYC]",
-       "effective_date": "2025-02-01",
-       "fixed_charge_usd_per_month": 71,
-       "openei_url": "https://apps.openei.org/USURDB/rate/view/67b78aa07498a04dc1005c32"
-      }
-     ],
-     "note": "These are the current general-service tariffs the utility publishes for New York City. Which one applies depends on peak demand, voltage and meter, so the building's own tariff is not chosen here and no energy price is taken from this list. Savings use the EIA state average instead.",
-     "needs_user_confirmation": true
+     "tool": "get_utility_tariff",
+     "data": {
+      "utility": "Consolidated Edison Co-NY Inc",
+      "candidate_tariffs": [
+       {
+        "tariff_name": "SC-2 - General Small [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 33,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b6352c787e577df40aaced"
+       },
+       {
+        "tariff_name": "SC-2 - General Small Time-Of-Day [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 33,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b63a48f6edc47fde0ceaa0"
+       },
+       {
+        "tariff_name": "SC-9 - General Large High Tension Service [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 71,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b7814168be0da29d0777a5"
+       },
+       {
+        "tariff_name": "SC-9 - General Large Low Tension Service [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 71,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b784a868be0da29d0777a8"
+       },
+       {
+        "tariff_name": "SC-9 - General Large TOD Service [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 500,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b787dc68be0da29d0777ab"
+       },
+       {
+        "tariff_name": "SC-9 - General Large Voluntary TOD Service [NYC]",
+        "effective_date": "2025-02-01",
+        "fixed_charge_usd_per_month": 71,
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b78aa07498a04dc1005c32"
+       }
+      ],
+      "note": "These are the current general-service tariffs the utility publishes for New York City. Which one applies depends on peak demand, voltage and meter, so the building's own tariff is not chosen here and no energy price is taken from this list. Savings use the EIA state average instead.",
+      "needs_user_confirmation": true
+     },
+     "source_url": "https://openei.org/wiki/Utility_Rate_Database",
+     "retrieved_at": "2026-10-17T07:42:47Z",
+     "dataset_version": "openei-usrdb-v8",
+     "mock": false,
+     "stale": false,
+     "flags": [
+      "tariff_needs_user_confirmation"
+     ]
     }
    },
    "scenarios": [
@@ -7835,11 +8038,22 @@
    ],
    "battery": null,
    "hazards": {
-    "flood_zone": "X",
-    "zone_subtype": "AREA OF MINIMAL FLOOD HAZARD",
-    "special_flood_hazard_area": false,
-    "notes": "FEMA effective flood map (current), read at the address point. NYC code uses the more restrictive of the effective and 2015 preliminary maps; the preliminary map was not checked. Heat and winter-storm ratings were not looked up.",
-    "geocoder_match": "660 WEST 236 STREET, Bronx, NY, USA"
+    "tool": "get_hazard_context",
+    "data": {
+     "flood_zone": "X",
+     "zone_subtype": "AREA OF MINIMAL FLOOD HAZARD",
+     "special_flood_hazard_area": false,
+     "notes": "FEMA effective flood map (current), read at the address point. NYC code uses the more restrictive of the effective and 2015 preliminary maps; the preliminary map was not checked. Heat and winter-storm ratings were not looked up.",
+     "geocoder_match": "660 WEST 236 STREET, Bronx, NY, USA"
+    },
+    "source_url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
+    "retrieved_at": "2026-10-17T07:42:45Z",
+    "dataset_version": "fema-nfhl-effective",
+    "mock": false,
+    "stale": false,
+    "flags": [
+     "hazard_partial"
+    ]
    },
    "calculations": {
     "C1": {
@@ -8156,19 +8370,19 @@
     {
      "label": "NYSERDA solar project costs",
      "url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
-     "retrieved_at": "2026-10-17T07:46:12Z",
+     "retrieved_at": "2026-10-17T08:46:39Z",
      "sample": false
     },
     {
      "label": "NYSERDA completed efficiency project costs",
      "url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "retrieved_at": "2026-10-17T07:46:12Z",
+     "retrieved_at": "2026-10-17T08:46:39Z",
      "sample": false
     },
     {
      "label": "NYC DCAS Local Law 87 report (measured savings realization)",
      "url": "https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf",
-     "retrieved_at": "2026-10-17T07:46:12Z",
+     "retrieved_at": "2026-10-17T08:46:39Z",
      "sample": false
     }
    ],
@@ -8990,7 +9204,7 @@
      "tool": "run_financial_model",
      "mock": false,
      "source_url": "internal://run_financial_model",
-     "retrieved_at": "2026-10-17T07:46:12Z",
+     "retrieved_at": "2026-10-17T08:46:39Z",
      "dataset_version": "v5-simple-payback",
      "flags": []
     }

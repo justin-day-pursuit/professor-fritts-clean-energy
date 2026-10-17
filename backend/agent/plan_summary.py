@@ -158,6 +158,9 @@ def build_plan_summary(run: Any, output: dict[str, Any], next_steps: list[dict[s
     """
     Gather everything the run found and calculated into one structured block.
 
+    The solar, price, battery and hazard entries are each tool's whole stored result (data plus source, date and the
+    live-or-sample flag), so the screen can say where the numbers came from; the other parts hold plain data.
+
     `output` is the run output being assembled (roadmap payload, notes). Nothing is dropped: the full roadmap sections,
     every calculation, every tool result's data, its source and date, and the notes' assumptions, flags and links are
     all present, grouped by topic.
@@ -220,13 +223,13 @@ def build_plan_summary(run: Any, output: dict[str, Any], next_steps: list[dict[s
             "goal_percent": goal_pct,
             "goal_kwh": round(float(annual_kwh) * float(goal_pct) / 100) if annual_kwh and goal_pct else None,
         },
-        "solar": {"production": data.get("get_solar_production") or None},
-        "prices": {"electricity": data.get("get_utility_rates") or None, "tariff": data.get("get_utility_tariff") or None},
+        "solar": {"production": results.get("get_solar_production") or None},
+        "prices": {"electricity": results.get("get_utility_rates") or None, "tariff": results.get("get_utility_tariff") or None},
         "scenarios": scenarios,
         "cost_basis": cost_basis,
         "incentives": (data.get("search_ny_incentives_and_rules") or {}).get("programs") or [],
-        "battery": data.get("optimize_solar_storage") or None,
-        "hazards": data.get("get_hazard_context") or None,
+        "battery": results.get("optimize_solar_storage") or None,
+        "hazards": results.get("get_hazard_context") or None,
         "calculations": {key: value for key, value in calculations.items() if not key.startswith("F-")},
         "confirm_first": confirm_first(flags, records, site),
         "assumptions": [{"id": key, "text": text} for key, text in (notes.get("assumptions") or {}).items()],

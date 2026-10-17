@@ -69,6 +69,10 @@ def test_every_recorded_replay_carries_a_complete_summary():
     assert summary["baseline"]["goal_kwh"] == round(456834 * 0.30)
     assert len(summary["sections"]) == 13 and {c["calc_id"] for s in summary["sections"] for c in s["claims"] if c.get("calc_id")}
     assert summary["incentives"] and summary["calculations"].get("C1")
+    # Each tool block keeps its data AND where it came from, so the screen never shows an empty block under a badge.
+    for block in (summary["solar"]["production"], summary["prices"]["electricity"], summary["battery"], summary["hazards"]):
+        assert block["data"] and block["source_url"] and block["retrieved_at"] and block["mock"] is not None
+    assert summary["solar"]["production"]["tool"] == "get_solar_production"
     json.dumps(summary)  # the whole block must be plain JSON
 
 
