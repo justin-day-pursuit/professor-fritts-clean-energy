@@ -448,7 +448,7 @@ function Backdrop({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
     <section className="relative flex min-h-[calc(100vh-6.5rem)] flex-col items-center px-4 pt-12 text-center" style={{ background: "radial-gradient(ellipse at 50% 100%, #d9efe9 0%, transparent 62%)" }}>
       <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--fr-teal)]">{eyebrow}</div>
-      <h1 className="mt-2 max-w-2xl text-3xl font-bold leading-tight text-[var(--fr-ink)] md:text-4xl">{title}</h1>
+      <h1 className="mt-2 max-w-5xl text-3xl font-bold leading-tight text-[var(--fr-ink)] md:whitespace-nowrap md:text-[clamp(1.25rem,2.8vw,2.25rem)]">{title}</h1>
     </section>
   );
 }

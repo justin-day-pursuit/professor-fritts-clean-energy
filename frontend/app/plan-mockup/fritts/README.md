@@ -39,12 +39,13 @@ Tips for a good swap:
 | `reading` | Working list: city records, incentives and rules | Reading a book |
 | `researching` | Working list: building details, solar, flood and heat, electricity prices and tariff | Researching (magnifying glass) |
 | `calculating` | Working list: the numbers, costing, sizing the battery | Chalkboard film |
-| `analyze` | Working list: costing, checking sources, writing the plan | Writing on a clipboard |
+| `analyze` | Working list: costing and checking sources | Writing on a clipboard (slow pen) |
+| `writing` | Working list: the last step, "writing your plan" | The same clipboard with his pen going fast, nodding, and the check mark drawing itself (the state he has when clicked) |
 | `present` | Report ready (the "I have your report" moment, center) | Taps the chart on the report (animated) |
 | `studying` | Opening scene of the working list (reading the building details) | Still picture: thinking over his clipboard, hand on chin |
 | `presenting` | Beside the finished report (his menu) | Still picture: presenting the report with an open hand |
 
-While the plan is worked out he plays five scenes in a fixed order: thinking over the clipboard (still picture), researching, reading, chalkboard, then writing notes. `runPlan.ts` sorts the working-list steps into those scenes (so the list can read in a slightly different order than the tools were used) and spreads them evenly across each scene. Each scene lasts one full pass of its animation (about 3 s, 6 s, 6 s, 7.4 s and 9 s), so nothing is cut off, and the list and progress bar fill at that pace (about 32 s in all). `poseForStep` in `poses.ts` decides which scene a step belongs to. To change a scene's length, edit `SCENES` in `runPlan.ts`. Clicking him (or the cue on the greeting and the finished report) plays that pose's short action: a big wave, a flourish, tapping the chart, a check mark, and so on.
+While the plan is worked out he plays six scenes in a fixed order: thinking over the clipboard (still picture), researching, reading, chalkboard, taking notes, then writing the plan (pen going fast). `runPlan.ts` sorts the working-list steps into those scenes (so the list can read in a slightly different order than the tools were used) and spreads them evenly across each scene. Each scene lasts one full pass of its animation (about 3 s, 6 s, 6 s, 4.8 s, 6 s and 3 s), so nothing is cut off, and the list and progress bar fill at that pace (about 29 s in all). `poseForStep` in `poses.ts` decides which scene a step belongs to. To change a scene's length, edit `SCENES` in `runPlan.ts`. Clicking him (or the cue on the greeting and the finished report) plays that pose's short action: a big wave, a flourish, tapping the chart, a check mark, and so on.
 
 ## Layered poses from the animation sheet
 

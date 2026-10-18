@@ -26,13 +26,14 @@ export type PoseName =
   | "reading"
   | "researching"
   | "calculating"
+  | "writing"
   | "studying"
   | "presenting";
 
 /** How one pose is drawn. */
 export type PoseAsset =
   | { kind: "rig" }
-  | { kind: "layers"; rig: RigId }
+  | { kind: "layers"; rig: RigId; writing?: boolean }
   | { kind: "board" }
   | { kind: "image"; src: string; alt: string; flip?: boolean; grow?: number }
   | { kind: "video"; src: string; poster?: string; alt: string };
@@ -50,6 +51,8 @@ export const POSES: Record<PoseName, PoseAsset> = {
   reading: { kind: "layers", rig: "read" },
   researching: { kind: "layers", rig: "research" },
   calculating: { kind: "board" },
+  // The last working step: the clipboard pose in the state it has when he is clicked (fast pen, nod, check mark), kept going.
+  writing: { kind: "layers", rig: "analyze", writing: true },
   // The two still pictures cut from the character sheet: him thinking over a clipboard, and him presenting the report.
   studying: { kind: "image", src: "/fritts/poses/fritts-analyze.png", alt: "Professor Fritts thinking over a clipboard" },
   // Beside the report: mirrored, and drawn a little bigger (the bubble keeps its place).
@@ -59,12 +62,13 @@ export const POSES: Record<PoseName, PoseAsset> = {
 /**
  * Picks the pose that matches what he is doing while the plan is worked out, from the sentence on the working list.
  * The first step, reading the building details, shows him thinking over his clipboard. Looking things up (the roof and sun, prices, risk) shows him with the magnifying glass; city records and
- * rules show him reading; the numbers and the battery sizing go on the chalkboard; everything else (costing the scenarios,
- * checking sources, writing) is note-taking.
+ * rules show him reading; the numbers and the battery sizing go on the chalkboard; costing the scenarios and checking
+ * sources are note-taking at the clipboard; writing the plan is the same clipboard with his pen going fast.
  * ./runPlan.ts uses this to sort the steps into scenes.
  */
 export function poseForStep(step: string): PoseName {
   const text = step.toLowerCase();
+  if (/writing/.test(text)) return "writing";
   if (/building details/.test(text)) return "studying";
   if (/records|incentive|rules/.test(text)) return "reading";
   if (/solar|flood|heat|electricity|tariff|prices/.test(text)) return "researching";

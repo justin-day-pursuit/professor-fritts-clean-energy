@@ -723,7 +723,6 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
         <span className="text-[var(--fr-line)]">|</span>
         <span className="font-semibold text-[var(--fr-ink)]">{String(plan.profile.building_name ?? plan.label)}</span>
         <span className="rounded-full bg-[var(--fr-soft)] px-2 py-0.5 text-xs text-[var(--fr-mute)]">{plan.status === "done" ? "Plan complete" : "Plan complete, with open items"}</span>
-        <span className="rounded-full bg-[var(--fr-soft)] px-2 py-0.5 text-xs text-[var(--fr-mute)]">{plan.kind === "recorded" ? "From a real run" : "Scripted demo"}</span>
         <div className="ml-auto flex items-center gap-2">
           <label className="flex cursor-pointer items-center gap-1.5 text-xs text-[var(--fr-mute)]">
             <input type="checkbox" checked={dev} onChange={(e) => setDev(e.target.checked)} />

@@ -82,7 +82,7 @@ interface FigureProps {
 }
 
 /** A layered pose: body, moving pieces, head and blinking eyes. */
-export function LayeredFigure({ rig, acting, onActEnd, flip = false }: FigureProps & { rig: Rig; flip?: boolean }) {
+export function LayeredFigure({ rig, acting, onActEnd, flip = false, writing = false }: FigureProps & { rig: Rig; flip?: boolean; writing?: boolean }) {
   // The action lasts a fixed time, so the guide hears about its end after that time (a little extra lets the last frame finish).
   useEffect(() => {
     if (!acting) return;
@@ -92,7 +92,7 @@ export function LayeredFigure({ rig, acting, onActEnd, flip = false }: FigurePro
 
   return (
     <div
-      className={`frg-lr frg-p-${rig.id} ${acting ? "frg-act" : ""}`}
+      className={`frg-lr frg-p-${rig.id} ${acting ? "frg-act" : ""} ${writing ? "frg-writing" : ""}`}
       style={
         {
           aspectRatio: String(rig.w * rig.k),
@@ -116,9 +116,9 @@ export function LayeredFigure({ rig, acting, onActEnd, flip = false }: FigurePro
 }
 
 /**
- * The chalkboard pose: one animated picture that plays once and stops on the finished board. He holds that for a moment, the
- * picture fades out, and it starts over. Being asked to act (clicked) plays it again from the start. With reduced motion (or if
- * the film cannot be loaded) it shows the finished board only.
+ * The chalkboard pose: one animated picture that plays once from start to finish and stays on the finished board (its scene
+ * ends as the film does). Being asked to act (clicked) plays it again from the start. With reduced motion (or if the film
+ * cannot be loaded) it shows the finished board only.
  */
 export function BoardFigure({ acting, onActEnd }: FigureProps) {
   const picture = useRef<HTMLImageElement>(null);
@@ -135,21 +135,13 @@ export function BoardFigure({ acting, onActEnd }: FigureProps) {
     let alive = true;
     let film: Blob | null = null;
     let address: string | null = null;
-    let timer: ReturnType<typeof setTimeout> | undefined;
 
     // Giving the picture a fresh address makes its animation start again from the first frame.
     const play = () => {
       if (!film) return;
-      clearTimeout(timer);
       if (address) URL.revokeObjectURL(address);
       address = URL.createObjectURL(film);
-      el.classList.remove("frg-fade");
       el.src = address;
-      // Once it has played and held on the finished board, fade it out and begin again.
-      timer = setTimeout(() => {
-        el.classList.add("frg-fade");
-        timer = setTimeout(play, BOARD.fadeMs);
-      }, BOARD.filmMs + BOARD.holdMs);
     };
     restart.current = play;
 
@@ -165,7 +157,6 @@ export function BoardFigure({ acting, onActEnd }: FigureProps) {
 
     return () => {
       alive = false;
-      clearTimeout(timer);
       if (address) URL.revokeObjectURL(address);
       restart.current = () => {};
     };

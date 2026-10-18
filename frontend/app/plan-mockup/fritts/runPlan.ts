@@ -20,8 +20,8 @@ export interface Scene {
   ms: number;
 }
 
-/** The chalkboard scene lasts as long as the film plus the pause on the finished board (it fades only after that). */
-const BOARD_SCENE_MS = BOARD.filmMs + BOARD.holdMs;
+/** The chalkboard scene lasts exactly as long as the film: it plays once from start to finish, with no pause on the finished board. */
+const BOARD_SCENE_MS = BOARD.filmMs;
 
 /**
  * The scenes, in order. The opening one is a still picture, so its length is only a pause long enough to read the first step. Researching and reading are about one cycle of their slow movement (the magnifying glass roaming
@@ -32,7 +32,8 @@ export const SCENES: readonly Scene[] = [
   { pose: "researching", ms: 6000 },
   { pose: "reading", ms: 6000 },
   { pose: "calculating", ms: BOARD_SCENE_MS },
-  { pose: "analyze", ms: 9000 },
+  { pose: "analyze", ms: 6000 },
+  { pose: "writing", ms: 3000 },
 ];
 
 /** The working list laid out in time. */

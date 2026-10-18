@@ -16,6 +16,7 @@
   translate: var(--nudge, 0%) 0;
   transition:
     left 0.8s cubic-bezier(0.45, 0, 0.2, 1),
+    bottom 0.8s cubic-bezier(0.45, 0, 0.2, 1),
     height 0.8s cubic-bezier(0.45, 0, 0.2, 1),
     transform 0.8s cubic-bezier(0.45, 0, 0.2, 1);
 }
@@ -25,7 +26,9 @@
   height: min(68vh, 700px);
 }
 .frg-stage {
-  left: 16px;
+  /* While he works he stands a little in from the left edge and a little above the floor of the screen. */
+  bottom: 4vh;
+  left: 56px;
   transform: translateX(0);
   height: min(58vh, 600px);
 }
@@ -529,6 +532,17 @@
   animation: frg-draw 2.4s ease-out forwards;
 }
 
+/* Writing the plan: the action state above kept going while he writes: fast pen, nodding, and the check mark drawing itself. */
+.frg-p-analyze.frg-writing .frg-lr-pen {
+  animation: frg-jotfast 2s ease-in-out infinite;
+}
+.frg-p-analyze.frg-writing .frg-lr-head {
+  animation: frg-nod 2s ease-in-out infinite;
+}
+.frg-p-analyze.frg-writing .frg-lr-check path {
+  animation: frg-draw 2.4s ease-out forwards;
+}
+
 /* Reading: the book rises and settles, and his head follows the lines. The action lifts the book and he chuckles. */
 .frg-p-read .frg-lr-body {
   animation-delay: -3.4s;
@@ -550,16 +564,12 @@
   animation: frg-chuckle 2s ease-in-out;
 }
 
-/* The chalkboard film. It fades out at the end of its loop and comes back at the start. */
+/* The chalkboard film: it plays once and stays on the finished board. */
 .frg-lr-film {
   display: block;
   /* The film is drawn taller than the guide (its height and offset are set in LayeredFigure.tsx) so that he stands as tall as in the other poses; the extra is empty easel space above him. */
   position: relative;
   max-width: none;
-  transition: opacity 0.45s ease;
-}
-.frg-lr-film.frg-fade {
-  opacity: 0;
 }
 
 @keyframes frg-wave {
@@ -1196,6 +1206,11 @@
   .frg-stage,
   .frg-big {
     height: min(22vh, 190px);
+  }
+  /* On a phone he stays in the corner. */
+  .frg-stage {
+    bottom: 0;
+    left: 16px;
   }
   .frg-bubble {
     position: fixed;

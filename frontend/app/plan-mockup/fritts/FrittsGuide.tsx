@@ -89,7 +89,7 @@ function Rig({ greeting, onGreetEnd }: { greeting: boolean; onGreetEnd: (e: Anim
 
 /** Draws one pose: the layered Gentleman Host, a pose from the animation sheet, the chalkboard film, a picture or GIF, or a looping clip. */
 function Figure({ asset, greeting, onGreetEnd, onActEnd, flip }: { asset: PoseAsset; greeting: boolean; onGreetEnd: (e: AnimationEvent) => void; onActEnd: () => void; flip: boolean }) {
-  if (asset.kind === "layers") return <LayeredFigure rig={RIGS[asset.rig]} acting={greeting} onActEnd={onActEnd} flip={flip} />;
+  if (asset.kind === "layers") return <LayeredFigure rig={RIGS[asset.rig]} acting={greeting} onActEnd={onActEnd} flip={flip} writing={asset.writing} />;
   if (asset.kind === "board") return <BoardFigure acting={greeting} onActEnd={onActEnd} />;
   if (asset.kind === "image") return <img className={`${styles.flat} ${asset.flip ? styles.flatFlip : ""}`} src={asset.src} alt={asset.alt} />;
   if (asset.kind === "video") {

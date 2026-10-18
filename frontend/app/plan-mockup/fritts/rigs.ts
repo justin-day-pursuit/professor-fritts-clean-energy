@@ -289,7 +289,7 @@ export const RIGS: Record<RigId, Rig> = {
 
 /**
  * The chalkboard pose is a short film instead of layers: one animated picture (board.webp, 115 pictures at 24 per second,
- * which plays once and stops on the finished board) and a still of that finished board for people who ask for less motion.
+ * which plays once from start to finish and stays on the finished board) and a still of that finished board for people who ask for less motion.
  * Its picture is 373 x 409, which is 0.912 as wide as it is tall.
  */
 export const BOARD = {
@@ -310,7 +310,4 @@ export const BOARD = {
    * theirs. Drawing it at exactly the guide's height keeps the whole figure, easel included, no taller than the others.
    */
   scale: 1.0,
-  /** Pause on the finished board before it fades and starts over, and how long the fade takes (milliseconds). */
-  holdMs: 2600,
-  fadeMs: 450,
 } as const;
