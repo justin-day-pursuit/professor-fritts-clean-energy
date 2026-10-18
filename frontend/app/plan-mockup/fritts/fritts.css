@@ -12,6 +12,8 @@
   display: flex;
   align-items: flex-end;
   pointer-events: none;
+  /* A small sideways nudge some poses ask for (set by the guide); it moves the figure and its bubble together. It is not animated, so he appears in his new spot instead of sliding there. */
+  translate: var(--nudge, 0%) 0;
   transition:
     left 0.8s cubic-bezier(0.45, 0, 0.2, 1),
     height 0.8s cubic-bezier(0.45, 0, 0.2, 1),
@@ -83,6 +85,10 @@
   animation: frg-breatheFlat 4.4s ease-in-out infinite;
   user-select: none;
   -webkit-user-drag: none;
+}
+/* A still picture drawn mirrored. (The scale property is separate from the breathing animation's transform.) */
+.frg-flatFlip {
+  scale: -1 1;
 }
 @keyframes frg-breatheFlat {
   0%,
@@ -278,6 +284,645 @@
   }
 }
 
+/* ---------------------------------------------------------------- the poses from the animation sheet */
+
+/*
+ * Each pose is a body picture with cut-out pieces on top (see rigs.ts). Everything is placed by percentages of the pose's own
+ * picture, and the picture's shape comes from the aspect-ratio set on it, so the pieces stay lined up at any size.
+ * A pose's class (frg-p-hello, frg-p-greet ...) says how its pieces move. While frg-act is on, the pose plays its short action.
+ */
+.frg-lr {
+  position: relative;
+  height: 100%;
+  max-width: none;
+}
+.frg-lr-body {
+  position: absolute;
+  inset: 0;
+  animation: frg-breathe 4.2s ease-in-out infinite;
+}
+.frg-lr img,
+.frg-lr-glass,
+.frg-lr-ring {
+  position: absolute;
+  display: block;
+  max-width: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+.frg-lr-base {
+  left: 0;
+  top: 0;
+  width: 100%;
+}
+.frg-lr-head {
+  position: absolute;
+}
+.frg-lr-head img {
+  left: 0;
+  top: 0;
+  width: 100%;
+}
+.frg-lr-lid {
+  position: absolute;
+  background: var(--lid, #f4cfa3);
+  border-bottom: 1.5px solid #0b2a44;
+  border-radius: 50% 50% 45% 45% / 40% 40% 60% 60%;
+  transform-origin: 50% 0;
+  transform: scaleY(0);
+  animation: frg-blink 5.3s infinite;
+}
+.frg-lr-glass img {
+  left: 0;
+  top: 0;
+  width: 100%;
+}
+
+/* Hello: looks about, offers a hand, the other hand sways. The action is a flourish with a nod and a bow. */
+.frg-p-hello .frg-lr-head {
+  animation: frg-headSway 7s ease-in-out infinite;
+}
+.frg-p-hello .frg-lr-hand {
+  animation: frg-handPresent 3.6s ease-in-out infinite;
+}
+.frg-p-hello .frg-lr-hand2 {
+  animation: frg-handSway 5.5s ease-in-out infinite;
+}
+.frg-p-hello.frg-act .frg-lr-hand {
+  animation: frg-flourish 1.6s ease-in-out;
+}
+.frg-p-hello.frg-act .frg-lr-head {
+  animation: frg-nod 1.6s ease-in-out;
+}
+.frg-p-hello.frg-act .frg-lr-body {
+  animation: frg-bow 1.6s ease-in-out;
+}
+
+/* Greeting: three waves, then a rest. The action is a big wave. */
+.frg-p-greet .frg-lr-hand {
+  animation: frg-wave 3.4s ease-in-out infinite;
+}
+.frg-p-greet .frg-lr-hand2 {
+  animation: frg-handSway 5s ease-in-out infinite;
+}
+.frg-p-greet .frg-lr-head {
+  animation: frg-headSway 6.5s ease-in-out infinite;
+  animation-delay: -2s;
+}
+.frg-p-greet .frg-lr-lid {
+  animation-delay: -1.4s;
+}
+.frg-p-greet.frg-act .frg-lr-hand {
+  animation: frg-bigwave 1.8s ease-in-out;
+}
+.frg-p-greet.frg-act .frg-lr-head {
+  animation: frg-cheer 1.8s ease-in-out;
+}
+.frg-p-greet.frg-act .frg-lr-body {
+  animation: frg-bow 1.8s ease-in-out;
+}
+
+/* Explaining: marks three points, then considers. */
+.frg-p-explain .frg-lr-body {
+  animation-delay: -1.3s;
+}
+.frg-p-explain .frg-lr-head {
+  animation: frg-musing 8s ease-in-out infinite;
+}
+.frg-p-explain .frg-lr-lid {
+  animation: frg-blink 6.1s infinite;
+  animation-delay: -2s;
+}
+.frg-p-explain .frg-lr-hand {
+  animation: frg-points 4.8s ease-in-out infinite;
+}
+.frg-p-explain.frg-act .frg-lr-hand {
+  animation: frg-expound 2s ease-in-out;
+}
+.frg-p-explain.frg-act .frg-lr-head {
+  animation: frg-explainNod 2s ease-in-out;
+}
+.frg-p-explain.frg-act .frg-lr-body {
+  animation: frg-lean 2s ease-in-out;
+}
+
+/* Good news: presents the report, glances about. */
+.frg-p-good .frg-lr-body {
+  animation-delay: -2.2s;
+}
+.frg-p-good .frg-lr-hand {
+  animation: frg-handPresent 3.2s ease-in-out infinite;
+  animation-delay: -0.8s;
+}
+.frg-p-good .frg-lr-head {
+  animation: frg-headSway 7.5s ease-in-out infinite;
+  animation-delay: -3s;
+}
+.frg-p-good .frg-lr-lid {
+  animation-delay: -3.3s;
+}
+.frg-p-good.frg-act .frg-lr-hand {
+  animation: frg-flourish 1.6s ease-in-out;
+}
+.frg-p-good.frg-act .frg-lr-head {
+  animation: frg-cheer 1.6s ease-in-out;
+}
+.frg-p-good.frg-act .frg-lr-body {
+  animation: frg-bow 1.6s ease-in-out;
+}
+
+/* Your report: taps the chart. The action taps it again and a gold outline pulses around it. */
+.frg-p-report .frg-lr-body {
+  animation-delay: -0.6s;
+}
+.frg-p-report .frg-lr-hand {
+  animation: frg-tap 3.4s ease-in-out infinite;
+}
+.frg-p-report .frg-lr-head {
+  animation: frg-musing 8s ease-in-out infinite;
+  animation-delay: -4s;
+}
+.frg-p-report .frg-lr-lid {
+  animation-delay: -0.7s;
+}
+.frg-lr-ring {
+  border: 3px solid var(--fr-gold, #e9b21c);
+  border-radius: 10px;
+  opacity: 0;
+  box-sizing: border-box;
+}
+.frg-p-report.frg-act .frg-lr-hand {
+  animation: frg-taptap 1.8s ease-in-out;
+}
+.frg-p-report.frg-act .frg-lr-head {
+  animation: frg-nod 1.8s ease-in-out;
+}
+.frg-p-report.frg-act .frg-lr-ring {
+  animation: frg-ringpulse 1.8s ease-out;
+}
+
+/* Researching: the glass roams over the page and a glint crosses the lens. Only the glass moves; head and body hold still. */
+.frg-p-research .frg-lr-body,
+.frg-p-research.frg-act .frg-lr-body,
+.frg-p-research .frg-lr-head,
+.frg-p-research.frg-act .frg-lr-head {
+  animation: none;
+}
+.frg-p-research .frg-lr-glass {
+  animation: frg-peer 6s ease-in-out infinite;
+}
+.frg-p-research .frg-lr-lid {
+  animation: frg-blink 4.6s infinite;
+  animation-delay: -1s;
+}
+.frg-p-research.frg-act .frg-lr-glass {
+  animation: frg-closer 1.8s ease-in-out;
+}
+.frg-lr-glint {
+  position: absolute;
+  border-radius: 50%;
+  overflow: hidden;
+  display: block;
+}
+.frg-lr-glint::before {
+  content: "";
+  position: absolute;
+  top: -10%;
+  left: 30%;
+  width: 28%;
+  height: 120%;
+  background: rgba(255, 255, 255, 0.75);
+  animation: frg-glint 3.6s ease-in-out infinite;
+}
+
+/* Analyzing: the pen scribbles, pauses, scribbles. The action is fast scribbling and a gold check mark that draws itself. */
+.frg-p-analyze .frg-lr-body {
+  animation-delay: -2.6s;
+}
+.frg-p-analyze .frg-lr-pen {
+  animation: frg-jot 3s ease-in-out infinite;
+}
+.frg-p-analyze .frg-lr-head {
+  animation: frg-ponder 3s ease-in-out infinite;
+}
+.frg-p-analyze .frg-lr-lid {
+  animation: frg-blink 4.4s infinite;
+  animation-delay: -1.8s;
+}
+.frg-lr-check {
+  position: absolute;
+  overflow: visible;
+  transform: rotate(-14deg);
+}
+.frg-lr-check path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.frg-p-analyze.frg-act .frg-lr-pen {
+  animation: frg-jotfast 2s ease-in-out;
+}
+.frg-p-analyze.frg-act .frg-lr-head {
+  animation: frg-nod 2s ease-in-out;
+}
+.frg-p-analyze.frg-act .frg-lr-check path {
+  animation: frg-draw 2.4s ease-out forwards;
+}
+
+/* Reading: the book rises and settles, and his head follows the lines. The action lifts the book and he chuckles. */
+.frg-p-read .frg-lr-body {
+  animation-delay: -3.4s;
+}
+.frg-p-read .frg-lr-book {
+  animation: frg-hold 5s ease-in-out infinite;
+}
+.frg-p-read .frg-lr-head {
+  animation: frg-lines 6s ease-in-out infinite;
+}
+.frg-p-read .frg-lr-lid {
+  animation: frg-blink 5.8s infinite;
+  animation-delay: -0.9s;
+}
+.frg-p-read.frg-act .frg-lr-book {
+  animation: frg-lift 2s ease-in-out;
+}
+.frg-p-read.frg-act .frg-lr-head {
+  animation: frg-chuckle 2s ease-in-out;
+}
+
+/* The chalkboard film. It fades out at the end of its loop and comes back at the start. */
+.frg-lr-film {
+  display: block;
+  /* The film is drawn taller than the guide (its height and offset are set in LayeredFigure.tsx) so that he stands as tall as in the other poses; the extra is empty easel space above him. */
+  position: relative;
+  max-width: none;
+  transition: opacity 0.45s ease;
+}
+.frg-lr-film.frg-fade {
+  opacity: 0;
+}
+
+@keyframes frg-wave {
+  0%,
+  52%,
+  100% {
+    transform: rotate(0);
+  }
+  8% {
+    transform: rotate(-13deg);
+  }
+  16% {
+    transform: rotate(9deg);
+  }
+  24% {
+    transform: rotate(-13deg);
+  }
+  32% {
+    transform: rotate(9deg);
+  }
+  40% {
+    transform: rotate(-8deg);
+  }
+}
+@keyframes frg-bigwave {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  12% {
+    transform: rotate(-18deg);
+  }
+  26% {
+    transform: rotate(14deg);
+  }
+  40% {
+    transform: rotate(-18deg);
+  }
+  54% {
+    transform: rotate(14deg);
+  }
+  68% {
+    transform: rotate(-14deg);
+  }
+  84% {
+    transform: rotate(8deg);
+  }
+}
+@keyframes frg-cheer {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  30% {
+    transform: rotate(3deg) translateY(3%);
+  }
+  60% {
+    transform: rotate(-1.5deg);
+  }
+}
+@keyframes frg-points {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  10% {
+    transform: rotate(-8deg);
+  }
+  18% {
+    transform: rotate(1deg);
+  }
+  28% {
+    transform: rotate(-8deg);
+  }
+  36% {
+    transform: rotate(1deg);
+  }
+  46% {
+    transform: rotate(-10deg);
+  }
+  56%,
+  90% {
+    transform: rotate(0);
+  }
+}
+@keyframes frg-musing {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  10% {
+    transform: rotate(1.5deg);
+  }
+  28% {
+    transform: rotate(1.5deg) translateY(1%);
+  }
+  46% {
+    transform: rotate(2deg);
+  }
+  62% {
+    transform: rotate(-1.5deg);
+  }
+  82% {
+    transform: rotate(-1deg);
+  }
+}
+@keyframes frg-expound {
+  0% {
+    transform: rotate(0);
+  }
+  22% {
+    transform: rotate(-18deg);
+  }
+  38% {
+    transform: rotate(4deg);
+  }
+  56% {
+    transform: rotate(-12deg);
+  }
+  74% {
+    transform: rotate(3deg);
+  }
+  100% {
+    transform: rotate(0);
+  }
+}
+@keyframes frg-explainNod {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(3deg) translateY(2%);
+  }
+  45% {
+    transform: rotate(-1deg);
+  }
+  65% {
+    transform: rotate(2.5deg) translateY(1.5%);
+  }
+}
+@keyframes frg-lean {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  30%,
+  70% {
+    transform: rotate(0.8deg);
+  }
+}
+@keyframes frg-tap {
+  0%,
+  36%,
+  100% {
+    transform: none;
+  }
+  8% {
+    transform: translate(5%, -1%) rotate(-2deg);
+  }
+  14% {
+    transform: none;
+  }
+  22% {
+    transform: translate(5%, -1%) rotate(-2deg);
+  }
+  28% {
+    transform: none;
+  }
+}
+@keyframes frg-taptap {
+  0%,
+  100% {
+    transform: none;
+  }
+  12%,
+  40%,
+  68% {
+    transform: translate(6%, -1.5%) rotate(-3deg);
+  }
+  26%,
+  54%,
+  82% {
+    transform: none;
+  }
+}
+@keyframes frg-peer {
+  0%,
+  100% {
+    transform: none;
+  }
+  25% {
+    transform: translate(4%, -2.5%) rotate(-3deg);
+  }
+  50% {
+    transform: translate(-2%, 2%) rotate(2deg);
+  }
+  75% {
+    transform: translate(3%, 2%) rotate(-1.5deg);
+  }
+}
+@keyframes frg-closer {
+  0%,
+  100% {
+    transform: none;
+  }
+  30%,
+  70% {
+    transform: translate(4%, -4%) scale(1.1) rotate(-4deg);
+  }
+}
+@keyframes frg-glint {
+  0%,
+  60% {
+    transform: translateX(-140%) skewX(-20deg);
+  }
+  85%,
+  100% {
+    transform: translateX(160%) skewX(-20deg);
+  }
+}
+@keyframes frg-jot {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  8% {
+    transform: rotate(-3deg) translate(2%, 1%);
+  }
+  16% {
+    transform: rotate(1deg) translate(5%, -1%);
+  }
+  24% {
+    transform: rotate(-2deg) translate(8%, 1%);
+  }
+  32% {
+    transform: rotate(0) translate(3%, 0);
+  }
+  40%,
+  70% {
+    transform: rotate(0);
+  }
+}
+@keyframes frg-jotfast {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  10%,
+  30%,
+  50%,
+  70% {
+    transform: rotate(-4deg) translate(4%, 2%);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: rotate(2deg) translate(8%, -1%);
+  }
+}
+@keyframes frg-ponder {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  40% {
+    transform: rotate(1.5deg) translateY(0.8%);
+  }
+  60% {
+    transform: rotate(1.5deg) translateY(0.8%);
+  }
+  80% {
+    transform: rotate(-1deg);
+  }
+}
+@keyframes frg-hold {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  50% {
+    transform: rotate(-1.4deg) translateY(-0.8%);
+  }
+}
+@keyframes frg-lines {
+  0%,
+  100% {
+    transform: rotate(-1.2deg);
+  }
+  45% {
+    transform: rotate(1.4deg);
+  }
+  50% {
+    transform: rotate(-1.2deg) translateY(0.6%);
+  }
+  95% {
+    transform: rotate(1.4deg) translateY(0.6%);
+  }
+}
+@keyframes frg-lift {
+  0%,
+  100% {
+    transform: none;
+  }
+  35%,
+  70% {
+    transform: translateY(-3%) rotate(-3deg);
+  }
+}
+@keyframes frg-chuckle {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  20% {
+    transform: rotate(-2deg) translateY(-1%);
+  }
+  35% {
+    transform: rotate(1deg);
+  }
+  50% {
+    transform: rotate(-2deg) translateY(-1%);
+  }
+  65% {
+    transform: rotate(1deg);
+  }
+}
+@keyframes frg-ringpulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+}
+@keyframes frg-draw {
+  0%,
+  30% {
+    stroke-dashoffset: 1;
+    opacity: 1;
+  }
+  60% {
+    stroke-dashoffset: 0;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
 /* ---------------------------------------------------------------- the speech bubble */
 
 .frg-bubble {
@@ -299,7 +944,7 @@
 .frg-center .frg-bubble,
 .frg-stage .frg-bubble {
   left: calc(var(--bubble-left, 80%) + 10px);
-  top: 3%;
+  top: var(--bubble-top, 3%);
 }
 .frg-sideRight .frg-bubble {
   right: 0;
@@ -421,7 +1066,35 @@
 .frg-center .frg-reopen,
 .frg-stage .frg-reopen {
   left: calc(var(--bubble-left, 80%) + 10px);
-  top: 3%;
+  top: var(--bubble-top, 3%);
+}
+
+/* The chalkboard pose reaches above the guide, so its speech bubble sits above the board instead of beside it. */
+.frg-above .frg-bubble,
+.frg-above .frg-reopen {
+  left: 0;
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+.frg-above .frg-bubble::after {
+  left: 28px;
+  top: auto;
+  bottom: -9px;
+  transform: rotate(45deg);
+}
+
+/* A still picture drawn bigger at the edge (--grow is how many times bigger): the guide grows upward, so the bubble is pulled down by the same amount, then raised a little (20px) so it stays clear of his head. */
+@media (min-width: 641px) {
+  .frg-sideRight.frg-grow,
+  .frg-sideLeft.frg-grow {
+    height: calc(var(--fh) * var(--grow));
+  }
+  .frg-sideRight.frg-grow .frg-bubble,
+  .frg-sideRight.frg-grow .frg-reopen,
+  .frg-sideLeft.frg-grow .frg-bubble,
+  .frg-sideLeft.frg-grow .frg-reopen {
+    bottom: calc(100% + 30px - (var(--grow) - 1) * var(--fh));
+  }
 }
 
 /* ---------------------------------------------------------------- beside the form, on wide screens */
@@ -457,6 +1130,42 @@
     bottom: auto;
     right: -8px;
     top: calc(55% - 7px);
+    transform: rotate(-45deg);
+  }
+  /*
+   * Mirrored to face the form: the mirror puts his body on the right of his picture, which would run off the screen, so he is
+   * pulled back left, and drawn a little smaller. His bubble sits on his left, level with his face, a little narrower than
+   * usual so it stays clear of the form.
+   */
+  .frg-guide.frg-big.frg-flipped {
+    --fh: calc(min(76vh, 780px, 48vw) * 0.8);
+    height: var(--fh);
+    translate: -22% 0;
+    /* He appears in this pose; he does not scale or slide in from the previous one. */
+    transition: none;
+  }
+  /* A last small move to the right, and a gentle stretch upward from his feet so he looks taller, for the figure alone so his bubble stays where it is. */
+  .frg-guide.frg-big.frg-flipped .frg-figure {
+    translate: 9% -5%;
+    scale: 1 1.12;
+    transform-origin: 50% 100%;
+  }
+  .frg-guide.frg-big.frg-flipped .frg-bubble,
+  .frg-guide.frg-big.frg-flipped .frg-reopen {
+    left: auto;
+    right: 55%;
+    bottom: auto;
+    top: calc(var(--fh) * -0.13);
+    translate: none;
+  }
+  .frg-guide.frg-big.frg-flipped .frg-bubble {
+    width: min(240px, 80vw);
+  }
+  .frg-guide.frg-big.frg-flipped .frg-bubble::after {
+    left: auto;
+    right: -8px;
+    bottom: auto;
+    top: 28px;
     transform: rotate(-45deg);
   }
   .frg-guide.frg-big .frg-reopen {

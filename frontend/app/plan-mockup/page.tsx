@@ -20,7 +20,8 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { AddressSearch } from "./AddressSearch";
 import { buildingTypeLabel, fetchBuildingRecord, numberOf, ownerKind, type AddressSuggestion, type BuildingRecord, type FoundBuilding } from "./address";
 import { FrittsGuide, type GuideAction } from "./fritts/FrittsGuide";
-import type { Placement, PoseName } from "./fritts/poses";
+import { poseForStep, type Placement, type PoseName } from "./fritts/poses";
+import { planRun } from "./fritts/runPlan";
 import { ADDRESS_ERROR, ADDRESS_LOOKING, ADDRESS_NOT_FOUND, ADDRESS_START, BRING, BRING_REPLY, CONFIRM_REPLY, HELLO, INTAKE_STEP, PDF_SAYS, PRIVATE_BUILDING, REPORT_MENU, foundLine, readyLine, shareLine, unclearOwner, workingLine } from "./fritts/script";
 import { plainify } from "./plain";
 import { copyShareLink, downloadPlanPdf } from "./plan-actions";
@@ -503,7 +504,9 @@ export default function PlanMockup() {
       : null;
   const lookup: "idle" | "looking" | "empty" | "error" =
     chosen && !hasRecord ? (failedBbl === chosen.bbl ? "error" : "looking") : searchStatus;
-  const runLines = useMemo(() => (sample ? narrationFor(sample) : []), [sample]);
+  // The steps in the order of Fritts's scenes, with when each one starts (see ./fritts/runPlan.ts).
+  const runPlan = useMemo(() => planRun(sample ? narrationFor(sample) : []), [sample]);
+  const runLines = runPlan.lines;
 
   /** Moves to a screen, scrolls to the top, and resets whatever Fritts should start fresh on that screen. */
   const goTo = useCallback((v: View) => {
@@ -537,16 +540,18 @@ export default function PlanMockup() {
     return () => clearTimeout(timer);
   }, [goTo]);
 
-  // The working list plays itself: one step every moment, then the report is ready.
+  // The working list plays itself, each step lasting as long as its part of Fritts's scene, then the report is ready.
   useEffect(() => {
     if (view !== "running") return;
     if (runShown >= runLines.length) {
       const t = setTimeout(() => goTo("ready"), 900);
       return () => clearTimeout(t);
     }
-    const t = setTimeout(() => setRunShown((n) => n + 1), 750);
+    // Each step lasts until the next one starts, so every scene of Fritts plays one full pass of its animation.
+    const stepEnd = runPlan.starts[runShown + 1] ?? runPlan.total;
+    const t = setTimeout(() => setRunShown((n) => n + 1), stepEnd - runPlan.starts[runShown]);
     return () => clearTimeout(t);
-  }, [view, runShown, runLines.length, goTo]);
+  }, [view, runShown, runLines.length, runPlan, goTo]);
 
   /** Forgets any building chosen and empties the address box. */
   const resetSearch = () => {
@@ -686,7 +691,7 @@ export default function PlanMockup() {
     }
     if (view === "running") {
       const current = runLines[Math.min(runShown, runLines.length - 1)] ?? "";
-      return { placement: "stage", pose: "analyze", line: workingLine(current), actions: [] };
+      return { placement: "stage", pose: poseForStep(current), line: workingLine(current), actions: [] };
     }
     if (view === "ready") {
       return { placement: "center", pose: "present", line: readyLine(sample.outcome.label), actions: [{ label: "Open my report", primary: true, onClick: () => goTo("results") }] };
@@ -695,7 +700,7 @@ export default function PlanMockup() {
       if (menu === "sections") {
         return {
           placement: "side",
-          pose: "explaining",
+          pose: "presenting",
           wide: true,
           line: "Which section would you like me to explain?",
           actions: [
@@ -715,11 +720,11 @@ export default function PlanMockup() {
         const copyAgain: GuideAction[] = shareUrl
           ? [{ label: "Copy link", primary: true, onClick: () => { void copyShareLink(sample.id).then(({ url, copied }) => setSaid(shareLine(url, copied))); } }]
           : [];
-        return { placement: "side", pose: "explaining", line: said, actions: [...copyAgain, { label: "Anything else?", primary: !shareUrl, onClick: () => setMenu("menu") }] };
+        return { placement: "side", pose: "presenting", line: said, actions: [...copyAgain, { label: "Anything else?", primary: !shareUrl, onClick: () => setMenu("menu") }] };
       }
       return {
         placement: "side",
-        pose: "present",
+        pose: "presenting",
         line: REPORT_MENU,
         actions: [
           { label: "Download PDF", onClick: () => { setShareUrl(null); setSaid(PDF_SAYS.making); setMenu("said"); void downloadPlanPdf(sample.plan).then((r) => setSaid(PDF_SAYS[r])); } },
