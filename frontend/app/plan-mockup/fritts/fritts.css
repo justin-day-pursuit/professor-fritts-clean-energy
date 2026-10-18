@@ -1,0 +1,521 @@
+/*
+ * Styles for the Professor Fritts guide (plain CSS with frg- names, because this project sends every CSS file through the Tailwind loader, which rules out CSS modules): where he stands, how the layered character moves, and the speech bubble.
+ * The layer positions are percentages of the character's 1024 x 1536 picture so the parts stay lined up at any size.
+ */
+
+/* ---------------------------------------------------------------- where he stands */
+
+.frg-guide {
+  position: fixed;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-end;
+  pointer-events: none;
+  transition:
+    left 0.8s cubic-bezier(0.45, 0, 0.2, 1),
+    height 0.8s cubic-bezier(0.45, 0, 0.2, 1),
+    transform 0.8s cubic-bezier(0.45, 0, 0.2, 1);
+}
+.frg-center {
+  left: 50%;
+  transform: translateX(-50%);
+  height: min(68vh, 700px);
+}
+.frg-stage {
+  left: 16px;
+  transform: translateX(0);
+  height: min(58vh, 600px);
+}
+.frg-sideRight {
+  left: calc(100% - 16px);
+  transform: translateX(-100%);
+  --fh: min(36vh, 360px);
+  height: var(--fh);
+}
+.frg-sideLeft {
+  left: 16px;
+  transform: translateX(0);
+  --fh: min(36vh, 360px);
+  height: var(--fh);
+}
+
+/* Beside the form he is drawn larger than beside the report, since the form leaves room for him. */
+.frg-big {
+  --fh: min(70vh, 720px);
+  height: var(--fh);
+}
+
+.frg-figure {
+  height: 100%;
+  pointer-events: auto;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.frg-figure:focus-visible {
+  outline: 2px solid var(--fr-teal);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
+/* A new pose fades in. */
+.frg-appear {
+  animation: frg-appear 0.45s ease both;
+}
+@keyframes frg-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------- pictures and clips */
+
+.frg-flat {
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: none;
+  object-fit: contain;
+  transform-origin: 50% 96%;
+  animation: frg-breatheFlat 4.4s ease-in-out infinite;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+@keyframes frg-breatheFlat {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(1.004, 1.01);
+  }
+}
+
+/* ---------------------------------------------------------------- the layered character */
+
+.frg-rig {
+  position: relative;
+  height: 100%;
+  aspect-ratio: 1024 / 1536;
+}
+.frg-body {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 89%;
+  animation: frg-breathe 4.2s ease-in-out infinite;
+}
+.frg-rig img {
+  position: absolute;
+  display: block;
+  max-width: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+.frg-base {
+  left: 0;
+  top: 0;
+  width: 100%;
+}
+.frg-head {
+  position: absolute;
+  left: 37.109%;
+  top: 1.302%;
+  width: 25.391%;
+  height: 15.755%;
+  transform-origin: 48% 95%;
+  animation: frg-headSway 7s ease-in-out infinite;
+}
+.frg-head img {
+  left: 0;
+  top: 0;
+  width: 100%;
+}
+.frg-lid {
+  position: absolute;
+  background: #f6d6ab;
+  border-bottom: 1.5px solid #0b2a44;
+  border-radius: 50% 50% 45% 45% / 40% 40% 60% 60%;
+  transform-origin: 50% 0;
+  transform: scaleY(0);
+  animation: frg-blink 5.3s infinite;
+}
+.frg-lidLeft {
+  left: 31.9%;
+  top: 41.2%;
+  width: 12%;
+  height: 7%;
+}
+.frg-lidRight {
+  left: 53.6%;
+  top: 38%;
+  width: 12.4%;
+  height: 7.3%;
+}
+.frg-hand {
+  left: 11.523%;
+  top: 30.859%;
+  width: 12.598%;
+  transform-origin: 91.5% 59.5%;
+  animation: frg-handPresent 3.6s ease-in-out infinite;
+}
+.frg-hand2 {
+  left: 68.848%;
+  top: 48.763%;
+  width: 9.375%;
+  transform-origin: 47% 2%;
+  animation: frg-handSway 5.5s ease-in-out infinite;
+}
+
+/* The welcome frg-flourish, played once when he greets someone. */
+.frg-greet .frg-hand {
+  animation: frg-flourish 1.6s ease-in-out;
+}
+.frg-greet .frg-head {
+  animation: frg-nod 1.6s ease-in-out;
+}
+.frg-greet .frg-body {
+  animation: frg-bow 1.6s ease-in-out;
+}
+
+@keyframes frg-breathe {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(1.004, 1.009);
+  }
+}
+@keyframes frg-headSway {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-2.2deg);
+  }
+  55% {
+    transform: rotate(1.4deg) translateY(0.3%);
+  }
+  80% {
+    transform: rotate(-0.6deg);
+  }
+}
+@keyframes frg-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(0);
+  }
+  95% {
+    transform: scaleY(1);
+  }
+  97.5% {
+    transform: scaleY(0.15);
+  }
+}
+@keyframes frg-handPresent {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-7deg);
+  }
+}
+@keyframes frg-handSway {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(3.5deg);
+  }
+}
+@keyframes frg-flourish {
+  0% {
+    transform: rotate(0);
+  }
+  20% {
+    transform: rotate(-16deg);
+  }
+  40% {
+    transform: rotate(6deg);
+  }
+  60% {
+    transform: rotate(-12deg);
+  }
+  80% {
+    transform: rotate(4deg);
+  }
+  100% {
+    transform: rotate(0);
+  }
+}
+@keyframes frg-nod {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  30% {
+    transform: rotate(-3deg) translateY(4%);
+  }
+  55% {
+    transform: rotate(1deg);
+  }
+}
+@keyframes frg-bow {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  30% {
+    transform: scale(1.006, 0.985);
+  }
+}
+
+/* ---------------------------------------------------------------- the speech bubble */
+
+.frg-bubble {
+  position: absolute;
+  z-index: 2;
+  width: min(300px, 80vw);
+  pointer-events: auto;
+  background: #ffffff;
+  color: var(--fr-ink);
+  border: 1.5px solid var(--fr-ink);
+  border-radius: 16px;
+  box-shadow: 3px 3px 0 var(--fr-gold);
+  padding: 12px 14px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 15.5px;
+  line-height: 1.35;
+  animation: frg-bubbleIn 0.3s ease both;
+}
+.frg-center .frg-bubble,
+.frg-stage .frg-bubble {
+  left: calc(var(--bubble-left, 80%) + 10px);
+  top: 3%;
+}
+.frg-sideRight .frg-bubble {
+  right: 0;
+  bottom: calc(100% + 10px);
+}
+.frg-sideLeft .frg-bubble {
+  left: 0;
+  bottom: calc(100% + 10px);
+}
+.frg-bubble::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #ffffff;
+  border-right: 1.5px solid var(--fr-ink);
+  border-bottom: 1.5px solid var(--fr-ink);
+  transform: rotate(45deg);
+}
+.frg-center .frg-bubble::after,
+.frg-stage .frg-bubble::after {
+  left: -8px;
+  top: 28px;
+  transform: rotate(135deg);
+}
+.frg-sideRight .frg-bubble::after {
+  right: 28px;
+  bottom: -9px;
+}
+.frg-sideLeft .frg-bubble::after {
+  left: 28px;
+  bottom: -9px;
+}
+@keyframes frg-bubbleIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Used only for the list of report sections: wider, and never taller than the room above his head, so a long list scrolls inside the bubble instead of running off the top of the screen. */
+.frg-bubble.frg-wide {
+  width: min(400px, 92vw);
+  max-height: calc(100vh - var(--fh, 360px) - 120px);
+  overflow-y: auto;
+}
+
+.frg-close {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--fr-mute);
+  font: 16px/1 system-ui, sans-serif;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+.frg-close:focus-visible,
+.frg-action:focus-visible,
+.frg-reopen:focus-visible {
+  outline: 2px solid var(--fr-teal);
+  outline-offset: 2px;
+}
+.frg-line {
+  margin: 0;
+  padding-right: 14px;
+}
+.frg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.frg-action {
+  border: 1.5px solid var(--fr-ink);
+  background: transparent;
+  color: var(--fr-ink);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font: 600 13px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+  cursor: pointer;
+}
+.frg-action:hover {
+  border-color: var(--fr-teal);
+}
+.frg-primary {
+  background: var(--fr-ink);
+  color: #ffffff;
+}
+.frg-primary:hover {
+  background: var(--fr-teal);
+}
+
+/* A small button that brings the bubble back after it was closed. */
+.frg-reopen {
+  position: absolute;
+  pointer-events: auto;
+  border: 1.5px solid var(--fr-ink);
+  background: #ffffff;
+  color: var(--fr-ink);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font: 600 12px/1 system-ui, sans-serif;
+  cursor: pointer;
+}
+.frg-sideRight .frg-reopen {
+  right: 0;
+  bottom: calc(100% + 6px);
+}
+.frg-sideLeft .frg-reopen {
+  left: 0;
+  bottom: calc(100% + 6px);
+}
+.frg-center .frg-reopen,
+.frg-stage .frg-reopen {
+  left: calc(var(--bubble-left, 80%) + 10px);
+  top: 3%;
+}
+
+/* ---------------------------------------------------------------- beside the form, on wide screens */
+
+/*
+ * On wide screens the form sits at the left and Fritts stands right beside it, with his bubble on his left between the two,
+ * level with his face. The form and Fritts are placed from the same point, so they stay together as the window changes size.
+ * (Below this width he stays at the right edge with the bubble above him.)
+ */
+@media (min-width: 1280px) {
+  .frg-guide.frg-big {
+    /* His height, kept in one place because the bubble is lined up from it. */
+    --fh: min(76vh, 780px, 48vw);
+    left: calc(max(16px, (100vw - 1344px) / 2) + 1064px);
+    transform: none;
+    height: var(--fh);
+  }
+  /*
+   * The bubble is lined up by its little corner, not by its top: the corner sits 55% of the way down the bubble, and the bubble
+   * is shifted so that point is level with his mouth (about 11% down his picture). A short line and a long one with buttons
+   * both end up with the corner at his mouth, so the bubble only grows up and down around that level.
+   */
+  .frg-guide.frg-big .frg-bubble {
+    left: auto;
+    bottom: auto;
+    right: 76%;
+    top: calc(var(--fh) * 0.112);
+    translate: 0 -55%;
+    width: min(270px, 80vw);
+  }
+  .frg-guide.frg-big .frg-bubble::after {
+    left: auto;
+    bottom: auto;
+    right: -8px;
+    top: calc(55% - 7px);
+    transform: rotate(-45deg);
+  }
+  .frg-guide.frg-big .frg-reopen {
+    left: auto;
+    bottom: auto;
+    right: 76%;
+    top: calc(var(--fh) * 0.112 - 12px);
+  }
+}
+
+/* ---------------------------------------------------------------- smaller screens */
+
+@media (max-width: 1023px) {
+  .frg-stage {
+    height: min(34vh, 340px);
+  }
+  .frg-big {
+    --fh: min(30vh, 300px);
+    height: var(--fh);
+  }
+}
+@media (max-width: 640px) {
+  .frg-center {
+    height: min(52vh, 460px);
+  }
+  .frg-sideRight,
+  .frg-sideLeft,
+  .frg-stage,
+  .frg-big {
+    height: min(22vh, 190px);
+  }
+  .frg-bubble {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-height: 42vh;
+    overflow: auto;
+  }
+  .frg-center .frg-bubble {
+    top: 64px;
+    bottom: auto;
+  }
+  .frg-sideRight .frg-bubble,
+  .frg-sideLeft .frg-bubble,
+  .frg-stage .frg-bubble {
+    top: auto;
+    bottom: calc(min(22vh, 190px) + 10px);
+  }
+  .frg-bubble::after {
+    display: none;
+  }
+}
+
+/* People who ask their device for less motion get a still character. */
+@media (prefers-reduced-motion: reduce) {
+  .frg-guide,
+  .frg-guide * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
