@@ -1,18 +1,48 @@
 {
-  "tool": "lookup_ny_building_records",
   "data": {
+    "bbl": "3005820001",
+    "ll24": {
+      "site": "Red Hook Recreation Center",
+      "agency": "DPR",
+      "status": "Completed",
+      "roof_age": null,
+      "report_year": 2024,
+      "solar_ready": false,
+      "installed_kw": 11.4,
+      "roof_condition": null,
+      "financing_mechanism": "Capital",
+      "city_council_district": "38",
+      "upfront_project_cost_usd": 75000.0,
+      "estimated_annual_production_kwh": 12540.0
+    },
+    "ll84": {
+      "year_built": 1920,
+      "report_year": 2024,
+      "fuel_oil_kbtu": null,
+      "property_name": "DPR_3739_Red Hook Recreation Center",
+      "property_type": "Fitness Center/Health Club/Gym",
+      "electricity_kwh": 375066.4,
+      "natural_gas_kbtu": 3073752.0,
+      "energy_star_score": null,
+      "district_steam_kbtu": null,
+      "gross_floor_area_sqft": 27069.0,
+      "site_eui_kbtu_per_sqft": 160.8,
+      "weather_normalized_site_eui": 166.5
+    },
     "address": "140 LORRAINE STREET",
     "borough": "Brooklyn",
-    "bbl": "3005820001",
     "zipcode": "11231",
-    "gross_floor_area_sqft": 21600.0,
-    "lot_area_sqft": 212400.0,
-    "lot_matches_intake_floor": false,
     "num_floors": 1.0,
     "year_built": 1936,
-    "building_class": "Q3",
     "land_use_code": "9",
     "landmark_flag": true,
+    "lot_area_sqft": 212400.0,
+    "building_class": "Q3",
+    "geocoder_match": "155 BAY STREET, Brooklyn, NY, USA",
+    "ll24_source_url": "https://data.cityofnewyork.us/City-Government/Solar-Readiness-Assessments-Local-Law-24/cfz5-6fvh",
+    "ll84_source_url": "https://data.cityofnewyork.us/Environment/NYC-Building-Energy-and-Water-Data-Disclosure-for-Local-Law-84/5zyy-y8am",
+    "footprints_error": null,
+    "city_energy_errors": [],
     "differs_from_intake": [
       {
         "field": "floor_area_sqft",
@@ -20,8 +50,9 @@
         "city_record": 21600.0
       }
     ],
-    "geocoder_match": "155 BAY STREET, Brooklyn, NY, USA",
     "footprint_total_sqft": 32862,
+    "footprints_source_url": "https://data.cityofnewyork.us/City-Government/Building-Footprints/5zhs-2jue",
+    "gross_floor_area_sqft": 21600.0,
     "footprint_building_count": 4,
     "footprint_buildings_sqft": [
       27000,
@@ -29,48 +60,17 @@
       825,
       667
     ],
-    "footprints_error": null,
-    "footprints_source_url": "https://data.cityofnewyork.us/City-Government/Building-Footprints/5zhs-2jue",
-    "ll84": {
-      "report_year": 2024,
-      "property_name": "DPR_3739_Red Hook Recreation Center",
-      "property_type": "Fitness Center/Health Club/Gym",
-      "gross_floor_area_sqft": 27069.0,
-      "site_eui_kbtu_per_sqft": 160.8,
-      "weather_normalized_site_eui": 166.5,
-      "energy_star_score": null,
-      "electricity_kwh": 375066.4,
-      "natural_gas_kbtu": 3073752.0,
-      "fuel_oil_kbtu": null,
-      "district_steam_kbtu": null,
-      "year_built": 1920
-    },
-    "ll84_source_url": "https://data.cityofnewyork.us/Environment/NYC-Building-Energy-and-Water-Data-Disclosure-for-Local-Law-84/5zyy-y8am",
-    "ll24": {
-      "agency": "DPR",
-      "site": "Red Hook Recreation Center",
-      "status": "Completed",
-      "solar_ready": false,
-      "roof_condition": null,
-      "roof_age": null,
-      "report_year": 2024,
-      "installed_kw": 11.4,
-      "estimated_annual_production_kwh": 12540.0,
-      "upfront_project_cost_usd": 75000.0,
-      "financing_mechanism": "Capital",
-      "city_council_district": "38"
-    },
-    "ll24_source_url": "https://data.cityofnewyork.us/City-Government/Solar-Readiness-Assessments-Local-Law-24/cfz5-6fvh",
-    "city_energy_errors": []
+    "lot_matches_intake_floor": false
   },
-  "source_url": "https://data.cityofnewyork.us/City-Government/Primary-Land-Use-Tax-Lot-Output-PLUTO-/64uk-42ks",
-  "retrieved_at": "2026-10-17T07:36:13Z",
-  "dataset_version": "pluto-26v2",
   "mock": false,
-  "stale": false,
+  "tool": "lookup_ny_building_records",
   "flags": [
     "intake_mismatch:floor_area_sqft",
     "city_roof_not_solar_ready",
     "address_street_mismatch"
-  ]
+  ],
+  "stale": false,
+  "source_url": "https://data.cityofnewyork.us/City-Government/Primary-Land-Use-Tax-Lot-Output-PLUTO-/64uk-42ks",
+  "retrieved_at": "2026-10-18T20:33:19Z",
+  "dataset_version": "pluto-26v2"
 }

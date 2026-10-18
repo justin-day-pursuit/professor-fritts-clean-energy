@@ -1,13 +1,17 @@
 {
-  "tool": "get_solar_production",
   "data": {
+    "location": {
+      "bbl": "5037320006",
+      "lat": 40.574815,
+      "lon": -74.099371,
+      "label": "421 LINCOLN AVENUE, Staten Island, NY, USA",
+      "borough": "Staten Island",
+      "confidence": 0.8,
+      "match_type": "fallback",
+      "postalcode": "10306"
+    },
     "system_kw_dc": 286.3333,
     "annual_ac_kwh": 354876.1533266063,
-    "annual_ac_kwh_low": 338147.3439416802,
-    "annual_ac_kwh_high": 371605.1221305011,
-    "range_assumption": "ASSUMPTION: system losses of 18% (low) to 10% (high) around PVWatts' 14% default; weather is typical-year data.",
-    "capacity_factor": 0.1414818898365881,
-    "solar_radiation_kwh_m2_day": 4.426414113749777,
     "monthly_ac_kwh": [
       18481.42299688025,
       24624.06762847011,
@@ -25,29 +29,25 @@
     "pvwatts_inputs": {
       "lat": 40.574815,
       "lon": -74.099371,
-      "system_capacity": 286.3333,
-      "module_type": 0,
-      "losses": 14,
-      "array_type": 1,
       "tilt": 10,
-      "azimuth": 180
+      "losses": 14,
+      "azimuth": 180,
+      "array_type": 1,
+      "module_type": 0,
+      "system_capacity": 286.3333
     },
-    "location": {
-      "label": "421 LINCOLN AVENUE, Staten Island, NY, USA",
-      "borough": "Staten Island",
-      "postalcode": "10306",
-      "match_type": "fallback",
-      "confidence": 0.8,
-      "bbl": "5037320006",
-      "lat": 40.574815,
-      "lon": -74.099371
-    },
-    "weather_data_source": "NSRDB PSM V3 GOES tmy-2020 3.2.0"
+    "capacity_factor": 0.1414818898365881,
+    "range_assumption": "ASSUMPTION: system losses of 18% (low) to 10% (high) around PVWatts' 14% default; weather is typical-year data.",
+    "annual_ac_kwh_low": 338147.3439416802,
+    "annual_ac_kwh_high": 371605.1221305011,
+    "weather_data_source": "NSRDB PSM V3 GOES tmy-2020 3.2.0",
+    "solar_radiation_kwh_m2_day": 4.426414113749777
   },
-  "source_url": "https://developer.nlr.gov/docs/solar/pvwatts/v8/",
-  "retrieved_at": "2026-10-17T07:34:15Z",
-  "dataset_version": "pvwatts-v8.5.0",
   "mock": false,
+  "tool": "get_solar_production",
+  "flags": [],
   "stale": false,
-  "flags": []
+  "source_url": "https://developer.nlr.gov/docs/solar/pvwatts/v8/",
+  "retrieved_at": "2026-10-18T20:31:15Z",
+  "dataset_version": "pvwatts-v8.5.0"
 }

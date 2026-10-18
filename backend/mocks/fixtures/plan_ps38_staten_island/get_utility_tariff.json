@@ -1,54 +1,54 @@
 {
-  "tool": "get_utility_tariff",
   "data": {
+    "note": "These are the current general-service tariffs the utility publishes for New York City. Which one applies depends on peak demand, voltage and meter, so the building's own tariff is not chosen here and no energy price is taken from this list. Savings use the EIA state average instead.",
     "utility": "Consolidated Edison Co-NY Inc",
     "candidate_tariffs": [
       {
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b6352c787e577df40aaced",
         "tariff_name": "SC-2 - General Small [NYC]",
         "effective_date": "2025-02-01",
-        "fixed_charge_usd_per_month": 33,
-        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b6352c787e577df40aaced"
+        "fixed_charge_usd_per_month": 33
       },
       {
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b63a48f6edc47fde0ceaa0",
         "tariff_name": "SC-2 - General Small Time-Of-Day [NYC]",
         "effective_date": "2025-02-01",
-        "fixed_charge_usd_per_month": 33,
-        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b63a48f6edc47fde0ceaa0"
+        "fixed_charge_usd_per_month": 33
       },
       {
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b7814168be0da29d0777a5",
         "tariff_name": "SC-9 - General Large High Tension Service [NYC]",
         "effective_date": "2025-02-01",
-        "fixed_charge_usd_per_month": 71,
-        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b7814168be0da29d0777a5"
+        "fixed_charge_usd_per_month": 71
       },
       {
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b784a868be0da29d0777a8",
         "tariff_name": "SC-9 - General Large Low Tension Service [NYC]",
         "effective_date": "2025-02-01",
-        "fixed_charge_usd_per_month": 71,
-        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b784a868be0da29d0777a8"
+        "fixed_charge_usd_per_month": 71
       },
       {
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b787dc68be0da29d0777ab",
         "tariff_name": "SC-9 - General Large TOD Service [NYC]",
         "effective_date": "2025-02-01",
-        "fixed_charge_usd_per_month": 500,
-        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b787dc68be0da29d0777ab"
+        "fixed_charge_usd_per_month": 500
       },
       {
+        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b78aa07498a04dc1005c32",
         "tariff_name": "SC-9 - General Large Voluntary TOD Service [NYC]",
         "effective_date": "2025-02-01",
-        "fixed_charge_usd_per_month": 71,
-        "openei_url": "https://apps.openei.org/USURDB/rate/view/67b78aa07498a04dc1005c32"
+        "fixed_charge_usd_per_month": 71
       }
     ],
-    "note": "These are the current general-service tariffs the utility publishes for New York City. Which one applies depends on peak demand, voltage and meter, so the building's own tariff is not chosen here and no energy price is taken from this list. Savings use the EIA state average instead.",
     "needs_user_confirmation": true
   },
-  "source_url": "https://openei.org/wiki/Utility_Rate_Database",
-  "retrieved_at": "2026-10-17T07:34:34Z",
-  "dataset_version": "openei-usrdb-v8",
   "mock": false,
-  "stale": false,
+  "tool": "get_utility_tariff",
   "flags": [
     "tariff_needs_user_confirmation"
-  ]
+  ],
+  "stale": false,
+  "source_url": "https://openei.org/wiki/Utility_Rate_Database",
+  "retrieved_at": "2026-10-18T20:31:28Z",
+  "dataset_version": "openei-usrdb-v8"
 }
