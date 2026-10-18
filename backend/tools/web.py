@@ -11,10 +11,12 @@ from typing import Any
 
 import httpx
 
-# One retry keeps the worst case for a hanging service to two timeouts plus a short wait; each tool sets
-# its own timeout (10 to 20 seconds), so a single call gives up well inside a minute.
-RETRIES = 1
-WAIT_SECONDS = 1.0
+# Two retries (three tries in all) ride out a short outage of a public service, such as the electricity-price service
+# timing out for a few seconds, which once left a whole live run with a partial plan. The wait grows between tries (1 s,
+# then 3 s). Each tool sets its own timeout (10 to 25 seconds), so a call that never answers still gives up in about
+# a minute and a half, well inside the run's own 10-minute limit.
+RETRIES = 2
+WAITS_SECONDS = (1.0, 3.0)
 
 
 def get_with_retry(url: str, **kwargs: Any) -> httpx.Response:
@@ -28,5 +30,5 @@ def get_with_retry(url: str, **kwargs: Any) -> httpx.Response:
         else:
             if response.status_code < 500 or attempt == RETRIES:
                 return response
-        time.sleep(WAIT_SECONDS)
+        time.sleep(WAITS_SECONDS[min(attempt, len(WAITS_SECONDS) - 1)])
     raise AssertionError("unreachable")

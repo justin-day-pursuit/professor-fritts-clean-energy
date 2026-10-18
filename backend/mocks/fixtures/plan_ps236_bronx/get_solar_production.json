@@ -1,13 +1,17 @@
 {
-  "tool": "get_solar_production",
   "data": {
+    "location": {
+      "bbl": "2028510021",
+      "lat": 40.848888,
+      "lon": -73.90984,
+      "label": "1871 WALTON AVENUE, Bronx, NY, USA",
+      "borough": "Bronx",
+      "confidence": 0.8,
+      "match_type": "fallback",
+      "postalcode": "10453"
+    },
     "system_kw_dc": 85.5,
     "annual_ac_kwh": 106100.7120587212,
-    "annual_ac_kwh_low": 101099.6543370472,
-    "annual_ac_kwh_high": 111098.4036110822,
-    "range_assumption": "ASSUMPTION: system losses of 18% (low) to 10% (high) around PVWatts' 14% default; weather is typical-year data.",
-    "capacity_factor": 0.1416602740510047,
-    "solar_radiation_kwh_m2_day": 4.421094011550492,
     "monthly_ac_kwh": [
       5407.303952890388,
       6960.772125437044,
@@ -25,29 +29,25 @@
     "pvwatts_inputs": {
       "lat": 40.848888,
       "lon": -73.90984,
-      "system_capacity": 85.5,
-      "module_type": 0,
-      "losses": 14,
-      "array_type": 1,
       "tilt": 10,
-      "azimuth": 180
+      "losses": 14,
+      "azimuth": 180,
+      "array_type": 1,
+      "module_type": 0,
+      "system_capacity": 85.5
     },
-    "location": {
-      "label": "1871 WALTON AVENUE, Bronx, NY, USA",
-      "borough": "Bronx",
-      "postalcode": "10453",
-      "match_type": "fallback",
-      "confidence": 0.8,
-      "bbl": "2028510021",
-      "lat": 40.848888,
-      "lon": -73.90984
-    },
-    "weather_data_source": "NSRDB PSM V3 GOES tmy-2020 3.2.0"
+    "capacity_factor": 0.1416602740510047,
+    "range_assumption": "ASSUMPTION: system losses of 18% (low) to 10% (high) around PVWatts' 14% default; weather is typical-year data.",
+    "annual_ac_kwh_low": 101099.6543370472,
+    "annual_ac_kwh_high": 111098.4036110822,
+    "weather_data_source": "NSRDB PSM V3 GOES tmy-2020 3.2.0",
+    "solar_radiation_kwh_m2_day": 4.421094011550492
   },
-  "source_url": "https://developer.nlr.gov/docs/solar/pvwatts/v8/",
-  "retrieved_at": "2026-10-17T07:32:04Z",
-  "dataset_version": "pvwatts-v8.5.0",
   "mock": false,
+  "tool": "get_solar_production",
+  "flags": [],
   "stale": false,
-  "flags": []
+  "source_url": "https://developer.nlr.gov/docs/solar/pvwatts/v8/",
+  "retrieved_at": "2026-10-18T20:28:54Z",
+  "dataset_version": "pvwatts-v8.5.0"
 }

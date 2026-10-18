@@ -1,18 +1,48 @@
 {
-  "tool": "lookup_ny_building_records",
   "data": {
+    "bbl": "5037320006",
+    "ll24": {
+      "site": "R038, R816 Campus: R038",
+      "agency": "DOE",
+      "status": "Not Solar Ready",
+      "roof_age": "20 years or more",
+      "report_year": 2024,
+      "solar_ready": false,
+      "installed_kw": null,
+      "roof_condition": "Fair",
+      "financing_mechanism": null,
+      "city_council_district": "50",
+      "upfront_project_cost_usd": null,
+      "estimated_annual_production_kwh": null
+    },
+    "ll84": {
+      "year_built": 1955,
+      "report_year": 2024,
+      "fuel_oil_kbtu": 1476599.8,
+      "property_name": "R038, R816 (OECID: 0500061; BBL: 5037320006)",
+      "property_type": "K-12 School",
+      "electricity_kwh": 284403.0,
+      "natural_gas_kbtu": 512500.0,
+      "energy_star_score": 74.0,
+      "district_steam_kbtu": null,
+      "gross_floor_area_sqft": 55860.0,
+      "site_eui_kbtu_per_sqft": 53.0,
+      "weather_normalized_site_eui": 53.4
+    },
     "address": "421 LINCOLN AVENUE",
     "borough": "Staten Island",
-    "bbl": "5037320006",
     "zipcode": "10306",
-    "gross_floor_area_sqft": 17620.0,
-    "lot_area_sqft": 65000.0,
-    "lot_matches_intake_floor": false,
     "num_floors": 1.0,
     "year_built": 1955,
-    "building_class": "W1",
     "land_use_code": "8",
     "landmark_flag": false,
+    "lot_area_sqft": 65000.0,
+    "building_class": "W1",
+    "geocoder_match": "421 LINCOLN AVENUE, Staten Island, NY, USA",
+    "ll24_source_url": "https://data.cityofnewyork.us/City-Government/Solar-Readiness-Assessments-Local-Law-24/cfz5-6fvh",
+    "ll84_source_url": "https://data.cityofnewyork.us/Environment/NYC-Building-Energy-and-Water-Data-Disclosure-for-Local-Law-84/5zyy-y8am",
+    "footprints_error": null,
+    "city_energy_errors": [],
     "differs_from_intake": [
       {
         "field": "floor_area_sqft",
@@ -20,55 +50,25 @@
         "city_record": 17620.0
       }
     ],
-    "geocoder_match": "421 LINCOLN AVENUE, Staten Island, NY, USA",
     "footprint_total_sqft": 34363,
+    "footprints_source_url": "https://data.cityofnewyork.us/City-Government/Building-Footprints/5zhs-2jue",
+    "gross_floor_area_sqft": 17620.0,
     "footprint_building_count": 3,
     "footprint_buildings_sqft": [
       19757,
       13319,
       1287
     ],
-    "footprints_error": null,
-    "footprints_source_url": "https://data.cityofnewyork.us/City-Government/Building-Footprints/5zhs-2jue",
-    "ll84": {
-      "report_year": 2024,
-      "property_name": "R038, R816 (OECID: 0500061; BBL: 5037320006)",
-      "property_type": "K-12 School",
-      "gross_floor_area_sqft": 55860.0,
-      "site_eui_kbtu_per_sqft": 53.0,
-      "weather_normalized_site_eui": 53.4,
-      "energy_star_score": 74.0,
-      "electricity_kwh": 284403.0,
-      "natural_gas_kbtu": 512500.0,
-      "fuel_oil_kbtu": 1476599.8,
-      "district_steam_kbtu": null,
-      "year_built": 1955
-    },
-    "ll84_source_url": "https://data.cityofnewyork.us/Environment/NYC-Building-Energy-and-Water-Data-Disclosure-for-Local-Law-84/5zyy-y8am",
-    "ll24": {
-      "agency": "DOE",
-      "site": "R038, R816 Campus: R038",
-      "status": "Not Solar Ready",
-      "solar_ready": false,
-      "roof_condition": "Fair",
-      "roof_age": "20 years or more",
-      "report_year": 2024,
-      "installed_kw": null,
-      "estimated_annual_production_kwh": null,
-      "upfront_project_cost_usd": null,
-      "financing_mechanism": null,
-      "city_council_district": "50"
-    },
-    "ll24_source_url": "https://data.cityofnewyork.us/City-Government/Solar-Readiness-Assessments-Local-Law-24/cfz5-6fvh",
-    "city_energy_errors": []
+    "lot_matches_intake_floor": false
   },
-  "source_url": "https://data.cityofnewyork.us/City-Government/Primary-Land-Use-Tax-Lot-Output-PLUTO-/64uk-42ks",
-  "retrieved_at": "2026-10-17T07:34:07Z",
-  "dataset_version": "pluto-26v2",
   "mock": false,
-  "stale": false,
+  "tool": "lookup_ny_building_records",
   "flags": [
     "intake_mismatch:floor_area_sqft",
     "city_roof_not_solar_ready"
-  ]
+  ],
+  "stale": false,
+  "source_url": "https://data.cityofnewyork.us/City-Government/Primary-Land-Use-Tax-Lot-Output-PLUTO-/64uk-42ks",
+  "retrieved_at": "2026-10-18T20:31:07Z",
+  "dataset_version": "pluto-26v2"
 }
