@@ -142,8 +142,8 @@ const LABEL_EXPLAINED: Record<string, { meaning: string; example: string; action
   },
   ASSUMPTION: {
     meaning: "A starting point used because the real number isn't known.",
-    example: "The electricity price, when you haven't entered your own.",
-    action: "Check it. If you know the real number, enter it and the plan changes to match.",
+    example: "The state-average electricity price, or the savings percent for efficiency work.",
+    action: "Check it. You can change it: enter your own electricity price and the plan changes to match. The efficiency savings percent stays a planning estimate until an energy audit.",
   },
   RECOMMENDATION: {
     meaning: "A suggested next step.",
@@ -161,12 +161,20 @@ function ClaimRow({ claim }: { claim: Claim }) {
   const sentences = text.split(/(?<=[.!?])\s+(?=[A-Z$(])/);
   const headline = sentences[0];
   const reasoning = sentences.slice(1).join(" ");
+  // A box keeps its reasoning to a few lines so the boxes in a row stay the same size; "Read more" opens the rest.
+  const [expanded, setExpanded] = useState(false);
+  const long = reasoning.length > 150;
   return (
-    <li className="flex flex-col gap-1.5 rounded-lg border border-[var(--fr-line)] bg-white p-3 text-sm">
-      <p className="text-base font-semibold text-[var(--fr-ink)]">{headline}</p>
-      {reasoning && <p className="text-[13.5px] text-[var(--fr-mute)]">{reasoning}</p>}
+    <li className="flex flex-col gap-1.5 rounded-xl border border-[var(--fr-line)] bg-white p-3.5 text-sm">
+      <p className="text-[15px] font-semibold leading-snug text-[var(--fr-ink)]">{headline}</p>
+      {reasoning && <p className={`text-[13.5px] text-[var(--fr-mute)] ${long && !expanded ? "line-clamp-3" : ""}`}>{reasoning}</p>}
+      {long && (
+        <button type="button" onClick={() => setExpanded(!expanded)} className="w-fit text-xs text-[var(--fr-teal)] underline underline-offset-2">
+          {expanded ? "Show less" : "Read more"}
+        </button>
+      )}
       {range && <p className="text-xs text-[var(--fr-mute)]">{range.trim()}</p>}
-      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-[var(--fr-mute)]">
+      <div className="mt-auto flex flex-wrap items-center gap-x-2.5 gap-y-1 border-t border-[var(--fr-line)] pt-2 text-xs text-[var(--fr-mute)]">
         <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--fr-ink)]">
           <i className="inline-block h-2 w-2 rounded-full" style={{ background: LABELS[claim.label]?.color ?? "#555" }} />
           {claim.label}
@@ -338,7 +346,7 @@ function GeneralStatements({ claims, title }: { claims: Claim[]; title: string }
   return (
     <div className="space-y-2">
       <p className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-teal)]">{title}</p>
-      <ul className="space-y-2">{claims.map((c) => <ClaimRow key={c.text} claim={c} />)}</ul>
+      <ul className="grid gap-3 sm:grid-cols-2">{claims.map((c) => <ClaimRow key={c.text} claim={c} />)}</ul>
     </div>
   );
 }
@@ -875,7 +883,7 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
                 ) : s.claims.length === 0 ? (
                   <p className="text-sm text-[var(--fr-mute)]">Nothing was provided for this section.</p>
                 ) : (
-                  <ul className="space-y-2">{s.claims.map((c) => <ClaimRow key={c.text} claim={c} />)}</ul>
+                  <ul className="grid gap-3 sm:grid-cols-2">{s.claims.map((c) => <ClaimRow key={c.text} claim={c} />)}</ul>
                 )}
                 {parts.length > 0 && (
                   <div className="mt-4 space-y-2 border-t border-[var(--fr-line)] pt-3">
