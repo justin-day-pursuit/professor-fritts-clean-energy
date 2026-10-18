@@ -111,7 +111,7 @@ export default function Home() {
       <header className="border-b px-4 py-3 flex items-center gap-3 shrink-0">
         {/* Plain img and anchor avoid a Next image/link hydration mismatch on this dev page. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/fritts-logo.png" alt="Professor Fritts" width={40} height={40} className="rounded" />
+        <img src="/fritts-logo-mark.png" alt="Professor Fritts" width={487} height={535} className="h-10 w-auto rounded" />
         <div className="flex-1">
           <h1 className="text-lg font-semibold leading-tight">Professor Fritts</h1>
           <p className="text-sm text-muted-foreground">building renewable energy planner</p>

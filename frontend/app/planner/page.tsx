@@ -347,7 +347,7 @@ export default function PlannerPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="border-b px-4 py-3 flex items-center gap-3 shrink-0">
-        <Image src="/fritts-logo.png" alt="Professor Fritts" width={40} height={40} className="rounded" />
+        <Image src="/fritts-logo-mark.png" alt="Professor Fritts" width={487} height={535} className="h-10 w-auto rounded" />
         <div>
           <h1 className="text-lg font-semibold leading-tight">Professor Fritts</h1>
           <p className="text-sm text-muted-foreground">building renewable energy planner</p>
