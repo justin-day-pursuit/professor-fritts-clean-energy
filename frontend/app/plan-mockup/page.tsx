@@ -355,20 +355,15 @@ function Intake({ sample, mode, found, prefill, values, onChange, runProblem, on
                 )}
               </div>
             )}
-            {found && (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Roof type" value="" />
-                <Field label="Roof area (sq ft)" value="" hint="Leave blank if you don't know it." />
+            <div className="rounded-3xl bg-[var(--fr-ink)] p-5 text-white">
+              <h3 className="text-base font-semibold">Or try a sample building</h3>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {PLANS.map((s) => (
+                  <button key={s.id} type="button" onClick={() => onPickSample(s.id)} className="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">
+                    {s.label.split(":")[0]}
+                  </button>
+                ))}
               </div>
-            )}
-            <div className="text-xs text-[var(--fr-mute)]">
-              Or try a sample building:{" "}
-              {PLANS.map((s, i) => (
-                <span key={s.id}>
-                  {i > 0 && " · "}
-                  <button type="button" onClick={() => onPickSample(s.id)} className="underline hover:text-[var(--fr-teal)]">{s.label}</button>
-                </span>
-              ))}
             </div>
           </div>
         )}
