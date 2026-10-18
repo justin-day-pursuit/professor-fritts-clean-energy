@@ -45,10 +45,10 @@ export async function downloadPlanPdf(plan: PlanSummary): Promise<PdfResult> {
 
 /** The demo link for a saved sample report. */
 export function shareLinkFor(sampleId: string): string {
-  return `${window.location.origin}/plan-mockup?view=results&sample=${encodeURIComponent(sampleId)}`;
+  return `${window.location.origin}/?view=results&sample=${encodeURIComponent(sampleId)}`;
 }
 
-/** A link cut short with "..." so it fits in a small space, like "http://localhost:3000/plan-mockup?vie...". */
+/** A link cut short with "..." so it fits in a small space, like "http://localhost:3000/?view=results&samp...". */
 export function shortLink(url: string, max = 38): string {
   return url.length > max ? `${url.slice(0, max)}...` : url;
 }

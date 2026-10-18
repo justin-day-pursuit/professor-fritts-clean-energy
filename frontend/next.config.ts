@@ -6,6 +6,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // The design page used to live at /plan-mockup. Old links still work and land on the home page.
+  async redirects() {
+    return [{ source: "/plan-mockup", destination: "/", permanent: false }];
+  },
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {

@@ -1,6 +1,6 @@
 # Running a real analysis from the design page
 
-When a visitor types their own address on the design page (`/plan-mockup`) and presses **Run Professor Fritts**, the page now starts a real analysis with the same agent the classic planner uses. The saved plans on the home page still replay from recordings, free and in seconds, so the demo never waits on Claude.
+When a visitor types their own address on the home page (`/`) and presses **Run Professor Fritts**, the page now starts a real analysis with the same agent the classic planner uses. The saved plans on the home page still replay from recordings, free and in seconds, so the demo never waits on Claude.
 
 ## What the visitor sees
 

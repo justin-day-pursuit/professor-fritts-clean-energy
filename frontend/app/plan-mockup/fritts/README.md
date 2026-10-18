@@ -1,6 +1,6 @@
 # Professor Fritts guide
 
-Professor Fritts stays on screen through the whole visit on the design page (`/plan-mockup`). He greets in the middle, steps to the side while you fill in the form, stands at the left while the work runs, announces the report in the middle, then steps to the side again.
+Professor Fritts stays on screen through the whole visit on the home page (`/`). He greets in the middle, steps to the side while you fill in the form, stands at the left while the work runs, announces the report in the middle, then steps to the side again.
 
 ## Files
 

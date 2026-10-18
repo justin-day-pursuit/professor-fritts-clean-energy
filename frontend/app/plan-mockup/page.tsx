@@ -1,11 +1,12 @@
 /**
- * /plan-mockup: the design page for the branded experience (home, guided intake, run narration, results).
+ * The home page (/): the branded Professor Fritts experience (home, guided intake, real analysis, results).
  *
- * It is not wired to the live app. It reads ./data/plans.json, which holds real runs recorded from the backend (written by
- * `python manage.py export_plan_summaries`), and calls no API and no Claude, so the design can be edited while looking at a
- * real plan with no server and no cost. The existing pages (/, /planner) are unchanged; the "Developer tools" menu links to them.
+ * The saved sample plans come from ./data/plans.json, real runs recorded from the backend (written by
+ * `python manage.py export_plan_summaries`); they replay with no server and no cost. A typed address starts a real analysis
+ * through the backend (see ./live-run.ts). The older pages are kept: /dev/run-sequences (the run list) and /planner (the classic
+ * planner); the "Developer tools" menu links to them.
  *
- * Deep links for review: /plan-mockup?view=results&sample=<case id>  (view: home | welcome | intake | running | ready | results,
+ * Deep links for review: /?view=results&sample=<case id>  (view: home | welcome | intake | running | ready | results,
  * and step=1..4 for the intake).
  *
  * Professor Fritts stays on screen through the whole visit (see ./fritts/). He greets in the middle, steps to the side during
@@ -68,8 +69,8 @@ function TopBar({ onHome, onStart }: { onHome: () => void; onStart: () => void }
             </button>
             {open && (
               <div className="absolute right-0 mt-2 w-64 rounded-xl border border-[var(--fr-line)] bg-white p-1 text-sm shadow-lg">
-                <Link href="/" className="block rounded-lg px-3 py-2 hover:bg-[var(--fr-soft)]">
-                  Run sequences <span className="block text-xs text-[var(--fr-mute)]">The current home page</span>
+                <Link href="/dev/run-sequences" className="block rounded-lg px-3 py-2 hover:bg-[var(--fr-soft)]">
+                  Run sequences <span className="block text-xs text-[var(--fr-mute)]">Test situations, live or scripted</span>
                 </Link>
                 <Link href="/planner" className="block rounded-lg px-3 py-2 hover:bg-[var(--fr-soft)]">
                   Classic planner <span className="block text-xs text-[var(--fr-mute)]">Form, chat, run log, roadmap</span>
