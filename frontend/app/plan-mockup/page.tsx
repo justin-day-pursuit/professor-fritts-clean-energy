@@ -149,7 +149,7 @@ function Home({ onPick, onStart }: { onPick: (id: string) => void; onStart: () =
           <SectionTitle eyebrow="Sample plans" title="See what you'd get" sub="Five real NYC buildings, planned from public data. Not every building gets a yes, and the plan says so honestly." />
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {PLANS.map((s) => (
-              <button key={s.id} type="button" onClick={() => onPick(s.id)} className="rounded-2xl border border-[var(--fr-line)] bg-white p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg">
+              <button key={s.id} type="button" onClick={() => onPick(s.id)} className="flex h-full flex-col rounded-2xl border border-[var(--fr-line)] bg-white p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg">
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <span
                     className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
@@ -163,8 +163,11 @@ function Home({ onPick, onStart }: { onPick: (id: string) => void; onStart: () =
                   <span className="text-[11px] text-[var(--fr-mute)]">{s.kind === "recorded" ? "From a real run" : "Scripted demo"}</span>
                 </div>
                 <div className="font-semibold text-[var(--fr-ink)]">{s.label}</div>
-                <p className="mt-1 text-sm text-[var(--fr-mute)]">{s.tag}</p>
-                <div className="mt-3 text-sm font-medium text-[var(--fr-teal)]">Open this plan →</div>
+                {/* The goal and the question this building asked, as on the old run-list page. */}
+                {s.profile.goal && <p className="mt-0.5 text-sm text-[var(--fr-mute)]">{String(s.profile.goal)}</p>}
+                <p className="mt-3 text-sm leading-snug text-[var(--fr-ink)]">&ldquo;{s.question}&rdquo;</p>
+                <p className="mt-3 border-t border-[var(--fr-line)] pt-3 text-xs text-[var(--fr-mute)]">{s.tag}</p>
+                <div className="mt-auto pt-3 text-sm font-medium text-[var(--fr-teal)]">Open this plan →</div>
               </button>
             ))}
           </div>
