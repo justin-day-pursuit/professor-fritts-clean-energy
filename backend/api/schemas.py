@@ -93,6 +93,13 @@ class MessageCreateRequest(BaseModel):
     content: str
 
 
+class LiveRunStartResponse(BaseModel):
+    """A run was started on a background thread. The page asks GET /sessions/{id}/latest-run for its progress."""
+
+    session_id: UUID
+    started: bool
+
+
 class MessageRunResponse(BaseModel):
     message: MessageResponse | None = None
     run: "RunResponse"
