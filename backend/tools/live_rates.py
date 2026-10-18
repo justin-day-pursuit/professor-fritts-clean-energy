@@ -17,7 +17,7 @@ from tools.web import get_with_retry
 EIA_URL = "https://api.eia.gov/v2/electricity/retail-sales/data/"
 EIA_SOURCE_URL = "https://www.eia.gov/electricity/data/browser/"
 
-TIMEOUT_SECONDS = 15
+TIMEOUT_SECONDS = 25
 MONTHS_AVERAGED = 12
 
 
