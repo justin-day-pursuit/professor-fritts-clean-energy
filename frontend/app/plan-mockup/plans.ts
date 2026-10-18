@@ -27,6 +27,18 @@ export interface PlanView {
 
 const files = (raw as unknown as PlanFile[]).filter((p) => p.plan_summary);
 
+/** The order the sample plans are shown in on every page: the home page cards, the sample pills and "Try another building". */
+const SHOW_ORDER = [
+  "plan_red_hook_rec_center",
+  "plan_jefferson_market_library",
+  "plan_ps38_staten_island",
+  "plan_ps236_bronx",
+  "plan_ps24_bronx_existing_solar",
+];
+
+/** A plan's place in SHOW_ORDER; a plan not listed there goes to the end, in the order it was exported. */
+const place = (id: string) => (SHOW_ORDER.includes(id) ? SHOW_ORDER.indexOf(id) : SHOW_ORDER.length);
+
 export const PLANS: PlanView[] = files.map((f) => {
   const plan = f.plan_summary as PlanSummary;
   return {
@@ -42,4 +54,4 @@ export const PLANS: PlanView[] = files.map((f) => {
     plan,
     markdown: f.markdown ?? "",
   };
-});
+}).sort((a, b) => place(a.id) - place(b.id));
