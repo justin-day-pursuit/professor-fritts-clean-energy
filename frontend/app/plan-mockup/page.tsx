@@ -67,7 +67,7 @@ function TopBar({ onHome, onStart }: { onHome: () => void; onStart: () => void }
     <header className="sticky top-0 z-20 border-b border-[var(--fr-line)] bg-[var(--fr-cream)]/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
         <button type="button" onClick={onHome} className="flex items-center gap-2 text-left">
-          <Image src="/fritts-logo-mark.png" alt="Professor Fritts" width={487} height={535} className="h-9 w-auto rounded-sm" />
+          <Image src="/fritts-logo-mark.png" alt="Professor Fritts" width={525} height={575} className="h-9 w-auto rounded-sm" />
           <span>
             <span className="block text-base font-bold leading-tight text-[var(--fr-ink)]">Professor Fritts</span>
             <span className="block text-[11px] uppercase tracking-[0.16em] text-[var(--fr-teal)]">Renewable energy planning</span>
@@ -126,7 +126,7 @@ function Home({ onPick, onStart }: { onPick: (id: string) => void; onStart: () =
           <p className="mt-4 text-xs text-[var(--fr-mute)]">Named for Charles Fritts, who put the first solar panels on a New York City rooftop in 1884.</p>
         </div>
         <div className="mx-auto w-full max-w-xs rounded-3xl bg-white p-6 shadow-[0_20px_60px_rgba(18,48,61,0.12)]">
-          <Image src="/fritts-logo.png" alt="Professor Fritts, renewable energy planning" width={487} height={720} className="h-auto w-full" priority />
+          <Image src="/fritts-logo.png" alt="Professor Fritts, renewable energy planning" width={465} height={735} className="h-auto w-full" priority />
         </div>
       </section>
 
