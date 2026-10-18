@@ -217,3 +217,9 @@ class ReplayResponse(BaseModel):
     message: MessageResponse | None = None
     run: "RunResponse"
     case: ReplayCase
+
+
+class PlanPdfRequest(BaseModel):
+    """POST /api/plans/pdf: the plan summary (output.plan_summary) to turn into a PDF."""
+
+    plan_summary: dict[str, Any]
