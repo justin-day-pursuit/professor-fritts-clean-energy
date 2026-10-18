@@ -130,20 +130,6 @@ function Home({ onPick, onStart }: { onPick: (id: string) => void; onStart: () =
         </div>
       </section>
 
-      <section className="border-y border-[var(--fr-line)] bg-white">
-        <div className="mx-auto max-w-6xl px-4 py-10">
-          <SectionTitle eyebrow="What makes it different" title="Every number tells you how sure we are" sub="Most AI answers sound equally confident about everything. Ours labels each number, so you know what to trust, what to check, and what to hand to a professional." />
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {Object.entries(LABELS).map(([name, l]) => (
-              <div key={name} className="rounded-xl border border-[var(--fr-line)] p-4">
-                <Chip label={name} />
-                <p className="mt-2 text-sm text-[var(--fr-ink)]">{l.blurb}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section id="how" className="mx-auto max-w-6xl px-4 py-12">
         <SectionTitle eyebrow="How it works" title="From an address to a plan you can bring to your board" />
         <div className="grid gap-4 md:grid-cols-3">
@@ -158,6 +144,20 @@ function Home({ onPick, onStart }: { onPick: (id: string) => void; onStart: () =
               <p className="mt-1 text-sm text-[var(--fr-mute)]">{d}</p>
             </Card>
           ))}
+        </div>
+      </section>
+
+      <section className="border-y border-[var(--fr-line)] bg-white">
+        <div className="mx-auto max-w-6xl px-4 py-10">
+          <SectionTitle eyebrow="What makes it different" title="Every number tells you how sure we are" sub="Most AI answers sound equally confident about everything. Ours labels each number, so you know what to trust, what to check, and what to hand to a professional." />
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {Object.entries(LABELS).map(([name, l]) => (
+              <div key={name} className="rounded-xl border border-[var(--fr-line)] p-4">
+                <Chip label={name} />
+                <p className="mt-2 text-sm text-[var(--fr-ink)]">{l.blurb}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
