@@ -209,6 +209,25 @@ export interface RoofSuggestion {
   note: string;
 }
 
+/** One value the city's free records suggest for the form (GET /api/records/building-prefill), with its source. */
+export interface PrefillItem {
+  field: string;
+  label: string;
+  value: number | string | boolean;
+  /** The same value written for a person to read. */
+  display: string;
+  source: string;
+  source_url: string;
+  note: string;
+}
+
+/** What the city already knows about one tax lot, as form values, plus a sentence for each part it could not find. */
+export interface BuildingPrefill {
+  bbl: string;
+  items: PrefillItem[];
+  missing: string[];
+}
+
 /** One saved demo the planner can replay (GET /api/replay/cases). kind says whether it is Claude's own recorded run or our script. */
 export interface ReplayCase {
   id: string;

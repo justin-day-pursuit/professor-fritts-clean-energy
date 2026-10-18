@@ -4,6 +4,7 @@
  */
 
 import type {
+  BuildingPrefill,
   DocumentResponse,
   FixtureListResponse,
   FixtureRunResponse,
@@ -172,6 +173,16 @@ export async function downloadRoadmapJson(runId: number): Promise<string> {
 export async function getRoofSuggestion(address: string, borough: string): Promise<RoofSuggestion> {
   const params = new URLSearchParams({ address, borough });
   return requestJson<RoofSuggestion>(`/api/records/roof-suggestion?${params.toString()}`);
+}
+
+/**
+ * Asks the backend what the city's free records already say about a building (yearly electricity, the roof assessment,
+ * solar already installed, a roof-area suggestion), so the design page can fill in the form. It uses no Claude. Every value
+ * is a suggestion for the visitor to confirm. Parts the city has no record for are simply left out and listed in `missing`.
+ */
+export async function getBuildingPrefill(bbl: string, address: string, borough: string): Promise<BuildingPrefill> {
+  const params = new URLSearchParams({ bbl, address, borough });
+  return requestJson<BuildingPrefill>(`/api/records/building-prefill?${params.toString()}`);
 }
 
 /**
