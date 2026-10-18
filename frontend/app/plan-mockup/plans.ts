@@ -31,8 +31,8 @@ const files = (raw as unknown as PlanFile[]).filter((p) => p.plan_summary);
 const SHOW_ORDER = [
   "plan_red_hook_rec_center",
   "plan_jefferson_market_library",
-  "plan_ps38_staten_island",
   "plan_ps236_bronx",
+  "plan_ps38_staten_island",
   "plan_ps24_bronx_existing_solar",
 ];
 
