@@ -77,6 +77,12 @@ export interface RunResponse {
   events: RunEventResponse[];
 }
 
+/** POST /api/sessions/{id}/runs: a run was started in the background; ask GET /sessions/{id}/latest-run for its progress. */
+export interface LiveRunStartResponse {
+  session_id: string;
+  started: boolean;
+}
+
 export interface MessageRunResponse {
   message: MessageResponse | null;
   run: RunResponse;

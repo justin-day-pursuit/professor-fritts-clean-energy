@@ -32,6 +32,9 @@ export const PREFILL_STEP: Record<number, string> = {
   3: "I've added the city's own roof assessment below. A roofer should confirm it before any design.",
 };
 
+/** What he says when the visitor asks to share a plan from their own run: links only work for the saved sample plans for now. */
+export const SHARE_LIVE = "Links work for the sample plans for now. To share your own plan, download the PDF and send that.";
+
 /** What he says at each step of the form. Step 1 depends on the building, so it is built in the page. */
 export const INTAKE_STEP: Record<number, string> = {
   2: "Now your energy and goals. If you have a recent Con Edison bill, you can attach it below.",

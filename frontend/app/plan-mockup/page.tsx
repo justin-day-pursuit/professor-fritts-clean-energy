@@ -16,15 +16,16 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AddressSearch } from "./AddressSearch";
 import { buildingTypeLabel, fetchBuildingRecord, numberOf, ownerKind, type AddressSuggestion, type BuildingRecord, type FoundBuilding } from "./address";
 import { FrittsGuide, type GuideAction } from "./fritts/FrittsGuide";
 import { poseForStep, type Placement, type PoseName } from "./fritts/poses";
 import { planRun } from "./fritts/runPlan";
 import { getBuildingPrefill } from "@/lib/api";
-import type { BuildingPrefill, PrefillItem } from "@/lib/types";
-import { ADDRESS_ERROR, ADDRESS_LOOKING, ADDRESS_NOT_FOUND, ADDRESS_START, BRING, BRING_REPLY, CONFIRM_REPLY, HELLO, INTAKE_STEP, PDF_SAYS, PREFILL_STEP, PRIVATE_BUILDING, REPORT_MENU, foundLine, readyLine, shareLine, unclearOwner, workingLine } from "./fritts/script";
+import { LiveRunError, buildProfile, buildQuestion, missingForRun, narrationFor as narrationForTools, planFromRun, runLive, stepsSoFar, type RunForm } from "./live-run";
+import type { BuildingPrefill, PrefillItem, RunResponse } from "@/lib/types";
+import { ADDRESS_ERROR, ADDRESS_LOOKING, ADDRESS_NOT_FOUND, ADDRESS_START, BRING, BRING_REPLY, CONFIRM_REPLY, HELLO, INTAKE_STEP, PDF_SAYS, PREFILL_STEP, PRIVATE_BUILDING, REPORT_MENU, SHARE_LIVE, foundLine, readyLine, shareLine, unclearOwner, workingLine } from "./fritts/script";
 import { plainify } from "./plain";
 import { copyShareLink, downloadPlanPdf } from "./plan-actions";
 import { Results } from "./plan-view";
@@ -36,27 +37,9 @@ const LOOKING_MOMENT_MS = 1400;
 
 type View = "welcome" | "home" | "intake" | "running" | "ready" | "results";
 
-/** Friendly narration for each tool the run used, in the order the run first used it. */
-const NARRATION: Record<string, string> = {
-  get_building_profile: "Reading your building details",
-  lookup_ny_building_records: "Checking NYC city records for your lot",
-  calculate: "Running the numbers",
-  get_solar_production: "Estimating rooftop solar with PVWatts",
-  get_utility_rates: "Looking up Con Edison electricity prices",
-  get_utility_tariff: "Matching your electricity tariff",
-  optimize_solar_storage: "Sizing a backup battery",
-  search_ny_incentives_and_rules: "Checking incentives and NYC rules",
-  get_hazard_context: "Checking flood and heat risk",
-  run_financial_model: "Costing the three scenarios",
-};
-
+/** The sentences for the steps of a saved plan, from the tools its run used. */
 function narrationFor(sample: PlanView): string[] {
-  const seen: string[] = [];
-  for (const tool of sample.tools) {
-    const line = NARRATION[tool];
-    if (line && !seen.includes(line)) seen.push(line);
-  }
-  return [...seen, "Checking every number has a label and a source", "Writing your plan"];
+  return narrationForTools(sample.tools);
 }
 
 // ------------------------------------------------------------------------------------------------ top bar
@@ -79,7 +62,6 @@ function TopBar({ onHome, onStart }: { onHome: () => void; onStart: () => void }
           <a href="#how" className="hover:text-[var(--fr-teal)]">How it works</a>
         </nav>
         <div className="ml-auto flex items-center gap-3">
-          <span className="hidden rounded-full border border-dashed border-[var(--fr-warn)] px-2 py-0.5 text-[11px] font-medium text-[var(--fr-warn)] sm:inline">Design mockup</span>
           <div className="relative">
             <button type="button" onClick={() => setOpen((v) => !v)} className="rounded-lg border border-[var(--fr-line)] bg-white px-3 py-1.5 text-sm text-[var(--fr-ink)]">
               Developer tools ▾
@@ -195,11 +177,17 @@ function Home({ onPick, onStart }: { onPick: (id: string) => void; onStart: () =
 
 const STEPS = ["Find your building", "Energy and goals", "What you already have", "Review and run"];
 
-function Field({ label, value, hint }: { label: string; value: string | number | null | undefined; hint?: string }) {
+function Field({ label, value, hint, onChange, readOnly }: { label: string; value: string | number | null | undefined; hint?: string; onChange?: (value: string) => void; readOnly?: boolean }) {
+  const box = "mt-1 w-full rounded-lg border border-[var(--fr-line)] bg-white px-3 py-2 text-[var(--fr-ink)] outline-none focus:border-[var(--fr-teal)]";
   return (
     <label className="block">
       <span className="text-sm font-medium text-[var(--fr-ink)]">{label}</span>
-      <input defaultValue={value ?? ""} key={String(value)} className="mt-1 w-full rounded-lg border border-[var(--fr-line)] bg-white px-3 py-2 text-[var(--fr-ink)] outline-none focus:border-[var(--fr-teal)]" />
+      {onChange ? (
+        // Typed into: the page keeps what was typed, so it can be sent to the planner.
+        <input value={value ?? ""} onChange={(e) => onChange(e.target.value)} className={box} />
+      ) : (
+        <input defaultValue={value ?? ""} key={String(value)} readOnly={readOnly} className={box} />
+      )}
       {hint && <span className="mt-1 block text-xs text-[var(--fr-mute)]">{hint}</span>}
     </label>
   );
@@ -216,9 +204,35 @@ function prefillValue(prefill: BuildingPrefill | null, field: string): string | 
   return typeof value === "boolean" ? undefined : value;
 }
 
+/** What the city's records suggest for the boxes the visitor can type in, as text. */
+function suggestedFrom(prefill: BuildingPrefill | null): RunForm {
+  const text = (field: string) => {
+    const value = prefillValue(prefill, field);
+    return value === undefined ? undefined : String(value);
+  };
+  return { annual_kwh: text("annual_kwh"), roof_area_sqft: text("roof_area_sqft"), existing_solar_kw: text("existing_solar_kw") };
+}
+
 /** The small print under a pre-filled box: where the value came from and what to keep in mind. */
 function prefillHint(item: PrefillItem | undefined, fallback?: string): string | undefined {
   return item ? `From ${item.source}. ${item.note}` : fallback;
+}
+
+/** A drop-down box, for a choice with a few set answers. */
+function SelectField({ label, value, options, hint, onChange }: { label: string; value: string | undefined; options: [string, string][]; hint?: string; onChange: (value: string) => void }) {
+  return (
+    <label className="block">
+      <span className="text-sm font-medium text-[var(--fr-ink)]">{label}</span>
+      <select value={value ?? ""} onChange={(e) => onChange(e.target.value)} className="mt-1 w-full rounded-lg border border-[var(--fr-line)] bg-white px-3 py-2 text-[var(--fr-ink)] outline-none focus:border-[var(--fr-teal)]">
+        {options.map(([v, text]) => (
+          <option key={v} value={v}>
+            {text}
+          </option>
+        ))}
+      </select>
+      {hint && <span className="mt-1 block text-xs text-[var(--fr-mute)]">{hint}</span>}
+    </label>
+  );
 }
 
 function Found({ children }: { children: ReactNode }) {
@@ -230,16 +244,31 @@ function Found({ children }: { children: ReactNode }) {
   );
 }
 
-/** A place to attach a recent electric bill. In this mockup the file is only named on screen, not read. */
-function BillUpload() {
+/**
+ * A place to attach a recent electric bill. For a building the visitor typed in, the file goes to the planner with the run:
+ * a CSV with month and kWh columns is read for the yearly electricity use, and other files are kept but not read yet.
+ * When the form is filled in from a saved sample, the file is only named on screen.
+ */
+function BillUpload({ onFile, forRun }: { onFile: (file: File | null) => void; forRun: boolean }) {
   const [name, setName] = useState("");
+  const attached = forRun
+    ? `Attached: ${name}. A CSV with month and kWh columns is read for your yearly use; any other file is kept with your plan but not read yet.`
+    : `Attached: ${name}. This replay does not read it, so the plan still uses the city's energy report.`;
   return (
     <div className="rounded-xl border-2 border-dashed border-[var(--fr-line)] bg-[var(--fr-soft)] p-4 sm:col-span-2">
       <label htmlFor="bill-upload" className="block text-sm font-medium text-[var(--fr-ink)]">Attach a recent electric bill (optional)</label>
-      <input id="bill-upload" type="file" accept=".pdf,.png,.jpg,.jpeg,.csv" onChange={(e) => setName(e.target.files?.[0]?.name ?? "")} className="mt-2 block w-full text-sm text-[var(--fr-mute)] file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--fr-ink)] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white" />
-      <p className="mt-2 text-xs text-[var(--fr-mute)]">
-        {name ? `Attached: ${name}. This mockup does not read it yet, so the plan still uses the city's energy report.` : "A bill lets the plan use your real electricity price and yearly use."}
-      </p>
+      <input
+        id="bill-upload"
+        type="file"
+        accept=".pdf,.png,.jpg,.jpeg,.csv"
+        onChange={(e) => {
+          const file = e.target.files?.[0] ?? null;
+          setName(file?.name ?? "");
+          onFile(file);
+        }}
+        className="mt-2 block w-full text-sm text-[var(--fr-mute)] file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--fr-ink)] file:px-3 file:py-1.5 file:text-white"
+      />
+      <p className="mt-2 text-xs text-[var(--fr-mute)]">{name ? attached : "A bill lets the plan use your real electricity price and yearly use."}</p>
     </div>
   );
 }
@@ -258,6 +287,13 @@ interface IntakeProps {
   found: FoundBuilding | null;
   /** What the city's free records suggest for this building, or null while it is loading, was not reachable, or no address is chosen. */
   prefill: BuildingPrefill | null;
+  /** What is in each box for a typed address: the city's suggestion until the visitor types over it. */
+  values: RunForm;
+  onChange: (name: keyof RunForm, value: string) => void;
+  /** What is still missing when the visitor pressed Run, or null. */
+  runProblem: string | null;
+  /** The electric bill the visitor attached, or null. */
+  onBill: (file: File | null) => void;
   /** Changes when the address box should be emptied and started again. */
   searchKey: number;
   searchValue: string;
@@ -270,7 +306,7 @@ interface IntakeProps {
   onRun: () => void;
 }
 
-function Intake({ sample, mode, found, prefill, searchKey, searchValue, onPickAddress, onEditAddress, onSearched, onPickSample, step, setStep, onRun }: IntakeProps) {
+function Intake({ sample, mode, found, prefill, values, onChange, runProblem, onBill, searchKey, searchValue, onPickAddress, onEditAddress, onSearched, onPickSample, step, setStep, onRun }: IntakeProps) {
   const searching = mode === "search";
   const rec = found?.record ?? null;
   // In search mode the form starts with only what the city's records say; in sample mode it is filled from the sample.
@@ -293,7 +329,7 @@ function Intake({ sample, mode, found, prefill, searchKey, searchValue, onPickAd
       </div>
 
       <Card>
-        <div className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--fr-teal)]">Step {step} of 4{searching ? "" : " · mockup pre-filled from a sample"}</div>
+        <div className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--fr-teal)]">Step {step} of 4{searching ? "" : " · filled in from a sample"}</div>
         <h2 className="mb-4 text-2xl font-semibold text-[var(--fr-ink)]">{STEPS[step - 1]}</h2>
 
         {step === 1 && searching && (
@@ -366,13 +402,14 @@ function Intake({ sample, mode, found, prefill, searchKey, searchValue, onPickAd
           <div className="grid gap-3 sm:grid-cols-2">
             <Field
               label="Electricity used per year (kWh)"
-              value={searching ? prefillValue(prefill, "annual_kwh") : p.annual_kwh}
+              value={searching ? values.annual_kwh : p.annual_kwh}
+              onChange={searching ? (v) => onChange("annual_kwh", v) : undefined}
               hint={prefillHint(prefillOf(prefill, "annual_kwh"), "Or attach a recent bill below.")}
             />
-            <Field label="Capital budget" value={dollars(p.budget_amount)} hint={searching ? "The most you could spend on the work." : `${p.budget_year} · capital`} />
-            <div className="sm:col-span-2"><Field label="Your goal" value={p.goal == null ? "" : String(p.goal)} hint={searching ? "For example: cut grid electricity 30% by 2030." : undefined} /></div>
-            <div className="sm:col-span-2"><Field label="Anything that must keep running in an outage?" value={p.critical_loads ?? ""} /></div>
-            <BillUpload />
+            <Field label="Capital budget" value={searching ? values.budget_amount : dollars(p.budget_amount)} onChange={searching ? (v) => onChange("budget_amount", v) : undefined} hint={searching ? "The most you could spend on the work, for example $400,000." : `${p.budget_year} · capital`} />
+            <div className="sm:col-span-2"><Field label="Your goal" value={searching ? values.goal : p.goal == null ? "" : String(p.goal)} onChange={searching ? (v) => onChange("goal", v) : undefined} hint={searching ? "For example: cut grid electricity 30% by 2030." : undefined} /></div>
+            <div className="sm:col-span-2"><Field label="Anything that must keep running in an outage?" value={searching ? values.critical_loads : (p.critical_loads ?? "")} onChange={searching ? (v) => onChange("critical_loads", v) : undefined} /></div>
+            <BillUpload onFile={onBill} forRun={searching} />
           </div>
         )}
 
@@ -382,10 +419,18 @@ function Intake({ sample, mode, found, prefill, searchKey, searchValue, onPickAd
             <div className="grid gap-3 sm:grid-cols-2">
               {searching && (
                 <>
-                  <Field label="Roof area (sq ft)" value={prefillValue(prefill, "roof_area_sqft")} hint={prefillHint(prefillOf(prefill, "roof_area_sqft"), "Not sure? An engineer or roofer can measure the usable area.")} />
+                  <Field label="Roof area (sq ft)" value={values.roof_area_sqft} onChange={(v) => onChange("roof_area_sqft", v)} hint={prefillHint(prefillOf(prefill, "roof_area_sqft"), "Not sure? An engineer or roofer can measure the usable area.")} />
+                  <SelectField
+                    label="Roof type"
+                    value={values.roof_type}
+                    onChange={(v) => onChange("roof_type", v)}
+                    options={[["", "Choose…"], ["flat", "Flat"], ["pitched", "Pitched (sloped)"], ["mixed", "Mixed, towers or domes"]]}
+                    hint="A pitched or mixed roof needs an engineer or roofer before solar is sized."
+                  />
                   <Field
                     label="Roof condition (the city's assessment)"
                     value={prefillOf(prefill, "roof_condition")?.display}
+                    readOnly
                     hint={prefillHint(prefillOf(prefill, "roof_condition"), "The city has no roof assessment for this building.")}
                   />
                   {prefillOf(prefill, "solar_ready") && (
@@ -397,11 +442,12 @@ function Intake({ sample, mode, found, prefill, searchKey, searchValue, onPickAd
               )}
               <Field
                 label="Solar already on the roof (kW)"
-                value={searching ? (prefillValue(prefill, "existing_solar_kw") ?? "") : (p.existing_solar_kw ?? "0")}
+                value={searching ? (values.existing_solar_kw ?? "") : (p.existing_solar_kw ?? "0")}
+                onChange={searching ? (v) => onChange("existing_solar_kw", v) : undefined}
                 hint={prefillHint(prefillOf(prefill, "existing_solar_kw"))}
               />
-              <Field label="Other renewables" value={searching ? "" : (p.existing_renewables ?? "none")} />
-              <div className="sm:col-span-2"><Field label="Efficiency work already done" value={searching ? "" : (p.existing_efficiency ?? "none")} /></div>
+              <Field label="Other renewables" value={searching ? values.existing_renewables : (p.existing_renewables ?? "none")} onChange={searching ? (v) => onChange("existing_renewables", v) : undefined} />
+              <div className="sm:col-span-2"><Field label="Efficiency work already done" value={searching ? values.existing_efficiency : (p.existing_efficiency ?? "none")} onChange={searching ? (v) => onChange("existing_efficiency", v) : undefined} /></div>
             </div>
           </div>
         )}
@@ -416,8 +462,9 @@ function Intake({ sample, mode, found, prefill, searchKey, searchValue, onPickAd
                   {rec && <Found>{buildingTypeLabel(rec)}</Found>}
                 </div>
                 <p className="rounded-xl bg-[var(--fr-soft)] p-3 text-xs text-[var(--fr-mute)]">
-                  This is a design page, so Run replays a saved sample plan (for {String(sample.profile.building_name)}). Once the page is connected to the live planner, it will plan the building you chose.
+                  Pressing Run starts a real analysis of this building. It takes about two minutes, and it uses your answers and the city&rsquo;s public records.
                 </p>
+                {runProblem && <p className="rounded-xl border border-[var(--fr-gold)] bg-white p-3 text-sm text-[var(--fr-ink)]">{runProblem}</p>}
               </>
             ) : (
               <>
@@ -450,36 +497,53 @@ function Intake({ sample, mode, found, prefill, searchKey, searchValue, onPickAd
 
 // --------------------------------------------------------------------------------------------- running
 
-/** The working list. The page owns the progress so Fritts can say each step out loud as it appears. */
-function Running({ sample, lines, shown, onDone }: { sample: PlanView; lines: string[]; shown: number; onDone: () => void }) {
-  const pct = Math.round((Math.min(shown, lines.length) / lines.length) * 100);
+/**
+ * The working list. The page owns the progress so Fritts can say each step out loud as it appears. A saved plan plays its
+ * steps on a timer. A real run shows the steps the agent has actually taken, so the bar can only estimate how far along it is.
+ */
+function Running({ name, lines, shown, live, error, onDone, onBack }: { name: string; lines: string[]; shown: number; live: boolean; error: string | null; onDone: () => void; onBack: () => void }) {
+  // A real run does not know its length ahead of time: the bar fills toward about a dozen steps and stays short of full until the plan is ready.
+  const pct = live ? Math.min(95, Math.round(((shown + 1) / 12) * 100)) : Math.round((Math.min(shown, lines.length) / lines.length) * 100);
   return (
     <section className="mx-auto max-w-5xl px-4 py-14 pb-56 lg:pb-14 lg:pl-[24rem]">
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-[var(--fr-ink)]">The Professor is working on {String(sample.profile.building_name)}</h2>
-        <p className="text-sm text-[var(--fr-mute)]">A live run takes about two minutes. This mockup plays it faster.</p>
+        <h2 className="text-2xl font-semibold text-[var(--fr-ink)]">The Professor is working on {name}</h2>
+        <p className="text-sm text-[var(--fr-mute)]">
+          {live ? "A real analysis takes about two minutes. Please keep this page open." : "A live run takes about two minutes. This replay plays it faster."}
+        </p>
       </div>
-      <div className="mb-5 h-2 overflow-hidden rounded-full bg-[var(--fr-soft)]">
-        <div className="h-2 rounded-full bg-[var(--fr-teal)] transition-all duration-500" style={{ width: `${pct}%` }} />
-      </div>
-      <Card>
-        <ul className="space-y-3">
-          {lines.map((line, i) => {
-            const done = i < shown;
-            const active = i === shown;
-            if (i > shown) return null;
-            return (
-              <li key={line} className="flex items-center gap-3 text-[var(--fr-ink)]">
-                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] ${done ? "bg-[var(--fr-teal)] text-white" : "border-2 border-[var(--fr-gold)]"} ${active ? "animate-pulse" : ""}`}>{done ? "✓" : ""}</span>
-                <span className={done ? "text-[var(--fr-mute)]" : "font-medium"}>{line}{active ? "…" : ""}</span>
-              </li>
-            );
-          })}
-        </ul>
-      </Card>
-      <div className="mt-4 text-center">
-        <button type="button" onClick={onDone} className="text-sm text-[var(--fr-mute)] underline">Skip to my plan</button>
-      </div>
+      {error ? (
+        <Card>
+          <p className="text-[var(--fr-ink)]">{error}</p>
+          <button type="button" onClick={onBack} className="mt-4 rounded-xl bg-[var(--fr-ink)] px-5 py-2.5 font-semibold text-white">Back to my answers</button>
+        </Card>
+      ) : (
+        <>
+          <div className="mb-5 h-2 overflow-hidden rounded-full bg-[var(--fr-soft)]">
+            <div className="h-2 rounded-full bg-[var(--fr-teal)] transition-all duration-500" style={{ width: `${pct}%` }} />
+          </div>
+          <Card>
+            <ul className="space-y-3">
+              {lines.map((line, i) => {
+                const done = i < shown;
+                const active = i === shown;
+                if (i > shown) return null;
+                return (
+                  <li key={line} className="flex items-center gap-3 text-[var(--fr-ink)]">
+                    <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] ${done ? "bg-[var(--fr-teal)] text-white" : "border-2 border-[var(--fr-gold)]"} ${active ? "animate-pulse" : ""}`}>{done ? "✓" : ""}</span>
+                    <span className={done ? "text-[var(--fr-mute)]" : "font-medium"}>{line}{active ? "…" : ""}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </Card>
+          {!live && (
+            <div className="mt-4 text-center">
+              <button type="button" onClick={onDone} className="text-sm text-[var(--fr-mute)] underline">Skip to my plan</button>
+            </div>
+          )}
+        </>
+      )}
     </section>
   );
 }
@@ -517,7 +581,21 @@ export default function PlanMockup() {
   const [step, setStep] = useState(1);
   // What the city's free records suggest for each lot the visitor has picked, kept by lot number; "failed" means the backend did not answer.
   const [prefills, setPrefills] = useState<Record<string, BuildingPrefill | "failed">>({});
-  const sample = PLANS.find((s) => s.id === sampleId) ?? PLANS[0];
+  // What the visitor typed over the city's suggestions, by box. A box shows the suggestion until something is typed.
+  const [typed, setTyped] = useState<RunForm>({});
+  // "sample" replays a saved plan; "live" is a real run for the visitor's own address.
+  const [runMode, setRunMode] = useState<"sample" | "live">("sample");
+  // A real run in progress (the steps it has taken so far), or the reason it did not give a plan.
+  const [live, setLive] = useState<{ status: "idle" | "running" | "error"; run: RunResponse | null; message: string }>({ status: "idle", run: null, message: "" });
+  // The plan a real run produced. The report screen shows it in place of a saved sample.
+  const [livePlan, setLivePlan] = useState<PlanView | null>(null);
+  // What was still missing when Run was pressed.
+  const [runProblem, setRunProblem] = useState<string | null>(null);
+  // The electric bill attached on the energy step, sent to the planner with a real run.
+  const [bill, setBill] = useState<File | null>(null);
+  // Counts up each time a real run starts or the visitor leaves the run, so a run they walked away from cannot pull them back.
+  const liveToken = useRef(0);
+  const sample = livePlan ?? PLANS.find((s) => s.id === sampleId) ?? PLANS[0];
 
   // What Fritts is in the middle of: the greeting, the answers he has been given, the working list and the report menu.
   const [cue, setCue] = useState(0);
@@ -552,12 +630,20 @@ export default function PlanMockup() {
   const lookup: "idle" | "looking" | "empty" | "error" =
     chosen && !hasRecord ? (failedBbl === chosen.bbl ? "error" : "looking") : searchStatus;
   // The steps in the order of Fritts's scenes, with when each one starts (see ./fritts/runPlan.ts).
-  const runPlan = useMemo(() => planRun(sample ? narrationFor(sample) : []), [sample]);
-  const runLines = runPlan.lines;
+  const savedRunPlan = useMemo(() => planRun(sample ? narrationFor(sample) : []), [sample]);
+  // A real run shows the steps the agent has actually taken so far; a saved plan plays its steps on a timer.
+  const liveSteps = useMemo(() => stepsSoFar(live.run?.events ?? []), [live.run]);
+  const runLines = runMode === "live" ? liveSteps : savedRunPlan.lines;
+  // How many steps are finished: for a real run, all but the last one, which is being worked on now.
+  const shownNow = runMode === "live" ? liveSteps.length - 1 : runShown;
+  // What is in each box for a typed address: the city's suggestion, until the visitor types over it.
+  const values: RunForm = { ...suggestedFrom(chosenPrefill), ...typed };
 
   /** Moves to a screen, scrolls to the top, and resets whatever Fritts should start fresh on that screen. */
   const goTo = useCallback((v: View) => {
     setView(v);
+    // Leaving for the home page, the welcome or the form stops following a real run that is still going.
+    if (v === "home" || v === "welcome" || v === "intake") liveToken.current += 1;
     if (typeof window !== "undefined") window.scrollTo({ top: 0 });
     if (v === "welcome" || v === "ready") setCue((c) => c + 1);
     if (v === "welcome") {
@@ -589,19 +675,62 @@ export default function PlanMockup() {
 
   // The working list plays itself, each step lasting as long as its part of Fritts's scene, then the report is ready.
   useEffect(() => {
-    if (view !== "running") return;
+    if (view !== "running" || runMode !== "sample") return;
     if (runShown >= runLines.length) {
       const t = setTimeout(() => goTo("ready"), 900);
       return () => clearTimeout(t);
     }
     // Each step lasts until the next one starts, so every scene of Fritts plays one full pass of its animation.
-    const stepEnd = runPlan.starts[runShown + 1] ?? runPlan.total;
-    const t = setTimeout(() => setRunShown((n) => n + 1), stepEnd - runPlan.starts[runShown]);
+    const stepEnd = savedRunPlan.starts[runShown + 1] ?? savedRunPlan.total;
+    const t = setTimeout(() => setRunShown((n) => n + 1), stepEnd - savedRunPlan.starts[runShown]);
     return () => clearTimeout(t);
-  }, [view, runShown, runLines.length, runPlan, goTo]);
+  }, [view, runMode, runShown, runLines.length, savedRunPlan, goTo]);
+
+  /** Starts a real analysis for the building the visitor chose and follows it to the end. */
+  const startLiveRun = async (building: FoundBuilding) => {
+    const question = buildQuestion(values);
+    const mine = ++liveToken.current;
+    setRunMode("live");
+    setLivePlan(null);
+    setLive({ status: "running", run: null, message: "" });
+    goTo("running");
+    try {
+      const run = await runLive(buildProfile(building, values), question, (latest) => setLive((prev) => ({ ...prev, run: latest })), {
+        isCancelled: () => liveToken.current !== mine,
+        bill,
+      });
+      if (liveToken.current !== mine) return;
+      const plan = planFromRun(run, question);
+      if (!plan) throw new LiveRunError("failed", "The analysis finished without a plan. Please try again.");
+      setLivePlan(plan);
+      setLive({ status: "idle", run: null, message: "" });
+      goTo("ready");
+    } catch (error) {
+      if (liveToken.current !== mine) return;
+      const failure = error instanceof LiveRunError ? error : new LiveRunError("failed", "Something went wrong. Please try again.");
+      setLive({ status: "error", run: null, message: failure.message });
+    }
+  };
+  /** Run: a typed address starts a real analysis; a saved sample replays its saved plan. */
+  const onRun = () => {
+    setRunProblem(null);
+    if (mode === "search" && found) {
+      const missing = missingForRun(found, values);
+      if (missing.length > 0) {
+        setRunProblem(`Before I can start I still need your ${missing.join(" and ")}.`);
+        return;
+      }
+      void startLiveRun(found);
+      return;
+    }
+    setRunMode("sample");
+    goTo("running");
+  };
 
   /** Forgets any building chosen and empties the address box. */
   const resetSearch = () => {
+    setTyped({});
+    setRunProblem(null);
     setChosen(null);
     setAccepted(false);
     setSearchStatus("idle");
@@ -611,6 +740,7 @@ export default function PlanMockup() {
   };
   /** The "Plan my building" buttons: Fritts greets first, then the form with an empty address box. */
   const startExperience = () => {
+    setLivePlan(null);
     setSampleId(PLANS[0].id);
     setStep(1);
     setMode("search");
@@ -619,6 +749,7 @@ export default function PlanMockup() {
   };
   /** A sample card on the home page: straight to the form, filled in from that sample. */
   const pick = (id: string) => {
+    setLivePlan(null);
     setSampleId(id);
     setStep(1);
     setMode("sample");
@@ -634,11 +765,14 @@ export default function PlanMockup() {
       resetSearch();
       return;
     }
+    setLivePlan(null);
     setSampleId(id);
     setMode("sample");
   };
   /** The visitor picked an address from the list: read the city's tax-lot record, which says who owns the lot. */
   const pickAddress = (choice: AddressSuggestion) => {
+    setTyped({});
+    setRunProblem(null);
     setSearchValue(choice.label);
     setChosen(choice);
     setAccepted(false);
@@ -747,10 +881,21 @@ export default function PlanMockup() {
         chosenPrefill !== null &&
         ((step === 2 && prefillOf(chosenPrefill, "annual_kwh")) ||
           (step === 3 && (prefillOf(chosenPrefill, "roof_area_sqft") || prefillOf(chosenPrefill, "roof_condition") || prefillOf(chosenPrefill, "existing_solar_kw"))));
-      return { placement: "form", pose: step === 4 ? "explaining" : "listening", line: filled ? PREFILL_STEP[step] : INTAKE_STEP[step], actions: [] };
+      return { placement: "form", pose: step === 4 ? "explaining" : "listening", line: step === 4 && runProblem ? `${runProblem} Press Back to add it.` : filled ? PREFILL_STEP[step] : INTAKE_STEP[step], actions: [] };
     }
     if (view === "running") {
-      const current = runLines[Math.min(runShown, runLines.length - 1)] ?? "";
+      if (runMode === "live" && live.status === "error") {
+        return {
+          placement: "stage",
+          pose: "reassuring",
+          line: live.message,
+          actions: [
+            { label: "Back to my answers", primary: true, onClick: () => goTo("intake") },
+            { label: "Open a sample plan", onClick: () => goTo("home") },
+          ],
+        };
+      }
+      const current = runLines[Math.min(shownNow, runLines.length - 1)] ?? "";
       return { placement: "stage", pose: poseForStep(current), line: workingLine(current), actions: [] };
     }
     if (view === "ready") {
@@ -788,7 +933,7 @@ export default function PlanMockup() {
         line: REPORT_MENU,
         actions: [
           { label: "Download PDF", onClick: () => { setShareUrl(null); setSaid(PDF_SAYS.making); setMenu("said"); void downloadPlanPdf(sample.plan).then((r) => setSaid(PDF_SAYS[r])); } },
-          { label: "Share", onClick: () => { void copyShareLink(sample.id).then(({ url, copied }) => { setShareUrl(url); setSaid(shareLine(url, copied)); setMenu("said"); }); } },
+          { label: "Share", onClick: () => { if (livePlan) { setShareUrl(null); setSaid(SHARE_LIVE); setMenu("said"); return; } void copyShareLink(sample.id).then(({ url, copied }) => { setShareUrl(url); setSaid(shareLine(url, copied)); setMenu("said"); }); } },
           { label: "Explain a section", primary: true, onClick: () => setMenu("sections") },
         ],
       };
@@ -798,9 +943,6 @@ export default function PlanMockup() {
 
   return (
     <div style={PALETTE} className="min-h-screen bg-[var(--fr-cream)] text-[var(--fr-ink)]">
-      <div className="bg-[var(--fr-ink)] px-4 py-1.5 text-center text-xs text-white/90">
-        Design page. Real runs recorded from the backend; nothing here calls Claude or the backend.
-      </div>
       <TopBar onHome={() => goTo("home")} onStart={startExperience} />
       {view === "home" && <Home onPick={pick} onStart={startExperience} />}
       {view === "welcome" && <Backdrop eyebrow="Renewable energy planning for NYC public buildings" title="Professor Fritts" />}
@@ -810,6 +952,10 @@ export default function PlanMockup() {
           mode={mode}
           found={found}
           prefill={chosenPrefill}
+          values={values}
+          onChange={(name, value) => setTyped((prev) => ({ ...prev, [name]: value }))}
+          runProblem={runProblem}
+          onBill={setBill}
           searchKey={searchKey}
           searchValue={searchValue}
           onPickAddress={pickAddress}
@@ -818,14 +964,24 @@ export default function PlanMockup() {
           onPickSample={pickSample}
           step={step}
           setStep={setStep}
-          onRun={() => goTo("running")}
+          onRun={onRun}
         />
       )}
-      {view === "running" && <Running sample={sample} lines={runLines} shown={runShown} onDone={() => goTo("ready")} />}
+      {view === "running" && (
+        <Running
+          name={runMode === "live" ? (found?.label ?? "your building") : String(sample.profile.building_name)}
+          lines={runLines}
+          shown={shownNow}
+          live={runMode === "live"}
+          error={runMode === "live" && live.status === "error" ? live.message : null}
+          onDone={() => goTo("ready")}
+          onBack={() => goTo("intake")}
+        />
+      )}
       {view === "ready" && <Backdrop eyebrow="Your plan is ready" title={String(sample.profile.building_name ?? sample.label)} />}
       {view === "results" && (
         <div className="pb-56 lg:pb-0">
-          <Results plan={sample} plans={PLANS} onRestart={() => goTo("home")} onPick={(id) => { setSampleId(id); goTo("results"); }} />
+          <Results plan={sample} plans={PLANS} onRestart={() => goTo("home")} onPick={(id) => { setLivePlan(null); setSampleId(id); goTo("results"); }} />
         </div>
       )}
       {guide && <FrittsGuide placement={guide.placement} pose={guide.pose} line={guide.line} actions={guide.actions} wide={guide.wide} cue={cue} />}

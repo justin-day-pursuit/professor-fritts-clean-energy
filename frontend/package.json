@@ -6,7 +6,8 @@
     "dev": "dotenv -e ../.env -- next dev",
     "build": "next build",
     "start": "dotenv -e ../.env -- next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:live-run": "node tests/live-run.check.cjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

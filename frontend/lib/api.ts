@@ -9,6 +9,7 @@ import type {
   FixtureListResponse,
   FixtureRunResponse,
   HealthResponse,
+  LiveRunStartResponse,
   MessageCreateRequest,
   MessageRunResponse,
   ProfileUpdateRequest,
@@ -143,6 +144,23 @@ export async function postMessage(
     method: "POST",
     body: JSON.stringify(body),
   });
+}
+
+/**
+ * Starts a run in the background and returns at once. A real analysis takes about two minutes, so the page then asks
+ * getLatestRun every couple of seconds. A 429 means the day's limit on real runs is used up (the message says so), and
+ * a 409 means this session already has a run going.
+ */
+export async function startRun(sessionId: string, body: MessageCreateRequest): Promise<LiveRunStartResponse> {
+  return requestJson<LiveRunStartResponse>(`/api/sessions/${sessionId}/runs`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+/** The newest run for a session with the steps it has taken so far. A 404 just means the run has not been created yet. */
+export async function getLatestRun(sessionId: string): Promise<RunResponse> {
+  return requestJson<RunResponse>(`/api/sessions/${sessionId}/latest-run`);
 }
 
 export async function getRun(runId: number): Promise<RunResponse> {
