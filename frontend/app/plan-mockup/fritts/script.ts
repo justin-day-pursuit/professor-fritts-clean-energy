@@ -1,3 +1,5 @@
+import { shortLink } from "../plan-actions";
+
 /**
  * What Professor Fritts says. Every line here is written ahead of time, so the guide costs nothing to run and never
  * says anything unexpected. The plan itself still comes from the real agent; these lines only walk the visitor through.
@@ -45,11 +47,18 @@ export function readyLine(outcomeLabel: string): string {
 /** The question he asks beside the finished report. */
 export const REPORT_MENU = "Would you like to download this, share it, or have a section explained?";
 
-/** What he says to the buttons that are not built yet. */
-export const COMING_SOON = {
-  download: "A PDF download is coming. For now, you can print this page from your browser.",
-  share: "Sharing is coming later. It needs saved plans first.",
+/** What he says while the PDF is made, and how it ended. */
+export const PDF_SAYS = {
+  making: "One moment, I'm putting your report into a PDF.",
+  done: "Your PDF is ready. Check your downloads.",
+  unreachable: "I couldn't reach the planner to make the PDF just now. You can print this page from your browser instead.",
+  failed: "The PDF didn't come out right this time. You can print this page from your browser instead.",
 } as const;
+
+/** What he says after copying the share link. */
+export function shareLine(url: string, copied: boolean): string {
+  return `${copied ? "Link copied." : "Here is the link."} ${shortLink(url)}`;
+}
 
 // ---------------------------------------------------------------------------------- the address step
 

@@ -12,6 +12,7 @@ import { createContext, useContext, useState, type ReactNode, type SyntheticEven
 import { SAMPLE_BADGE_TEXT } from "./copy";
 import type { Claim, PlanSummary, Program, Scenario, Section } from "./plan-types";
 import { fieldLabel, fieldValue, isInternalField, plainify, toolLabel } from "./plain";
+import { copyShareLink, downloadPlanPdf, shortLink } from "./plan-actions";
 import type { PlanView } from "./plans";
 import {
   Card,
@@ -530,6 +531,21 @@ function priceText(kind: string, price: unknown): string {
 
 export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; plans: PlanView[]; onRestart: () => void; onPick: (id: string) => void }) {
   const [dev, setDev] = useState(false);
+  // What the Download PDF and Share buttons last did, shown beside them.
+  const [note, setNote] = useState("");
+  const onDownload = () => {
+    setNote("Making your PDF...");
+    void downloadPlanPdf(plan.plan).then((r) => setNote(r === "done" ? "PDF downloaded." : r === "unreachable" ? "Couldn't reach the planner. Try printing this page instead." : "The PDF could not be made."));
+  };
+  // The box under the Share button: the link that was copied, and a button to copy it again.
+  const [share, setShare] = useState<{ url: string; copied: boolean; again: boolean } | null>(null);
+  const onShare = () => {
+    setNote("");
+    void copyShareLink(plan.id).then(({ url, copied }) => setShare({ url, copied, again: false }));
+  };
+  const onCopyAgain = () => {
+    void copyShareLink(plan.id).then(({ url, copied }) => setShare({ url, copied, again: copied }));
+  };
   // Only one report section is open at a time; opening one closes the others and opens the drop-downs inside it.
   const [openSection, setOpenSection] = useState<string | null>(null);
   const sum: PlanSummary = plan.plan;
@@ -713,8 +729,23 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
             <input type="checkbox" checked={dev} onChange={(e) => setDev(e.target.checked)} />
             Developer view
           </label>
-          <button type="button" disabled className="rounded-lg border border-[var(--fr-line)] bg-white px-3 py-1.5 text-[var(--fr-mute)] opacity-60">Download PDF</button>
-          <button type="button" disabled className="rounded-lg border border-[var(--fr-line)] bg-white px-3 py-1.5 text-[var(--fr-mute)] opacity-60">Share</button>
+          {note && <span className="text-xs text-[var(--fr-mute)]" role="status">{note}</span>}
+          <button type="button" onClick={onDownload} className="rounded-lg border border-[var(--fr-line)] bg-white px-3 py-1.5 text-[var(--fr-ink)] hover:border-[var(--fr-teal)]">Download PDF</button>
+          <div className="relative">
+            <button type="button" onClick={onShare} className="rounded-lg border border-[var(--fr-line)] bg-white px-3 py-1.5 text-[var(--fr-ink)] hover:border-[var(--fr-teal)]">Share</button>
+            {share && (
+              <div role="dialog" aria-label="Share this report" onKeyDown={(e) => { if (e.key === "Escape") setShare(null); }} className="absolute right-0 z-30 mt-2 w-80 rounded-xl border border-[var(--fr-line)] bg-white p-3 text-sm shadow-lg">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-semibold text-[var(--fr-ink)]">{share.copied ? "\u2713 Link copied" : "Copy this link"}</span>
+                  <button type="button" onClick={() => setShare(null)} aria-label="Close" className="px-1 text-[var(--fr-mute)] hover:text-[var(--fr-ink)]">&times;</button>
+                </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <input readOnly aria-label="Share link" value={shortLink(share.url)} title={share.url} onFocus={(e) => e.currentTarget.select()} className="min-w-0 flex-1 truncate rounded-lg border border-[var(--fr-line)] bg-[var(--fr-soft)] px-2.5 py-1.5 text-xs text-[var(--fr-ink)]" />
+                  <button type="button" onClick={onCopyAgain} className="shrink-0 rounded-lg bg-[var(--fr-ink)] px-3 py-1.5 text-xs font-semibold text-white">{share.again ? "Copied" : "Copy link"}</button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

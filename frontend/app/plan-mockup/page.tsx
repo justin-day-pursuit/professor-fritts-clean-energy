@@ -21,8 +21,9 @@ import { AddressSearch } from "./AddressSearch";
 import { buildingTypeLabel, fetchBuildingRecord, numberOf, ownerKind, type AddressSuggestion, type BuildingRecord, type FoundBuilding } from "./address";
 import { FrittsGuide, type GuideAction } from "./fritts/FrittsGuide";
 import type { Placement, PoseName } from "./fritts/poses";
-import { ADDRESS_ERROR, ADDRESS_LOOKING, ADDRESS_NOT_FOUND, ADDRESS_START, BRING, BRING_REPLY, COMING_SOON, CONFIRM_REPLY, HELLO, INTAKE_STEP, PRIVATE_BUILDING, REPORT_MENU, foundLine, readyLine, unclearOwner, workingLine } from "./fritts/script";
+import { ADDRESS_ERROR, ADDRESS_LOOKING, ADDRESS_NOT_FOUND, ADDRESS_START, BRING, BRING_REPLY, CONFIRM_REPLY, HELLO, INTAKE_STEP, PDF_SAYS, PRIVATE_BUILDING, REPORT_MENU, foundLine, readyLine, shareLine, unclearOwner, workingLine } from "./fritts/script";
 import { plainify } from "./plain";
+import { copyShareLink, downloadPlanPdf } from "./plan-actions";
 import { Results } from "./plan-view";
 import { PLANS, type PlanView } from "./plans";
 import { Card, Chip, LABELS, PALETTE, SectionTitle } from "./ui";
@@ -491,6 +492,8 @@ export default function PlanMockup() {
   const [runShown, setRunShown] = useState(0);
   const [menu, setMenu] = useState<"menu" | "sections" | "said">("menu");
   const [said, setSaid] = useState("");
+  // The share link Fritts last copied, so his menu can offer "Copy link" again.
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
   // What the city's records say about the chosen address, worked out from the state above so a slow answer for an
   // address the visitor has since changed can never show up.
   const hasRecord = chosen !== null && chosen.bbl in records && lookShown === chosen.bbl;
@@ -515,6 +518,7 @@ export default function PlanMockup() {
     if (v === "results") {
       setMenu("menu");
       setSaid("");
+      setShareUrl(null);
     }
   }, []);
 
@@ -708,15 +712,18 @@ export default function PlanMockup() {
         };
       }
       if (menu === "said") {
-        return { placement: "side", pose: "explaining", line: said, actions: [{ label: "Anything else?", primary: true, onClick: () => setMenu("menu") }] };
+        const copyAgain: GuideAction[] = shareUrl
+          ? [{ label: "Copy link", primary: true, onClick: () => { void copyShareLink(sample.id).then(({ url, copied }) => setSaid(shareLine(url, copied))); } }]
+          : [];
+        return { placement: "side", pose: "explaining", line: said, actions: [...copyAgain, { label: "Anything else?", primary: !shareUrl, onClick: () => setMenu("menu") }] };
       }
       return {
         placement: "side",
         pose: "present",
         line: REPORT_MENU,
         actions: [
-          { label: "Download PDF", onClick: () => { setSaid(COMING_SOON.download); setMenu("said"); } },
-          { label: "Share", onClick: () => { setSaid(COMING_SOON.share); setMenu("said"); } },
+          { label: "Download PDF", onClick: () => { setShareUrl(null); setSaid(PDF_SAYS.making); setMenu("said"); void downloadPlanPdf(sample.plan).then((r) => setSaid(PDF_SAYS[r])); } },
+          { label: "Share", onClick: () => { void copyShareLink(sample.id).then(({ url, copied }) => { setShareUrl(url); setSaid(shareLine(url, copied)); setMenu("said"); }); } },
           { label: "Explain a section", primary: true, onClick: () => setMenu("sections") },
         ],
       };
