@@ -2,7 +2,7 @@
   "city": "New York",
   "goal": "Cut grid electricity 30% by 2030",
   "state": "NY",
-  "address": "425 6th Avenue",
+  "address": "425 6 AVENUE",
   "borough": "Manhattan",
   "utility": "Con Edison",
   "roof_type": "pitched",
@@ -17,7 +17,7 @@
   "building_type": "library",
   "critical_loads": "reading room cooling and lighting",
   "roof_area_sqft": 7020,
-  "floor_area_sqft": 18643,
+  "floor_area_sqft": 19800,
   "existing_efficiency": "none",
   "existing_renewables": "none",
   "question": "Our library is in the Greenwich Village Historic District. Can we put solar on the roof, and how do we cut grid power 30% by 2030 on $500k?"

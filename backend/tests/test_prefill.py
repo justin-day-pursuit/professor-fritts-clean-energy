@@ -45,9 +45,27 @@ def test_every_value_names_its_source_and_asks_for_confirmation():
 
 
 def test_solar_already_installed_is_listed_only_when_the_city_reports_some():
-    with_solar = build_prefill(BBL, LL84, {**LL24, "installed_kw": 150.0}, ROOF)
-    assert _by_field(with_solar)["existing_solar_kw"]["display"] == "150 kW installed or planned"
+    with_solar = build_prefill(BBL, LL84, {**LL24, "installed_kw": 150.0, "status": "Completed"}, ROOF)
+    assert _by_field(with_solar)["existing_solar_kw"]["display"] == "150 kW installed"
     assert "existing_solar_kw" not in _by_field(build_prefill(BBL, LL84, LL24, ROOF))
+
+
+def test_solar_that_is_only_planned_is_not_filled_in_as_already_on_the_roof():
+    result = build_prefill(BBL, LL84, {**LL24, "installed_kw": 219.0, "status": "In Progress"}, ROOF)
+    assert "existing_solar_kw" not in _by_field(result)
+    assert any("planned or in progress" in line for line in result["missing"])
+
+
+def test_a_blank_solar_readiness_is_not_reported_as_not_ready():
+    # The city left the field blank: say nothing about readiness rather than "not solar ready".
+    result = build_prefill(BBL, LL84, {**LL24, "solar_ready": None}, ROOF)
+    assert "solar_ready" not in _by_field(result)
+    assert "roof_condition" in _by_field(result)
+
+
+def test_an_explicit_no_is_reported_as_not_ready():
+    items = _by_field(build_prefill(BBL, LL84, {**LL24, "solar_ready": False}, ROOF))
+    assert items["solar_ready"]["display"] == "Rated not solar ready by the city"
 
 
 def test_a_solar_ready_roof_is_said_plainly():

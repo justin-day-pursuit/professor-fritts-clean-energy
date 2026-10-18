@@ -752,6 +752,8 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
         <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--fr-teal)]">The short answer · {o.label}</div>
         <h1 className="mt-2 max-w-3xl text-3xl font-bold leading-tight text-[var(--fr-ink)] md:text-4xl">{o.headline}</h1>
         <p className="mt-3 max-w-3xl text-lg text-[var(--fr-ink)]/80">{o.subhead}</p>
+        {/* The headline above is worked out by code from the numbers. This paragraph is the agent's own plain-words answer to the question, checked by code before it is saved. A plan recorded before it existed has none and looks exactly as it did. */}
+        {sum.plain_answer && <p className="mt-5 max-w-3xl text-base leading-relaxed text-[var(--fr-ink)]">{sum.plain_answer}</p>}
         {sum.confirm_first.length > 0 && (
           <div className="mt-6 max-w-3xl rounded-2xl border border-[var(--fr-gold)] bg-white/80 p-4">
             <div className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-warn)]">Please confirm first</div>

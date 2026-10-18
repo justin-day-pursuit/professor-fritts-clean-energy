@@ -168,6 +168,8 @@ def render_roadmap_markdown(
     Edit heading text in agent.claims.SECTION_TITLES when the product PRD section titles change.
     """
     lines = ["# Professor Fritts — Priority roadmap", ""]
+    if payload.plain_answer.strip():
+        lines.extend(["## In plain words", "", payload.plain_answer.strip(), ""])
     register = build_assumptions_register(payload)
     for section in ordered_sections(payload):
         lines.append(f"## {section.section_id}. {section.title}")

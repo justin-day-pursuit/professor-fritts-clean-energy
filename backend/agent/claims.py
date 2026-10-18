@@ -122,9 +122,18 @@ class RoadmapPayload(BaseModel):
 
     sections: list[RoadmapSection] = Field(default_factory=list)
     footer_note: str = ""
+    # The plan opens with this: one short, connected answer to the user's question in plain words (see the system prompt).
+    # It is optional in the format, so plans recorded before it existed still load; live runs are required to write it.
+    plain_answer: str = Field(
+        default="",
+        description=(
+            "One short plain-words answer to the user's question (about 80 to 200 words, no bullet points): what was asked, "
+            "the answer, why, what limits it, what does not line up, and what to do next. Use only facts that are in the sections."
+        ),
+    )
 
 
-def roadmap_with_sections(sections: list[RoadmapSection]) -> RoadmapPayload:
+def roadmap_with_sections(sections: list[RoadmapSection], plain_answer: str = "") -> RoadmapPayload:
     """
     Build a 13-section roadmap, using the given sections and leaving the rest empty.
 
@@ -137,7 +146,7 @@ def roadmap_with_sections(sections: list[RoadmapSection]) -> RoadmapPayload:
         given.get(section_id) or RoadmapSection(section_id=section_id, title=title, claims=[])
         for section_id, title in SECTION_TITLES.items()
     ]
-    return RoadmapPayload(sections=ordered)
+    return RoadmapPayload(sections=ordered, plain_answer=plain_answer)
 
 
 def _parse_json_string(value: Any) -> Any:

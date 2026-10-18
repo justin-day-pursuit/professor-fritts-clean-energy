@@ -100,31 +100,35 @@ def build_prefill(
                     "This is the city's own rating of its roof. A roofer should confirm before any design.",
                 )
             )
-        ready = bool(ll24.get("solar_ready"))
-        items.append(
-            _item(
-                "solar_ready",
-                "Roof ready for solar?",
-                ready,
-                "Rated solar ready by the city" if ready else "Not rated solar ready by the city",
-                source,
-                LL24_SOURCE_URL,
-                "The city's assessment of whether the roof can take solar panels today.",
+        ready = ll24.get("solar_ready")
+        if ready is True or ready is False:
+            items.append(
+                _item(
+                    "solar_ready",
+                    "Roof ready for solar?",
+                    ready,
+                    "Rated solar ready by the city" if ready else "Rated not solar ready by the city",
+                    source,
+                    LL24_SOURCE_URL,
+                    "The city's assessment of whether the roof can take solar panels today.",
+                )
             )
-        )
-        installed = _positive(ll24.get("installed_kw"))
-        if installed is not None:
+        listed = _positive(ll24.get("installed_kw"))
+        if listed is not None and str(ll24.get("status") or "").strip().lower() == "completed":
             items.append(
                 _item(
                     "existing_solar_kw",
                     "Solar already on the roof (kW)",
-                    installed,
-                    f"{installed:g} kW installed or planned",
+                    listed,
+                    f"{listed:g} kW installed",
                     source,
                     LL24_SOURCE_URL,
-                    "The size the city lists as installed or planned. Please confirm what is actually on the roof.",
+                    "The size the city lists as completed. Please confirm what is actually on the roof.",
                 )
             )
+        elif listed is not None:
+            # Planned or in progress is not on the roof yet, so it is not filled into the form; the reader is told.
+            missing.append(f"The city lists {listed:g} kW of solar as planned or in progress, not yet installed, so the form does not count it as already on the roof.")
     elif "roof_assessment" in problems:
         missing.append("The city's roof assessments did not answer, so the roof condition is blank.")
     else:

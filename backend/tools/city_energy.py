@@ -89,13 +89,28 @@ def fetch_ll84(bbl: str) -> dict[str, Any] | None:
     return parse_ll84_row(rows[0]) if rows else None
 
 
+def solar_readiness(value: Any) -> bool | None:
+    """
+    The city's answer to "is this roof solar ready?": True for yes, False for no, None when the city left it blank.
+
+    A blank is not a no. Many rows (a roof with solar already installed, for example) carry no assessment, and reporting
+    those as "not solar ready" tells the reader something the city never said.
+    """
+    text = str(value or "").strip().lower()
+    if text == "yes":
+        return True
+    if text == "no":
+        return False
+    return None
+
+
 def parse_ll24_row(row: dict[str, Any]) -> dict[str, Any]:
     """Pick the useful LL24 solar-readiness fields from one assessment row (text kept as the city wrote it)."""
     return {
         "agency": row.get("agency"),
         "site": row.get("site"),
         "status": row.get("status"),
-        "solar_ready": str(row.get("solar_readiness_assessment") or "").strip().lower() == "yes",
+        "solar_ready": solar_readiness(row.get("solar_readiness_assessment")),
         "roof_condition": row.get("roof_condition"),
         "roof_age": row.get("roof_age"),
         "report_year": int(_number(row.get("year_of_report")) or 0) or None,

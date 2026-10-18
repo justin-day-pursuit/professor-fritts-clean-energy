@@ -121,3 +121,23 @@ def test_endpoint_rejects_something_that_is_not_a_plan():
     response = client.post("/api/plans/pdf", json={"plan_summary": {"hello": "world"}})
     assert response.status_code == 422
     assert "plan summary" in response.json()["detail"]
+
+
+def _pdf_text(pdf: bytes) -> str:
+    """All the text on every page of a PDF, read back with pypdf."""
+    import io
+
+    from pypdf import PdfReader
+
+    return " ".join(page.extract_text() or "" for page in PdfReader(io.BytesIO(pdf)).pages)
+
+
+def test_the_pdf_shows_the_plain_words_answer_under_the_headline_when_the_plan_has_one():
+    summary = _summary()
+    summary["plain_answer"] = "You asked how to cut grid power. The plan finds the goal can be reached, but not inside the budget."
+    text = _pdf_text(build_plan_pdf(summary))
+    assert "The plan finds the goal can be reached, but not inside the budget." in " ".join(text.split())
+
+
+def test_a_plan_without_one_makes_the_same_pdf_as_before():
+    assert "You asked" not in _pdf_text(build_plan_pdf(_summary()))

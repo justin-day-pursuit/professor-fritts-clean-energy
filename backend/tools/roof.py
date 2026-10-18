@@ -31,6 +31,25 @@ VERIFY_MESSAGE = (
 )
 
 
+def plain_refusal(message: str | None) -> str | None:
+    """
+    A sentence for the reader when a tool's error message is a roof rule saying "do not size solar here", not a broken lookup.
+
+    The two rules are a roof that is not flat (solar is not sized until an engineer or roofer verifies the usable area) and a
+    roof already full of solar (no free roof for a new array). Any other message returns None, so the plan keeps saying that
+    part "could not return data". The messages are matched by their wording because a saved run only keeps the text.
+    """
+    text = message or ""
+    full = re.search(r"existing (\d+(?:\.\d+)?) kW array already uses the whole usable roof", text)
+    if full:
+        return f"No room for new solar: the {float(full.group(1)):g} kW array already on the roof uses the whole usable roof, so this plan is efficiency only."
+    if "cannot be estimated from the flat-roof defaults" in text:
+        kind = re.match(r"The roof is (.+?), so the usable area", text)
+        what = kind.group(1) if kind else "not flat"
+        return f"Solar was not sized because the roof is {what}. An engineer or roofer needs to verify the usable roof area first."
+    return None
+
+
 class RoofNotSizableError(ToolUnavailableError):
     """Solar cannot be sized for this roof yet: it is not flat and no verified usable area was given."""
 

@@ -2,7 +2,7 @@
   "city": "New York",
   "goal": "Cut grid electricity 30% by 2030",
   "state": "NY",
-  "address": "155 Bay Street",
+  "address": "155 BAY STREET",
   "borough": "Brooklyn",
   "utility": "Con Edison",
   "roof_type": "flat",
@@ -17,6 +17,7 @@
   "building_type": "park recreation center",
   "critical_loads": "gym cooling, lighting and communications for a cooling center",
   "roof_area_sqft": 32860,
-  "floor_area_sqft": 27069,
-  "question": "Our rec center flooded in Hurricane Sandy and is used as a cooling center. How do we cut grid power 30% by 2030 and keep critical loads running in outages, on $750k?"
+  "floor_area_sqft": 21600,
+  "question": "Our rec center flooded in Hurricane Sandy and is used as a cooling center. How do we cut grid power 30% by 2030 and keep critical loads running in outages, on $750k?",
+  "existing_solar_kw": 11.4
 }

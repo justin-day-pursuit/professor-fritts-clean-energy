@@ -296,6 +296,11 @@ def build_plan_pdf(summary: dict[str, Any], generated_on: date | None = None) ->
         story.append(Paragraph(safe(f"THE SHORT ANSWER  |  {str(outcome['label']).upper()}"), st["brand"]))
     story.append(Paragraph(safe(outcome.get("headline", "")), st["headline"]))
     story.append(Paragraph(safe(plainify(str(outcome.get("subhead", "")))), st["body"]))
+    # The agent's plain-words answer, when the plan has one, sits under the headline as it does on screen.
+    plain_answer = str(summary.get("plain_answer") or "").strip()
+    if plain_answer:
+        story.append(Spacer(1, 6))
+        story.append(Paragraph(safe(plainify(plain_answer)), st["body"]))
 
     confirm = summary.get("confirm_first") or []
     if confirm:

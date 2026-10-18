@@ -59,12 +59,12 @@
      "budget_amount": 800000,
      "building_name": "P.S. 236 Langston Hughes (DOE building X173)",
      "building_type": "elementary school",
-     "profile_flags": [],
      "critical_loads": "emergency lighting and communications",
      "roof_area_sqft": 10260,
      "floor_area_sqft": 43760,
      "existing_efficiency": "none",
-     "existing_renewables": "none"
+     "existing_renewables": "none",
+     "profile_flags": []
     },
     "city_records": {
      "bbl": "2028510021",
@@ -96,9 +96,6 @@
       "site_eui_kbtu_per_sqft": 57.6,
       "weather_normalized_site_eui": 58.3
      },
-     "query": {
-      "address": "1871 Walton Avenue, Bronx, NY"
-     },
      "address": "1869 WALTON AVENUE",
      "borough": "Bronx",
      "zipcode": "10453",
@@ -121,7 +118,10 @@
      "footprint_buildings_sqft": [
       10255
      ],
-     "lot_matches_intake_floor": false
+     "lot_matches_intake_floor": false,
+     "query": {
+      "address": "1871 Walton Avenue, Bronx, NY"
+     }
     },
     "energy_report": {
      "year_built": 1994,
@@ -167,6 +167,7 @@
    },
    "solar": {
     "production": {
+     "tool": "get_solar_production",
      "data": {
       "location": {
        "bbl": "2028510021",
@@ -211,17 +212,17 @@
       "weather_data_source": "NSRDB PSM V3 GOES tmy-2020 3.2.0",
       "solar_radiation_kwh_m2_day": 4.421094011550492
      },
-     "mock": false,
-     "tool": "get_solar_production",
-     "flags": [],
-     "stale": false,
      "source_url": "https://developer.nlr.gov/docs/solar/pvwatts/v8/",
      "retrieved_at": "2026-10-18T20:28:54Z",
-     "dataset_version": "pvwatts-v8.5.0"
+     "dataset_version": "pvwatts-v8.5.0",
+     "mock": false,
+     "stale": false,
+     "flags": []
     }
    },
    "prices": {
     "electricity": {
+     "tool": "get_utility_rates",
      "data": {
       "utility": "Con Edison",
       "price_units": "cents per kilowatt-hour",
@@ -235,17 +236,17 @@
       "latest_month_usd_per_kwh": 0.2418,
       "avg_energy_charge_usd_per_kwh": 0.222
      },
-     "mock": false,
-     "tool": "get_utility_rates",
-     "flags": [
-      "statewide_average_rate"
-     ],
-     "stale": false,
      "source_url": "https://www.eia.gov/electricity/data/browser/",
      "retrieved_at": "2026-10-18T20:28:56Z",
-     "dataset_version": "eia-retail-sales-2026-07"
+     "dataset_version": "eia-retail-sales-2026-07",
+     "mock": false,
+     "stale": false,
+     "flags": [
+      "statewide_average_rate"
+     ]
     },
     "tariff": {
+     "tool": "get_utility_tariff",
      "data": {
       "note": "These are the current general-service tariffs the utility publishes for New York City. Which one applies depends on peak demand, voltage and meter, so the building's own tariff is not chosen here and no energy price is taken from this list. Savings use the EIA state average instead.",
       "utility": "Consolidated Edison Co-NY Inc",
@@ -289,15 +290,14 @@
       ],
       "needs_user_confirmation": true
      },
-     "mock": false,
-     "tool": "get_utility_tariff",
-     "flags": [
-      "tariff_needs_user_confirmation"
-     ],
-     "stale": false,
      "source_url": "https://openei.org/wiki/Utility_Rate_Database",
      "retrieved_at": "2026-10-18T20:29:11Z",
-     "dataset_version": "openei-usrdb-v8"
+     "dataset_version": "openei-usrdb-v8",
+     "mock": false,
+     "stale": false,
+     "flags": [
+      "tariff_needs_user_confirmation"
+     ]
     }
    },
    "scenarios": [
@@ -802,6 +802,7 @@
     }
    ],
    "battery": {
+    "tool": "optimize_solar_storage",
     "data": {
      "notes": "Critical load not given, so estimated at 1.0 W per sq ft x 43760 sq ft = 43.8 kW (a planning estimate, not metered). Backup length not given, so 8 hours assumed. Battery energy = kW x hours / 0.85 round-trip efficiency = 412 kWh.",
      "battery_kw": 43.8,
@@ -809,17 +810,17 @@
      "critical_load_kw": 43.8,
      "critical_load_hours": 8.0
     },
-    "mock": false,
-    "tool": "optimize_solar_storage",
-    "flags": [
-     "battery_inputs_estimated"
-    ],
-    "stale": false,
     "source_url": "internal://optimize_solar_storage",
     "retrieved_at": "2026-10-18T20:29:13Z",
-    "dataset_version": "battery-sizing-v1"
+    "dataset_version": "battery-sizing-v1",
+    "mock": false,
+    "stale": false,
+    "flags": [
+     "battery_inputs_estimated"
+    ]
    },
    "hazards": {
+    "tool": "get_hazard_context",
     "data": {
      "notes": "FEMA effective flood map (current), read at the address point. NYC code uses the more restrictive of the effective and 2015 preliminary maps; the preliminary map was not checked. Heat and winter-storm ratings were not looked up.",
      "flood_zone": "X",
@@ -827,15 +828,14 @@
      "geocoder_match": "1871 WALTON AVENUE, Bronx, NY, USA",
      "special_flood_hazard_area": false
     },
-    "mock": false,
-    "tool": "get_hazard_context",
-    "flags": [
-     "hazard_partial"
-    ],
-    "stale": false,
     "source_url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
     "retrieved_at": "2026-10-18T20:29:08Z",
-    "dataset_version": "fema-nfhl-effective"
+    "dataset_version": "fema-nfhl-effective",
+    "mock": false,
+    "stale": false,
+    "flags": [
+     "hazard_partial"
+    ]
    },
    "calculations": {
     "C1": {
@@ -1232,25 +1232,25 @@
     {
      "label": "NYSERDA solar project costs",
      "url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
-     "retrieved_at": "2026-10-18T20:41:49Z",
+     "retrieved_at": "2026-10-18T22:04:14Z",
      "sample": false
     },
     {
      "label": "NYSERDA battery storage project costs",
      "url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
-     "retrieved_at": "2026-10-18T20:41:49Z",
+     "retrieved_at": "2026-10-18T22:04:14Z",
      "sample": false
     },
     {
      "label": "NYSERDA completed efficiency project costs",
      "url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "retrieved_at": "2026-10-18T20:41:49Z",
+     "retrieved_at": "2026-10-18T22:04:14Z",
      "sample": false
     },
     {
      "label": "NYC DCAS Local Law 87 report (measured savings realization)",
      "url": "https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf",
-     "retrieved_at": "2026-10-18T20:41:49Z",
+     "retrieved_at": "2026-10-18T22:04:14Z",
      "sample": false
     },
     {
@@ -2241,7 +2241,7 @@
      "tool": "run_financial_model",
      "mock": false,
      "source_url": "internal://run_financial_model",
-     "retrieved_at": "2026-10-18T20:41:49Z",
+     "retrieved_at": "2026-10-18T22:04:14Z",
      "dataset_version": "v5-simple-payback",
      "flags": []
     }
@@ -2308,12 +2308,12 @@
      "budget_amount": 600000,
      "building_name": "P.S. 38 (R038)",
      "building_type": "elementary school",
-     "profile_flags": [],
      "critical_loads": "emergency lighting and communications",
      "roof_area_sqft": 34360,
      "floor_area_sqft": 55860,
      "existing_efficiency": "none",
-     "existing_renewables": "none"
+     "existing_renewables": "none",
+     "profile_flags": []
     },
     "city_records": {
      "bbl": "5037320006",
@@ -2345,9 +2345,6 @@
       "site_eui_kbtu_per_sqft": 53.0,
       "weather_normalized_site_eui": 53.4
      },
-     "query": {
-      "address": "421 Lincoln Avenue, Staten Island, NY"
-     },
      "address": "421 LINCOLN AVENUE",
      "borough": "Staten Island",
      "zipcode": "10306",
@@ -2378,7 +2375,10 @@
       13319,
       1287
      ],
-     "lot_matches_intake_floor": false
+     "lot_matches_intake_floor": false,
+     "query": {
+      "address": "421 Lincoln Avenue, Staten Island, NY"
+     }
     },
     "energy_report": {
      "year_built": 1955,
@@ -2424,6 +2424,7 @@
    },
    "solar": {
     "production": {
+     "tool": "get_solar_production",
      "data": {
       "location": {
        "bbl": "5037320006",
@@ -2468,17 +2469,17 @@
       "weather_data_source": "NSRDB PSM V3 GOES tmy-2020 3.2.0",
       "solar_radiation_kwh_m2_day": 4.426414113749777
      },
-     "mock": false,
-     "tool": "get_solar_production",
-     "flags": [],
-     "stale": false,
      "source_url": "https://developer.nlr.gov/docs/solar/pvwatts/v8/",
      "retrieved_at": "2026-10-18T20:31:15Z",
-     "dataset_version": "pvwatts-v8.5.0"
+     "dataset_version": "pvwatts-v8.5.0",
+     "mock": false,
+     "stale": false,
+     "flags": []
     }
    },
    "prices": {
     "electricity": {
+     "tool": "get_utility_rates",
      "data": {
       "utility": "Con Edison",
       "price_units": "cents per kilowatt-hour",
@@ -2492,17 +2493,17 @@
       "latest_month_usd_per_kwh": 0.2418,
       "avg_energy_charge_usd_per_kwh": 0.222
      },
-     "mock": false,
-     "tool": "get_utility_rates",
-     "flags": [
-      "statewide_average_rate"
-     ],
-     "stale": false,
      "source_url": "https://www.eia.gov/electricity/data/browser/",
      "retrieved_at": "2026-10-18T20:31:17Z",
-     "dataset_version": "eia-retail-sales-2026-07"
+     "dataset_version": "eia-retail-sales-2026-07",
+     "mock": false,
+     "stale": false,
+     "flags": [
+      "statewide_average_rate"
+     ]
     },
     "tariff": {
+     "tool": "get_utility_tariff",
      "data": {
       "note": "These are the current general-service tariffs the utility publishes for New York City. Which one applies depends on peak demand, voltage and meter, so the building's own tariff is not chosen here and no energy price is taken from this list. Savings use the EIA state average instead.",
       "utility": "Consolidated Edison Co-NY Inc",
@@ -2546,15 +2547,14 @@
       ],
       "needs_user_confirmation": true
      },
-     "mock": false,
-     "tool": "get_utility_tariff",
-     "flags": [
-      "tariff_needs_user_confirmation"
-     ],
-     "stale": false,
      "source_url": "https://openei.org/wiki/Utility_Rate_Database",
      "retrieved_at": "2026-10-18T20:31:28Z",
-     "dataset_version": "openei-usrdb-v8"
+     "dataset_version": "openei-usrdb-v8",
+     "mock": false,
+     "stale": false,
+     "flags": [
+      "tariff_needs_user_confirmation"
+     ]
     }
    },
    "scenarios": [
@@ -3059,6 +3059,7 @@
     }
    ],
    "battery": {
+    "tool": "optimize_solar_storage",
     "data": {
      "notes": "Critical load not given, so estimated at 1.0 W per sq ft x 55860 sq ft = 55.9 kW (a planning estimate, not metered). Backup length not given, so 8 hours assumed. Battery energy = kW x hours / 0.85 round-trip efficiency = 526 kWh.",
      "battery_kw": 55.9,
@@ -3066,17 +3067,17 @@
      "critical_load_kw": 55.9,
      "critical_load_hours": 8.0
     },
-    "mock": false,
-    "tool": "optimize_solar_storage",
-    "flags": [
-     "battery_inputs_estimated"
-    ],
-    "stale": false,
     "source_url": "internal://optimize_solar_storage",
     "retrieved_at": "2026-10-18T20:31:32Z",
-    "dataset_version": "battery-sizing-v1"
+    "dataset_version": "battery-sizing-v1",
+    "mock": false,
+    "stale": false,
+    "flags": [
+     "battery_inputs_estimated"
+    ]
    },
    "hazards": {
+    "tool": "get_hazard_context",
     "data": {
      "notes": "FEMA effective flood map (current), read at the address point. NYC code uses the more restrictive of the effective and 2015 preliminary maps; the preliminary map was not checked. Heat and winter-storm ratings were not looked up.",
      "flood_zone": "X",
@@ -3084,15 +3085,14 @@
      "geocoder_match": "421 LINCOLN AVENUE, Staten Island, NY, USA",
      "special_flood_hazard_area": false
     },
-    "mock": false,
-    "tool": "get_hazard_context",
-    "flags": [
-     "hazard_partial"
-    ],
-    "stale": false,
     "source_url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
     "retrieved_at": "2026-10-18T20:31:30Z",
-    "dataset_version": "fema-nfhl-effective"
+    "dataset_version": "fema-nfhl-effective",
+    "mock": false,
+    "stale": false,
+    "flags": [
+     "hazard_partial"
+    ]
    },
    "calculations": {
     "C1": {
@@ -3457,25 +3457,25 @@
     {
      "label": "NYSERDA solar project costs",
      "url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
-     "retrieved_at": "2026-10-18T20:41:51Z",
+     "retrieved_at": "2026-10-18T22:04:15Z",
      "sample": false
     },
     {
      "label": "NYSERDA battery storage project costs",
      "url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
-     "retrieved_at": "2026-10-18T20:41:51Z",
+     "retrieved_at": "2026-10-18T22:04:15Z",
      "sample": false
     },
     {
      "label": "NYSERDA completed efficiency project costs",
      "url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "retrieved_at": "2026-10-18T20:41:51Z",
+     "retrieved_at": "2026-10-18T22:04:15Z",
      "sample": false
     },
     {
      "label": "NYC DCAS Local Law 87 report (measured savings realization)",
      "url": "https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf",
-     "retrieved_at": "2026-10-18T20:41:51Z",
+     "retrieved_at": "2026-10-18T22:04:15Z",
      "sample": false
     },
     {
@@ -4347,7 +4347,7 @@
      "tool": "run_financial_model",
      "mock": false,
      "source_url": "internal://run_financial_model",
-     "retrieved_at": "2026-10-18T20:41:52Z",
+     "retrieved_at": "2026-10-18T22:04:15Z",
      "dataset_version": "v5-simple-payback",
      "flags": []
     }
@@ -4412,10 +4412,10 @@
      "budget_amount": 750000,
      "building_name": "Red Hook Recreation Center (NYC Parks)",
      "building_type": "park recreation center",
-     "profile_flags": [],
      "critical_loads": "gym cooling, lighting and communications for a cooling center",
      "roof_area_sqft": 32860,
-     "floor_area_sqft": 27069
+     "floor_area_sqft": 27069,
+     "profile_flags": []
     },
     "city_records": {
      "bbl": "3005820001",
@@ -4446,9 +4446,6 @@
       "gross_floor_area_sqft": 27069.0,
       "site_eui_kbtu_per_sqft": 160.8,
       "weather_normalized_site_eui": 166.5
-     },
-     "query": {
-      "address": "155 Bay Street, Brooklyn, NY"
      },
      "address": "140 LORRAINE STREET",
      "borough": "Brooklyn",
@@ -4481,7 +4478,10 @@
       825,
       667
      ],
-     "lot_matches_intake_floor": false
+     "lot_matches_intake_floor": false,
+     "query": {
+      "address": "155 Bay Street, Brooklyn, NY"
+     }
     },
     "energy_report": {
      "year_built": 1920,
@@ -4527,6 +4527,7 @@
    },
    "solar": {
     "production": {
+     "tool": "get_solar_production",
      "data": {
       "location": {
        "bbl": "3005820001",
@@ -4571,17 +4572,17 @@
       "weather_data_source": "NSRDB PSM V3 GOES tmy-2020 3.2.0",
       "solar_radiation_kwh_m2_day": 4.381658825054564
      },
-     "mock": false,
-     "tool": "get_solar_production",
-     "flags": [],
-     "stale": false,
      "source_url": "https://developer.nlr.gov/docs/solar/pvwatts/v8/",
      "retrieved_at": "2026-10-18T20:33:28Z",
-     "dataset_version": "pvwatts-v8.5.0"
+     "dataset_version": "pvwatts-v8.5.0",
+     "mock": false,
+     "stale": false,
+     "flags": []
     }
    },
    "prices": {
     "electricity": {
+     "tool": "get_utility_rates",
      "data": {
       "utility": "Con Edison",
       "price_units": "cents per kilowatt-hour",
@@ -4595,17 +4596,17 @@
       "latest_month_usd_per_kwh": 0.2418,
       "avg_energy_charge_usd_per_kwh": 0.222
      },
-     "mock": false,
-     "tool": "get_utility_rates",
-     "flags": [
-      "statewide_average_rate"
-     ],
-     "stale": false,
      "source_url": "https://www.eia.gov/electricity/data/browser/",
      "retrieved_at": "2026-10-18T20:33:30Z",
-     "dataset_version": "eia-retail-sales-2026-07"
+     "dataset_version": "eia-retail-sales-2026-07",
+     "mock": false,
+     "stale": false,
+     "flags": [
+      "statewide_average_rate"
+     ]
     },
     "tariff": {
+     "tool": "get_utility_tariff",
      "data": {
       "note": "These are the current general-service tariffs the utility publishes for New York City. Which one applies depends on peak demand, voltage and meter, so the building's own tariff is not chosen here and no energy price is taken from this list. Savings use the EIA state average instead.",
       "utility": "Consolidated Edison Co-NY Inc",
@@ -4649,15 +4650,14 @@
       ],
       "needs_user_confirmation": true
      },
-     "mock": false,
-     "tool": "get_utility_tariff",
-     "flags": [
-      "tariff_needs_user_confirmation"
-     ],
-     "stale": false,
      "source_url": "https://openei.org/wiki/Utility_Rate_Database",
      "retrieved_at": "2026-10-18T20:33:47Z",
-     "dataset_version": "openei-usrdb-v8"
+     "dataset_version": "openei-usrdb-v8",
+     "mock": false,
+     "stale": false,
+     "flags": [
+      "tariff_needs_user_confirmation"
+     ]
     }
    },
    "scenarios": [
@@ -5153,6 +5153,7 @@
     }
    ],
    "battery": {
+    "tool": "optimize_solar_storage",
     "data": {
      "notes": "Critical load not given, so estimated at 1.0 W per sq ft x 27069 sq ft = 27.1 kW (a planning estimate, not metered). Backup length not given, so 8 hours assumed. Battery energy = kW x hours / 0.85 round-trip efficiency = 255 kWh.",
      "battery_kw": 27.1,
@@ -5160,17 +5161,17 @@
      "critical_load_kw": 27.1,
      "critical_load_hours": 8.0
     },
-    "mock": false,
-    "tool": "optimize_solar_storage",
-    "flags": [
-     "battery_inputs_estimated"
-    ],
-    "stale": false,
     "source_url": "internal://optimize_solar_storage",
     "retrieved_at": "2026-10-18T20:33:48Z",
-    "dataset_version": "battery-sizing-v1"
+    "dataset_version": "battery-sizing-v1",
+    "mock": false,
+    "stale": false,
+    "flags": [
+     "battery_inputs_estimated"
+    ]
    },
    "hazards": {
+    "tool": "get_hazard_context",
     "data": {
      "notes": "FEMA effective flood map (current), read at the address point. NYC code uses the more restrictive of the effective and 2015 preliminary maps; the preliminary map was not checked. Heat and winter-storm ratings were not looked up.",
      "flood_zone": "AE",
@@ -5178,15 +5179,14 @@
      "geocoder_match": "155 BAY STREET, Brooklyn, NY, USA",
      "special_flood_hazard_area": true
     },
-    "mock": false,
-    "tool": "get_hazard_context",
-    "flags": [
-     "hazard_partial"
-    ],
-    "stale": false,
     "source_url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
     "retrieved_at": "2026-10-18T20:33:44Z",
-    "dataset_version": "fema-nfhl-effective"
+    "dataset_version": "fema-nfhl-effective",
+    "mock": false,
+    "stale": false,
+    "flags": [
+     "hazard_partial"
+    ]
    },
    "calculations": {
     "C1": {
@@ -5584,25 +5584,25 @@
     {
      "label": "NYSERDA solar project costs",
      "url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
-     "retrieved_at": "2026-10-18T20:41:54Z",
+     "retrieved_at": "2026-10-18T22:04:16Z",
      "sample": false
     },
     {
      "label": "NYSERDA battery storage project costs",
      "url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
-     "retrieved_at": "2026-10-18T20:41:54Z",
+     "retrieved_at": "2026-10-18T22:04:16Z",
      "sample": false
     },
     {
      "label": "NYSERDA completed efficiency project costs",
      "url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "retrieved_at": "2026-10-18T20:41:54Z",
+     "retrieved_at": "2026-10-18T22:04:16Z",
      "sample": false
     },
     {
      "label": "NYC DCAS Local Law 87 report (measured savings realization)",
      "url": "https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf",
-     "retrieved_at": "2026-10-18T20:41:54Z",
+     "retrieved_at": "2026-10-18T22:04:16Z",
      "sample": false
     },
     {
@@ -6544,7 +6544,7 @@
      "tool": "run_financial_model",
      "mock": false,
      "source_url": "internal://run_financial_model",
-     "retrieved_at": "2026-10-18T20:41:54Z",
+     "retrieved_at": "2026-10-18T22:04:16Z",
      "dataset_version": "v5-simple-payback",
      "flags": []
     }
@@ -6611,12 +6611,12 @@
      "budget_amount": 500000,
      "building_name": "Jefferson Market Library (NYPL)",
      "building_type": "library",
-     "profile_flags": [],
      "critical_loads": "reading room cooling and lighting",
      "roof_area_sqft": 7020,
      "floor_area_sqft": 18643,
      "existing_efficiency": "none",
-     "existing_renewables": "none"
+     "existing_renewables": "none",
+     "profile_flags": []
     },
     "city_records": {
      "bbl": "1006060001",
@@ -6648,9 +6648,6 @@
       "site_eui_kbtu_per_sqft": 105.0,
       "weather_normalized_site_eui": 109.9
      },
-     "query": {
-      "address": "425 6th Avenue, Manhattan"
-     },
      "address": "421 AVENUE OF THE AMERICAS",
      "borough": "Manhattan",
      "zipcode": "10011",
@@ -6673,7 +6670,10 @@
      "footprint_buildings_sqft": [
       7019
      ],
-     "lot_matches_intake_floor": false
+     "lot_matches_intake_floor": false,
+     "query": {
+      "address": "425 6th Avenue, Manhattan"
+     }
     },
     "energy_report": {
      "year_built": 1877,
@@ -6721,6 +6721,7 @@
    },
    "prices": {
     "electricity": {
+     "tool": "get_utility_rates",
      "data": {
       "utility": "Con Edison",
       "price_units": "cents per kilowatt-hour",
@@ -6734,17 +6735,17 @@
       "latest_month_usd_per_kwh": 0.2418,
       "avg_energy_charge_usd_per_kwh": 0.222
      },
-     "mock": false,
-     "tool": "get_utility_rates",
-     "flags": [
-      "statewide_average_rate"
-     ],
-     "stale": false,
      "source_url": "https://www.eia.gov/electricity/data/browser/",
      "retrieved_at": "2026-10-18T20:36:32Z",
-     "dataset_version": "eia-retail-sales-2026-07"
+     "dataset_version": "eia-retail-sales-2026-07",
+     "mock": false,
+     "stale": false,
+     "flags": [
+      "statewide_average_rate"
+     ]
     },
     "tariff": {
+     "tool": "get_utility_tariff",
      "data": {
       "note": "These are the current general-service tariffs the utility publishes for New York City. Which one applies depends on peak demand, voltage and meter, so the building's own tariff is not chosen here and no energy price is taken from this list. Savings use the EIA state average instead.",
       "utility": "Consolidated Edison Co-NY Inc",
@@ -6788,15 +6789,14 @@
       ],
       "needs_user_confirmation": true
      },
-     "mock": false,
-     "tool": "get_utility_tariff",
-     "flags": [
-      "tariff_needs_user_confirmation"
-     ],
-     "stale": false,
      "source_url": "https://openei.org/wiki/Utility_Rate_Database",
      "retrieved_at": "2026-10-18T20:36:40Z",
-     "dataset_version": "openei-usrdb-v8"
+     "dataset_version": "openei-usrdb-v8",
+     "mock": false,
+     "stale": false,
+     "flags": [
+      "tariff_needs_user_confirmation"
+     ]
     }
    },
    "scenarios": [
@@ -7004,6 +7004,7 @@
    ],
    "battery": null,
    "hazards": {
+    "tool": "get_hazard_context",
     "data": {
      "notes": "FEMA effective flood map (current), read at the address point. NYC code uses the more restrictive of the effective and 2015 preliminary maps; the preliminary map was not checked. Heat and winter-storm ratings were not looked up.",
      "flood_zone": "X",
@@ -7011,15 +7012,14 @@
      "geocoder_match": "425 6 AVENUE, New York, NY, USA",
      "special_flood_hazard_area": false
     },
-    "mock": false,
-    "tool": "get_hazard_context",
-    "flags": [
-     "hazard_partial"
-    ],
-    "stale": false,
     "source_url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
     "retrieved_at": "2026-10-18T20:36:34Z",
-    "dataset_version": "fema-nfhl-effective"
+    "dataset_version": "fema-nfhl-effective",
+    "mock": false,
+    "stale": false,
+    "flags": [
+     "hazard_partial"
+    ]
    },
    "calculations": {},
    "calculation_names": {
@@ -7061,8 +7061,8 @@
      "text": "The city's tax-lot record lists a different street than the one entered. Confirm the address."
     },
     {
-     "kind": "gap",
-     "text": "The roof and solar math could not return data, so that part of the plan is missing."
+     "kind": "flag",
+     "text": "Solar was not sized because the roof is not flat ('pitched'). An engineer or roofer needs to verify the usable roof area first."
     },
     {
      "kind": "flag",
@@ -7308,19 +7308,19 @@
     {
      "label": "NYSERDA solar project costs",
      "url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
-     "retrieved_at": "2026-10-18T20:41:56Z",
+     "retrieved_at": "2026-10-18T22:04:16Z",
      "sample": false
     },
     {
      "label": "NYSERDA completed efficiency project costs",
      "url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "retrieved_at": "2026-10-18T20:41:56Z",
+     "retrieved_at": "2026-10-18T22:04:16Z",
      "sample": false
     },
     {
      "label": "NYC DCAS Local Law 87 report (measured savings realization)",
      "url": "https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf",
-     "retrieved_at": "2026-10-18T20:41:56Z",
+     "retrieved_at": "2026-10-18T22:04:16Z",
      "sample": false
     },
     {
@@ -8100,7 +8100,7 @@
      "tool": "run_financial_model",
      "mock": false,
      "source_url": "internal://run_financial_model",
-     "retrieved_at": "2026-10-18T20:41:56Z",
+     "retrieved_at": "2026-10-18T22:04:16Z",
      "dataset_version": "v5-simple-payback",
      "flags": []
     }
@@ -8169,14 +8169,14 @@
      "budget_amount": 400000,
      "building_name": "P.S. 24 (X024)",
      "building_type": "elementary school",
-     "profile_flags": [],
      "critical_loads": "emergency lighting and communications",
      "roof_area_sqft": 40500,
      "floor_area_sqft": 115325,
      "existing_solar_kw": 380,
      "existing_solar_kwh": 457512,
      "existing_efficiency": "none",
-     "existing_renewables": "none"
+     "existing_renewables": "none",
+     "profile_flags": []
     },
     "city_records": {
      "bbl": "2059170140",
@@ -8208,9 +8208,6 @@
       "site_eui_kbtu_per_sqft": 48.4,
       "weather_normalized_site_eui": 51.9
      },
-     "query": {
-      "address": "660 West 236th Street, Bronx, NY"
-     },
      "address": "660 WEST 235 STREET",
      "borough": "Bronx",
      "zipcode": "10471",
@@ -8240,7 +8237,10 @@
       40051,
       446
      ],
-     "lot_matches_intake_floor": false
+     "lot_matches_intake_floor": false,
+     "query": {
+      "address": "660 West 236th Street, Bronx, NY"
+     }
     },
     "energy_report": {
      "year_built": 1953,
@@ -8289,6 +8289,7 @@
    },
    "prices": {
     "electricity": {
+     "tool": "get_utility_rates",
      "data": {
       "utility": "Con Edison",
       "price_units": "cents per kilowatt-hour",
@@ -8302,17 +8303,17 @@
       "latest_month_usd_per_kwh": 0.2418,
       "avg_energy_charge_usd_per_kwh": 0.222
      },
-     "mock": false,
-     "tool": "get_utility_rates",
-     "flags": [
-      "statewide_average_rate"
-     ],
-     "stale": false,
      "source_url": "https://www.eia.gov/electricity/data/browser/",
      "retrieved_at": "2026-10-18T20:38:57Z",
-     "dataset_version": "eia-retail-sales-2026-07"
+     "dataset_version": "eia-retail-sales-2026-07",
+     "mock": false,
+     "stale": false,
+     "flags": [
+      "statewide_average_rate"
+     ]
     },
     "tariff": {
+     "tool": "get_utility_tariff",
      "data": {
       "note": "These are the current general-service tariffs the utility publishes for New York City. Which one applies depends on peak demand, voltage and meter, so the building's own tariff is not chosen here and no energy price is taken from this list. Savings use the EIA state average instead.",
       "utility": "Consolidated Edison Co-NY Inc",
@@ -8356,15 +8357,14 @@
       ],
       "needs_user_confirmation": true
      },
-     "mock": false,
-     "tool": "get_utility_tariff",
-     "flags": [
-      "tariff_needs_user_confirmation"
-     ],
-     "stale": false,
      "source_url": "https://openei.org/wiki/Utility_Rate_Database",
      "retrieved_at": "2026-10-18T20:39:15Z",
-     "dataset_version": "openei-usrdb-v8"
+     "dataset_version": "openei-usrdb-v8",
+     "mock": false,
+     "stale": false,
+     "flags": [
+      "tariff_needs_user_confirmation"
+     ]
     }
    },
    "scenarios": [
@@ -8581,6 +8581,7 @@
    ],
    "battery": null,
    "hazards": {
+    "tool": "get_hazard_context",
     "data": {
      "notes": "FEMA effective flood map (current), read at the address point. NYC code uses the more restrictive of the effective and 2015 preliminary maps; the preliminary map was not checked. Heat and winter-storm ratings were not looked up.",
      "flood_zone": "X",
@@ -8588,15 +8589,14 @@
      "geocoder_match": "660 WEST 236 STREET, Bronx, NY, USA",
      "special_flood_hazard_area": false
     },
-    "mock": false,
-    "tool": "get_hazard_context",
-    "flags": [
-     "hazard_partial"
-    ],
-    "stale": false,
     "source_url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
     "retrieved_at": "2026-10-18T20:39:12Z",
-    "dataset_version": "fema-nfhl-effective"
+    "dataset_version": "fema-nfhl-effective",
+    "mock": false,
+    "stale": false,
+    "flags": [
+     "hazard_partial"
+    ]
    },
    "calculations": {
     "C1": {
@@ -8657,8 +8657,8 @@
      "text": "Not given: the year the roof was last replaced. The plan states what it assumed."
     },
     {
-     "kind": "gap",
-     "text": "The solar output estimate could not return data, so that part of the plan is missing."
+     "kind": "flag",
+     "text": "No room for new solar: the 380 kW array already on the roof uses the whole usable roof, so this plan is efficiency only."
     },
     {
      "kind": "flag",
@@ -8670,7 +8670,7 @@
     },
     {
      "kind": "flag",
-     "text": "The city's own roof assessment says this roof is not solar ready. Check the roof, and consider replacing it, before solar."
+     "text": "The city's roof assessment rates this roof not solar ready, yet solar is already installed. Check the roof's condition, and who owns the array, before relying on this plan."
     },
     {
      "kind": "flag",
@@ -8687,6 +8687,10 @@
     {
      "kind": "flag",
      "text": "Which tariff the building is on has to be confirmed on a bill; none was chosen."
+    },
+    {
+     "kind": "mismatch",
+     "text": "The solar already on the roof differs from the city's solar record. You entered 380 kW; the city's record says 228.2 kW. Confirm which is right, and who owns the array."
     },
     {
      "kind": "flag",
@@ -8931,19 +8935,19 @@
     {
      "label": "NYSERDA solar project costs",
      "url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
-     "retrieved_at": "2026-10-18T20:41:57Z",
+     "retrieved_at": "2026-10-18T22:04:17Z",
      "sample": false
     },
     {
      "label": "NYSERDA completed efficiency project costs",
      "url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "retrieved_at": "2026-10-18T20:41:57Z",
+     "retrieved_at": "2026-10-18T22:04:17Z",
      "sample": false
     },
     {
      "label": "NYC DCAS Local Law 87 report (measured savings realization)",
      "url": "https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf",
-     "retrieved_at": "2026-10-18T20:41:57Z",
+     "retrieved_at": "2026-10-18T22:04:17Z",
      "sample": false
     },
     {
@@ -9755,7 +9759,7 @@
      "tool": "run_financial_model",
      "mock": false,
      "source_url": "internal://run_financial_model",
-     "retrieved_at": "2026-10-18T20:41:57Z",
+     "retrieved_at": "2026-10-18T22:04:17Z",
      "dataset_version": "v5-simple-payback",
      "flags": []
     }

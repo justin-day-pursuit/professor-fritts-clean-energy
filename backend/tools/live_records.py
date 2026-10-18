@@ -206,7 +206,8 @@ def fetch_live_building_records(profile: dict[str, Any], address: str | None = N
         differences.append(energy_difference)
 
     flags = [f"intake_mismatch:{d['field']}" for d in differences]
-    if ll24 and not ll24["solar_ready"]:
+    # Only an explicit "no" is a warning; a blank means the city did not rate the roof.
+    if ll24 and ll24["solar_ready"] is False:
         flags.append("city_roof_not_solar_ready")
     if is_approximate(place):
         flags.append("address_match_approximate")

@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Any
 
 from agent.plain_names import calculation_formula, calculation_name, tool_name
+from tools.roof import plain_refusal
 
 SUMMARY_VERSION = 3
 
@@ -200,8 +201,31 @@ def not_included(profile: dict[str, Any], site: dict[str, Any]) -> list[dict[str
     return items
 
 
-def confirm_first(flags: list[str], records: dict[str, Any], site: dict[str, Any]) -> list[dict[str, str]]:
-    """What the reader should check before relying on the plan, from the run's flags and the city-record differences."""
+def _kw(value: Any) -> float | None:
+    """A solar size in kW above zero, or None for blank, zero or text."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if number > 0 else None
+
+
+def confirm_first(
+    flags: list[str],
+    records: dict[str, Any],
+    site: dict[str, Any],
+    existing_solar_kw: Any = None,
+    refusals: dict[str, str] | None = None,
+) -> list[dict[str, str]]:
+    """
+    What the reader should check before relying on the plan, from the run's flags and the city-record differences.
+
+    `refusals` holds, by tool name, the plain sentence for a tool that said no by a roof rule (see tools.roof.plain_refusal),
+    so a deliberate "no room for new solar" is not reported as a lookup that could not return data.
+    `existing_solar_kw` is the solar already on the roof as the user entered it, compared with the city's solar record.
+    """
+    refusals = refusals or {}
+    existing = _kw(existing_solar_kw)
     items: list[dict[str, str]] = []
     for flag in flags:
         if flag.startswith("missing_field:"):
@@ -213,14 +237,49 @@ def confirm_first(flags: list[str], records: dict[str, Any], site: dict[str, Any
             detail = f" You entered {diff.get('intake'):,.0f}; the city record says {diff.get('city_record'):,.0f}." if diff.get("intake") and diff.get("city_record") else ""
             items.append({"kind": "mismatch", "text": f"Your {MISMATCH_FIELD_LABELS.get(field, field.replace('_', ' '))} differs from the city record.{detail}"})
         elif flag.startswith("tool_error:"):
-            items.append({"kind": "gap", "text": f"{tool_name(flag.split(':', 1)[1])} could not return data, so that part of the plan is missing."})
+            name = flag.split(":", 1)[1]
+            if name in refusals:
+                items.append({"kind": "flag", "text": refusals[name]})
+            else:
+                items.append({"kind": "gap", "text": f"{tool_name(name)} could not return data, so that part of the plan is missing."})
+        elif flag == "city_roof_not_solar_ready" and existing:
+            items.append(
+                {
+                    "kind": "flag",
+                    "text": "The city's roof assessment rates this roof not solar ready, yet solar is already installed. Check the roof's condition, and who owns the array, before relying on this plan.",
+                }
+            )
         elif flag in FLAG_TEXT:
             items.append({"kind": "flag", "text": FLAG_TEXT[flag]})
+    # Solar already on the roof: the size the user entered against the size in the city's solar record.
+    ll24 = records.get("ll24") or {}
+    # Only completed solar is compared: a planned array is not on the roof, so a smaller entered size is not a conflict.
+    city_kw = _kw(ll24.get("installed_kw")) if str(ll24.get("status") or "").strip().lower() == "completed" else None
+    if existing and city_kw and abs(existing - city_kw) > 0.1 * max(existing, city_kw):
+        items.append(
+            {
+                "kind": "mismatch",
+                "text": f"The solar already on the roof differs from the city's solar record. You entered {existing:g} kW; the city's record says {city_kw:g} kW. Confirm which is right, and who owns the array.",
+            }
+        )
     if not_included({}, site):
         items.append({"kind": "flag", "text": "No plan's cost includes replacing the roof, which may be needed first. Get a roofer's quote."})
     if site.get("roof_age_20_plus") and "city_roof_not_solar_ready" not in flags:
         items.append({"kind": "flag", "text": "The city lists the roof as 20 years old or more. Check it before solar."})
     return items
+
+
+def _roof_refusals(run: Any) -> dict[str, str]:
+    """For each tool the run called that a roof rule turned down, the plain sentence saying why (read from the run's error events)."""
+    reasons: dict[str, str] = {}
+    for event in run.events.all():
+        if event.kind != "error":
+            continue
+        tool = event.payload.get("tool")
+        reason = plain_refusal(event.payload.get("message"))
+        if tool and reason:
+            reasons[str(tool)] = reason
+    return reasons
 
 
 def build_plan_summary(run: Any, output: dict[str, Any], next_steps: list[dict[str, str]] | None = None) -> dict[str, Any]:
@@ -278,6 +337,7 @@ def build_plan_summary(run: Any, output: dict[str, Any], next_steps: list[dict[s
 
     return {
         "version": SUMMARY_VERSION,
+        "plain_answer": (roadmap.get("plain_answer") or "").strip() or None,
         "outcome": decide_outcome(scenarios, site, budget),
         "building": {
             "intake": profile,
@@ -307,7 +367,7 @@ def build_plan_summary(run: Any, output: dict[str, Any], next_steps: list[dict[s
         },
         "calculation_names": {key: calculation_name(key) for key in ("C1", "C2", "C3", "C4", "F-A", "F-B", "F-C")},
         "flag_text": FLAG_TEXT,
-        "confirm_first": confirm_first(flags, records, site),
+        "confirm_first": confirm_first(flags, records, site, profile.get("existing_solar_kw"), _roof_refusals(run)),
         "assumptions": [{"id": key, "text": text} for key, text in (notes.get("assumptions") or {}).items()],
         "referrals": referrals,
         "next_steps": next_steps or [],

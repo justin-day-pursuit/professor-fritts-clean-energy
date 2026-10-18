@@ -56,6 +56,15 @@ def test_harness_case1_scripted():
     assert "does not reach" in md.lower() or "19%" in md
 
 
+# A plain-words answer that passes the live-run check: live runs must open with one, and these stand-in plans pretend to be live.
+_PLAIN_ANSWER = (
+    "You asked how to reduce the building's grid electricity use. The plan finds that efficiency measures help but do not "
+    "reach the goal on their own, and it says what limits the answer and what still needs to be confirmed. The roof, the "
+    "tariff and the cost estimates all need review by the right professionals before any money is committed, and the plan "
+    "lists who to contact and where to start. Nothing here is a promise of savings."
+)
+
+
 class _Check4RetryRecordingLLM(LLMClient):
     """
     Minimal fake LLM: first final fails Check 4, second passes; records tool_result calls.
@@ -160,7 +169,7 @@ class _Check4RetryRecordingLLM(LLMClient):
                     ),
                 ],
             ),
-        ])
+        ], plain_answer=_PLAIN_ANSWER)
         return LLMStep(
             kind="final",
             tool_name="write_roadmap",

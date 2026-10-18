@@ -101,6 +101,8 @@ export interface Program {
 
 export interface PlanSummary {
   version: number;
+  /** The agent's plain-words answer to the question, shown under the headline. Absent on plans recorded before it existed. */
+  plain_answer?: string | null;
   outcome: Outcome;
   building: { intake: Json; city_records: Json; energy_report: Json | null; roof_assessment: Json | null; site_context: Json };
   baseline: { annual_kwh: number | null; source: string; goal_percent: number | null; goal_kwh: number | null };

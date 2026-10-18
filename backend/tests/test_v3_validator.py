@@ -27,6 +27,15 @@ HAZARD_FIELDS = (
 )
 
 
+# A plain-words answer that passes the live-run check: live runs must open with one, and these stand-in plans pretend to be live.
+_PLAIN_ANSWER = (
+    "You asked how to reduce the building's grid electricity use. The plan finds that efficiency measures help but do not "
+    "reach the goal on their own, and it says what limits the answer and what still needs to be confirmed. The roof, the "
+    "tariff and the cost estimates all need review by the right professionals before any money is committed, and the plan "
+    "lists who to contact and where to start. Nothing here is a promise of savings."
+)
+
+
 def _referrals() -> RoadmapSection:
     """Section 10 with every referral group, including the structural one."""
     return RoadmapSection(
@@ -109,14 +118,14 @@ def _clean_roadmap(extra: list[RoadmapSection] | None = None) -> RoadmapPayload:
     ]
     if extra:
         sections.extend(extra)
-    return roadmap_with_sections(sections)
+    return roadmap_with_sections(sections, plain_answer=_PLAIN_ANSWER)
 
 
 def _replace_section(payload: RoadmapPayload, section: RoadmapSection) -> RoadmapPayload:
     """Swap one section in an otherwise clean plan."""
     kept = [item for item in payload.sections if item.section_id != section.section_id]
     kept.append(section)
-    return roadmap_with_sections(kept)
+    return roadmap_with_sections(kept, plain_answer=payload.plain_answer)
 
 
 def test_clean_roadmap_passes_with_state_and_federal_programs():

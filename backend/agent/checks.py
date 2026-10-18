@@ -817,6 +817,82 @@ def _plain_language_issues(payload: RoadmapPayload) -> list[str]:
     return issues
 
 
+PLAIN_ANSWER_MIN_WORDS = 50
+PLAIN_ANSWER_MAX_WORDS = 240
+_NUMBER_TOKEN = re.compile(r"\$?\d[\d,]*(?:\.\d+)?\s*(?:thousand|million|k|m)?\b", re.I)
+_DIFFERS_WORDS = ("differ", "does not match", "doesn't match", "do not match", "disagree", "mismatch", "city record", "city's record")
+
+
+def _number_values(text: str) -> list[float]:
+    """The numbers in a sentence as plain values ("$40k" is 40000, "226,605" is 226605), years left out."""
+    values: list[float] = []
+    for token in _NUMBER_TOKEN.findall(text):
+        raw = token.strip().lower().lstrip("$")
+        scale = 1.0
+        for word, factor in (("thousand", 1e3), ("million", 1e6), ("k", 1e3), ("m", 1e6)):
+            if raw.endswith(word):
+                raw, scale = raw[: -len(word)].strip(), factor
+                break
+        try:
+            value = float(raw.replace(",", "")) * scale
+        except ValueError:
+            continue
+        if value.is_integer() and 1900 <= value <= 2100:
+            continue  # a year
+        values.append(value)
+    return values
+
+
+def _plain_answer_issues(payload: RoadmapPayload, notes: AgentNotes | None, *, required: bool) -> list[str]:
+    """
+    v8: the plan opens with one plain-words answer to the question, and it must be safe to put first.
+
+    Required in live runs (a missing answer sends the plan back once). Whenever one is present it must be the right length,
+    use no promise wording, no internal names or ids, and state no number that is not already in the plan's own statements, so
+    it cannot say more than the plan supports. It must also mention the two things a reader would otherwise miss: that an
+    entered value differs from the city's record, and that solar was ruled out by the roof rules.
+    """
+    text = (payload.plain_answer or "").strip()
+    if not text:
+        return ["The plan has no plain-words answer at the top. Write one short paragraph in `plain_answer` that answers the question."] if required else []
+    issues: list[str] = []
+    words = len(text.split())
+    if words < PLAIN_ANSWER_MIN_WORDS or words > PLAIN_ANSWER_MAX_WORDS:
+        issues.append(f"The plain-words answer is {words} words; it should be about {PLAIN_ANSWER_MIN_WORDS} to {PLAIN_ANSWER_MAX_WORDS}.")
+    lowered = _NEGATED_PROMISE.sub(" ", text.lower())
+    promises = [word for word in PROMISE_WORDS if word in lowered]
+    if promises:
+        issues.append(f"Promise wording in the plain-words answer: {', '.join(sorted(set(promises)))}")
+    if _SNAKE_CASE.search(text) or _INTERNAL_ID.search(text):
+        issues.append("The plain-words answer uses an internal name or id (write it in plain words).")
+
+    # No number the plan's own statements do not contain.
+    known: list[float] = []
+    for claim in _collect_claims(payload):
+        known.extend(_number_values(claim.text))
+        known.extend(float(v) for v in (claim.value_low, claim.value_high) if v is not None)
+    def supported(value: float) -> bool:
+        if value < 10:
+            return True  # counts and small rounded numbers ("two scenarios", "6 to 18")
+        return any(abs(value - k) <= max(0.03 * abs(k), 0.6) for k in known)
+    unsupported = [v for v in _number_values(text) if not supported(v)]
+    if unsupported:
+        shown = ", ".join(f"{v:,.0f}" if v >= 100 else f"{v:g}" for v in unsupported[:4])
+        issues.append(f"The plain-words answer states numbers that are not in the plan's statements: {shown}. Use only numbers the sections give.")
+
+    if notes is not None:
+        lower = text.lower()
+        mismatched = [f.split(":", 1)[1].replace("_", " ") for f in notes.flags if f.startswith("intake_mismatch:")]
+        if mismatched and not any(word in lower for word in _DIFFERS_WORDS):
+            issues.append(f"The plain-words answer must say that what was entered ({', '.join(mismatched)}) differs from the city's record.")
+        from tools.roof import plain_refusal
+
+        if any(plain_refusal(str(err)) for err in notes.failed_tools.values()):
+            if "solar" not in lower or not any(word in lower for word in ("roof", "room", "space", "engineer", "roofer")):
+                issues.append("The plain-words answer must say why solar was not sized (the roof rules turned it down) and what that means.")
+    return issues
+
+
 def _intake_detail_issues(payload: RoadmapPayload, notes: AgentNotes, claims: list[Claim]) -> list[str]:
     """
     v7 rules for the optional intake answers (owner, roof condition, lighting, heating fuel, goal type, budget type).
@@ -931,6 +1007,7 @@ def run_check4(
     require_all_sections: bool = True,
     notes: AgentNotes | None = None,
     plain_language: bool = False,
+    require_plain_answer: bool = False,
 ) -> CheckResult:
     """
     Share gate: labels, sections, NYC-only rules, referrals, and no closed program in net cost.
@@ -986,6 +1063,8 @@ def run_check4(
         issues.extend(_run_context_issues(payload, notes))
     if plain_language:
         issues.extend(_plain_language_issues(payload))
+    if require_all_sections:
+        issues.extend(_plain_answer_issues(payload, notes, required=require_plain_answer))
 
     promises = _has_promise_words(payload)
     if promises:

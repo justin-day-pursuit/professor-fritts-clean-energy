@@ -30,8 +30,8 @@ from tools.registry import TOOL_SPECS, execute_tool, get_tool_spec
 
 
 def load_system_prompt() -> str:
-    """Read the v4 system prompt markdown shipped with the backend (v0–v3 stay in prompts/ for history)."""
-    path = Path(__file__).resolve().parent / "prompts" / "system_prompt_v4.md"
+    """Read the v5 system prompt markdown shipped with the backend (v0–v4 stay in prompts/ for history)."""
+    path = Path(__file__).resolve().parent / "prompts" / "system_prompt_v5.md"
     return path.read_text(encoding="utf-8")
 
 
@@ -519,6 +519,7 @@ def run_harness(
                         require_all_sections=True,
                         notes=notes,
                         plain_language=provider != "scripted",
+                        require_plain_answer=provider != "scripted",
                     )
             except ValidationError as exc:
                 # A missing label never becomes a Claim. Treat that as a Check 4 miss so the
