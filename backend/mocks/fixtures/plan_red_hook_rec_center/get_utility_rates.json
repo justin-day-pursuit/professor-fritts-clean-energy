@@ -1,0 +1,24 @@
+{
+  "tool": "get_utility_rates",
+  "data": {
+    "utility": "Con Edison",
+    "tariff_name": "EIA New York commercial average (not the building's own tariff)",
+    "avg_energy_charge_usd_per_kwh": 0.222,
+    "price_low_usd_per_kwh": 0.1981,
+    "price_high_usd_per_kwh": 0.2418,
+    "latest_month_usd_per_kwh": 0.2418,
+    "latest_month": "2026-07",
+    "months_averaged": 12,
+    "period_start": "2025-08",
+    "effective_date": "2026-07",
+    "price_units": "cents per kilowatt-hour"
+  },
+  "source_url": "https://www.eia.gov/electricity/data/browser/",
+  "retrieved_at": "2026-10-17T07:36:24Z",
+  "dataset_version": "eia-retail-sales-2026-07",
+  "mock": false,
+  "stale": false,
+  "flags": [
+    "statewide_average_rate"
+  ]
+}

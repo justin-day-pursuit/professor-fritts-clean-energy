@@ -191,3 +191,35 @@ class RoofSuggestionResponse(BaseModel):
     source_url: str
     retrieved_at: str
     note: str
+
+
+class ReplayCase(BaseModel):
+    """One saved demo the planner can replay: what it is, and whether it is a recording or a script."""
+
+    id: str
+    label: str
+    tag: str
+    # "recorded" = a real Claude run saved as it happened; "scripted" = text written by us from real tool numbers.
+    kind: str
+    question: str
+
+
+class ReplayCaseListResponse(BaseModel):
+    """GET /api/replay/cases."""
+
+    cases: list[ReplayCase]
+
+
+class ReplayResponse(BaseModel):
+    """A replayed run: the session it used, the plan message, and the full run with its events."""
+
+    session: SessionResponse
+    message: MessageResponse | None = None
+    run: "RunResponse"
+    case: ReplayCase
+
+
+class PlanPdfRequest(BaseModel):
+    """POST /api/plans/pdf: the plan summary (output.plan_summary) to turn into a PDF."""
+
+    plan_summary: dict[str, Any]

@@ -1,0 +1,53 @@
+{
+  "tool": "get_solar_production",
+  "data": {
+    "system_kw_dc": 273.8333,
+    "annual_ac_kwh": 344031.201445883,
+    "annual_ac_kwh_low": 327821.541237396,
+    "annual_ac_kwh_high": 360188.5490151246,
+    "range_assumption": "ASSUMPTION: system losses of 18% (low) to 10% (high) around PVWatts' 14% default; weather is typical-year data.",
+    "capacity_factor": 0.1434192561736822,
+    "solar_radiation_kwh_m2_day": 4.381658825054564,
+    "monthly_ac_kwh": [
+      18217.01092037385,
+      21907.69109129924,
+      32157.68533343902,
+      30807.03390860381,
+      38578.97839044028,
+      38563.84714824866,
+      39958.95507155441,
+      34079.98534978367,
+      30752.68906109116,
+      24818.26673357185,
+      19289.05385234335,
+      14900.00458513361
+    ],
+    "pvwatts_inputs": {
+      "lat": 40.672436,
+      "lon": -74.004228,
+      "system_capacity": 273.8333,
+      "module_type": 0,
+      "losses": 14,
+      "array_type": 1,
+      "tilt": 10,
+      "azimuth": 180
+    },
+    "location": {
+      "label": "155 BAY STREET, Brooklyn, NY, USA",
+      "borough": "Brooklyn",
+      "postalcode": "11231",
+      "match_type": "fallback",
+      "confidence": 0.8,
+      "bbl": "3005820001",
+      "lat": 40.672436,
+      "lon": -74.004228
+    },
+    "weather_data_source": "NSRDB PSM V3 GOES tmy-2020 3.2.0"
+  },
+  "source_url": "https://developer.nlr.gov/docs/solar/pvwatts/v8/",
+  "retrieved_at": "2026-10-15T21:42:59Z",
+  "dataset_version": "pvwatts-v8.5.0",
+  "mock": false,
+  "stale": false,
+  "flags": []
+}

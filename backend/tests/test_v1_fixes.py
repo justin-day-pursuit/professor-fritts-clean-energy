@@ -297,7 +297,12 @@ def test_intake_and_calculate_are_not_flagged_stale(monkeypatch):
 
 def test_mock_results_are_flagged_in_a_live_run_only(monkeypatch):
     """A tool that still answers from saved data is flagged mock_data_in_live_run in live mode, not in mock mode."""
-    step = LLMStep(kind="tool", tool_name="get_hazard_context", tool_input={}, tool_use_id="t1")
+    from mocks.mock_mode import require_mock_or_fixture
+    from tools import registry
+
+    # Every real tool has a live version now, so stand in a tool that still reads its saved file.
+    monkeypatch.setattr(registry, "get_utility_tariff", lambda case, profile=None: require_mock_or_fixture(case, "get_utility_tariff"))
+    step = LLMStep(kind="tool", tool_name="get_utility_tariff", tool_input={}, tool_use_id="t1")
 
     run, _ = _run(monkeypatch, [step], mode="live")
     live = [e for e in run.events.all() if e.kind == "tool_result"][0]

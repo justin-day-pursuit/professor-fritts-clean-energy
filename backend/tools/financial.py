@@ -28,6 +28,18 @@ EFFICIENCY_LEVELS = {
     "deep": {"savings_pct": (15.0, 25.0), "usd_per_sqft": (10.0, 16.0)},
 }
 
+# Share of an audit's predicted efficiency savings that the City's measured projects actually delivered: "gross
+# savings realizations rates range from 62% to 88%" in the past three Local Law 87 annual reports (DCAS, FY2022 report,
+# section 3, footnote 9). Applied in live runs only; see EFFICIENCY_REALIZATION_SOURCE.
+EFFICIENCY_REALIZATION = (0.62, 0.88)
+EFFICIENCY_REALIZATION_URL = (
+    "https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf"
+)
+EFFICIENCY_REALIZATION_SOURCE = (
+    f"NYC DCAS Local Law 87 annual report FY2022, section 3 (city projects realized 62-88% of predicted savings), "
+    f"{EFFICIENCY_REALIZATION_URL}"
+)
+
 # The federal commercial tax credit rate. It is applied only when the incentives tool reported the
 # program as open; otherwise the plan leaves every incentive out of net cost (the safe default).
 ITC_RATE = 0.30
@@ -36,18 +48,99 @@ ITC_RATE = 0.30
 BATTERY_USABLE_FRACTION = (0.85, 1.0)
 
 
-def benchmark_assumption_text() -> str:
-    """The one sentence behind assumption A9, built from the tables above."""
+def _saved_kwh_at_middle(level: str, annual_use_kwh: float) -> float:
+    """kWh a year the package saves at the middle of its planning-estimate savings range."""
+    pct = EFFICIENCY_LEVELS[level]["savings_pct"]
+    return annual_use_kwh * (pct[0] + pct[1]) / 200.0
+
+
+def efficiency_cost_range(
+    level: str,
+    floor_area_sqft: float,
+    annual_use_kwh: float,
+    real_prices: dict[str, tuple[float, float]] | None = None,
+) -> tuple[float, float]:
+    """
+    Low and high upfront cost of an efficiency package.
+
+    With real prices (dollars per kWh saved per year, from NYSERDA's completed projects) the cost is the kWh the package
+    saves, taken at the MIDDLE of its savings estimate, times the 25th and 75th percentile prices. The savings range is
+    not multiplied in as well: a package that saves a given amount costs that amount, give or take the real spread in
+    project prices, and stacking both spreads made the range much wider than the evidence. Without real prices it falls
+    back to the planning-estimate dollars per square foot.
+    """
+    eff = EFFICIENCY_LEVELS[level]
+    if real_prices and level in real_prices:
+        saved = _saved_kwh_at_middle(level, annual_use_kwh)
+        return (saved * real_prices[level][0], saved * real_prices[level][1])
+    return (floor_area_sqft * eff["usd_per_sqft"][0], floor_area_sqft * eff["usd_per_sqft"][1])
+
+
+def efficiency_cost_best(
+    level: str,
+    floor_area_sqft: float,
+    annual_use_kwh: float,
+    real_prices: dict[str, tuple[float, float]] | None = None,
+    real_middle_prices: dict[str, float] | None = None,
+) -> float:
+    """The best-guess cost: the median price of similar NYC projects (or the middle of the range) at the middle savings."""
+    if real_middle_prices and level in real_middle_prices:
+        return _saved_kwh_at_middle(level, annual_use_kwh) * real_middle_prices[level]
+    low, high = efficiency_cost_range(level, floor_area_sqft, annual_use_kwh, real_prices)
+    return (low + high) / 2.0
+
+
+def benchmark_assumption_text(
+    solar_price: tuple[float, float] | None = None,
+    solar_basis: str = "",
+    battery_price: tuple[float, float] | None = None,
+    battery_basis: str = "",
+    efficiency_prices: dict[str, tuple[float, float]] | None = None,
+    efficiency_basis: str = "",
+    realization: tuple[float, float] | None = None,
+) -> str:
+    """
+    The one sentence behind assumption A9, built from the tables above.
+
+    When real solar prices were found (solar_price, with solar_basis naming the source) the sentence quotes them
+    instead of the placeholder range, so the plan says where the solar price came from.
+    """
     std, deep = EFFICIENCY_LEVELS["standard"], EFFICIENCY_LEVELS["deep"]
+    solar = solar_price or COST_BENCHMARKS["solar_usd_per_kw_dc"]
+    solar_text = f"solar ${solar[0]:,.0f}-{solar[1]:,.0f}/kW DC" + (f" ({solar_basis})" if solar_basis else " (planning estimate)")
+    battery = battery_price or COST_BENCHMARKS["battery_usd_per_kwh"]
+    if efficiency_prices:
+        efficiency_text = (
+            f"efficiency cost per kWh saved per year ${efficiency_prices['standard'][0]:.2f}-{efficiency_prices['standard'][1]:.2f} "
+            f"(standard) and ${efficiency_prices['deep'][0]:.2f}-{efficiency_prices['deep'][1]:.2f} (deep) ({efficiency_basis}), "
+        )
+    else:
+        efficiency_text = (
+            f"standard efficiency ${std['usd_per_sqft'][0]:.0f}-{std['usd_per_sqft'][1]:.0f}/sq ft and "
+            f"deep efficiency ${deep['usd_per_sqft'][0]:.0f}-{deep['usd_per_sqft'][1]:.0f}/sq ft (planning estimates), "
+        )
+    battery_text = f"battery ${battery[0]:,.0f}-{battery[1]:,.0f}/kWh" + (
+        f" ({battery_basis})" if battery_basis else " (planning estimate)"
+    )
     return (
         "Planning-level benchmark prices, not quotes: "
-        f"solar ${COST_BENCHMARKS['solar_usd_per_kw_dc'][0]:,.0f}-{COST_BENCHMARKS['solar_usd_per_kw_dc'][1]:,.0f}/kW DC, "
-        f"battery ${COST_BENCHMARKS['battery_usd_per_kwh'][0]:,.0f}-{COST_BENCHMARKS['battery_usd_per_kwh'][1]:,.0f}/kWh, "
-        f"standard efficiency ${std['usd_per_sqft'][0]:.0f}-{std['usd_per_sqft'][1]:.0f}/sq ft saving "
+        f"{solar_text}, "
+        f"{battery_text}, "
+        f"{efficiency_text}"
+        f"standard efficiency saving "
         f"{std['savings_pct'][0]:.0f}-{std['savings_pct'][1]:.0f}%, "
-        f"deep efficiency ${deep['usd_per_sqft'][0]:.0f}-{deep['usd_per_sqft'][1]:.0f}/sq ft saving "
+        f"deep efficiency saving "
         f"{deep['savings_pct'][0]:.0f}-{deep['savings_pct'][1]:.0f}%; "
         f"usable battery share {BATTERY_USABLE_FRACTION[0]:.0%}-{BATTERY_USABLE_FRACTION[1]:.0%}; "
+        "the efficiency savings percents are planning estimates, not yet backed by project data"
+        + (
+            f", but only {realization[0]:.0%}-{realization[1]:.0%} of them is counted because the City's audited "
+            f"projects delivered that share ({EFFICIENCY_REALIZATION_SOURCE})"
+            if realization
+            else ""
+        )
+        + ("; " if efficiency_prices else ", and so are the efficiency prices; ")
+        + 
         "the 30% federal credit counts only when the incentives tool says the program is open."
     )
 
@@ -77,6 +170,23 @@ class Site:
     critical_load_kw: float = 0.0
     goal_fraction: float = 0.30
     federal_credit_open: bool = False
+    # Solar price per kW DC as (low, high). Real project costs replace the placeholder when they were found.
+    solar_usd_per_kw: tuple[float, float] | None = None
+    # Where that price came from, quoted in the itemized bill; blank means the placeholder was used.
+    solar_price_basis: str = ""
+    # Battery price per kWh as (low, high); real NYC project costs replace the placeholder when found.
+    battery_usd_per_kwh: tuple[float, float] | None = None
+    battery_price_basis: str = ""
+    # Efficiency cost per kWh saved per year by level ({"standard": (low, high), "deep": (low, high)}); real project
+    # costs replace the placeholder dollars per square foot when found.
+    efficiency_usd_per_kwh: dict[str, tuple[float, float]] | None = None
+    efficiency_price_basis: str = ""
+    # The median (middle) price of each kind, used for the best guess. None means the middle of the low-high range.
+    solar_usd_per_kw_mid: float | None = None
+    battery_usd_per_kwh_mid: float | None = None
+    efficiency_usd_per_kwh_mid: dict[str, float] | None = None
+    # Share of the predicted efficiency savings that is really delivered, as (low, high); None means all of it.
+    efficiency_realization: tuple[float, float] | None = None
 
 
 def _round_pair(low: float, high: float, digits: int = 0) -> list[float]:
@@ -115,10 +225,24 @@ def model_package(package: Package, site: Site) -> dict:
     eff = EFFICIENCY_LEVELS[package.efficiency_level]
 
     # --- upfront cost (low, high) ---
-    eff_cost = [site.floor_area_sqft * p for p in eff["usd_per_sqft"]]
-    solar_cost = [package.solar_kw_dc * p for p in COST_BENCHMARKS["solar_usd_per_kw_dc"]]
-    battery_cost = [package.battery_kwh * p for p in COST_BENCHMARKS["battery_usd_per_kwh"]]
+    eff_cost = list(efficiency_cost_range(
+        package.efficiency_level, site.floor_area_sqft, site.annual_use_kwh, site.efficiency_usd_per_kwh
+    ))
+    solar_price = site.solar_usd_per_kw or COST_BENCHMARKS["solar_usd_per_kw_dc"]
+    solar_cost = [package.solar_kw_dc * p for p in solar_price]
+    battery_price = site.battery_usd_per_kwh or COST_BENCHMARKS["battery_usd_per_kwh"]
+    battery_cost = [package.battery_kwh * p for p in battery_price]
     upfront = [eff_cost[i] + solar_cost[i] + battery_cost[i] for i in (0, 1)]
+
+    # --- best guess: the median price of similar NYC projects, at the middle of the savings estimate ---
+    eff_best = efficiency_cost_best(
+        package.efficiency_level, site.floor_area_sqft, site.annual_use_kwh, site.efficiency_usd_per_kwh, site.efficiency_usd_per_kwh_mid
+    )
+    solar_best = package.solar_kw_dc * (site.solar_usd_per_kw_mid or sum(solar_price) / 2.0)
+    battery_best = package.battery_kwh * (site.battery_usd_per_kwh_mid or sum(battery_price) / 2.0)
+    upfront_best = eff_best + solar_best + battery_best
+    credit_best = ITC_RATE * (solar_best + battery_best) if site.federal_credit_open else 0.0
+    net_best = upfront_best - credit_best
 
     # --- incentives: only the federal credit, only when confirmed open, only on solar and battery ---
     credit = [0.0, 0.0]
@@ -129,7 +253,8 @@ def model_package(package: Package, site: Site) -> dict:
     net = [upfront[0] - credit[0], upfront[1] - credit[1]]
 
     # --- energy: how many kWh per year the package removes from the grid bill ---
-    efficiency_kwh = [site.annual_use_kwh * pct / 100.0 for pct in eff["savings_pct"]]
+    realization = site.efficiency_realization or (1.0, 1.0)
+    efficiency_kwh = [site.annual_use_kwh * pct / 100.0 * realization[i] for i, pct in enumerate(eff["savings_pct"])]
     scale = (package.solar_kw_dc / site.full_array_kw_dc) if site.full_array_kw_dc else 0.0
     solar_kwh = [site.full_array_kwh_low * scale, site.full_array_kwh_high * scale]
     # Solar can only replace power the building still uses after efficiency. Anything beyond that is surplus
@@ -154,6 +279,8 @@ def model_package(package: Package, site: Site) -> dict:
     if savings[0] > 0 and savings[1] > 0:
         # Fast payback = lowest net cost over highest savings; slow payback = the reverse.
         payback = [net[0] / savings[1], net[1] / savings[0]]
+    savings_middle = (savings[0] + savings[1]) / 2.0
+    payback_best = net_best / savings_middle if savings_middle > 0 else None
 
     # --- budget strain: upfront cost against the user's budget (credits arrive after the bill is paid) ---
     if site.budget_usd > 0:
@@ -185,13 +312,59 @@ def model_package(package: Package, site: Site) -> dict:
         # No battery: solar panels shut off in an outage, so there is no backup.
         outage_hours = [0.0, 0.0]
 
+    # The itemized bill: each line is what it costs at the low and high price, and what the price is based on.
+    cost_items: list[dict] = []
+    if package.efficiency_level != "none":
+        if site.efficiency_usd_per_kwh and package.efficiency_level in site.efficiency_usd_per_kwh:
+            low_price, high_price = site.efficiency_usd_per_kwh[package.efficiency_level]
+            efficiency_basis = (
+                f"{_saved_kwh_at_middle(package.efficiency_level, site.annual_use_kwh):,.0f} kWh saved a year (the middle of the "
+                f"{eff['savings_pct'][0]:.0f}-{eff['savings_pct'][1]:.0f}% planning estimate) x ${low_price:.2f}-{high_price:.2f} per kWh saved"
+                f" ({site.efficiency_price_basis})"
+            )
+        else:
+            efficiency_basis = f"{site.floor_area_sqft:,.0f} sq ft x ${eff['usd_per_sqft'][0]:.0f}-{eff['usd_per_sqft'][1]:.0f}/sq ft (planning estimate)"
+        cost_items.append({
+            "item": f"{'Standard' if package.efficiency_level == 'standard' else 'Expanded' if package.efficiency_level == 'deep' else package.efficiency_level.title()} efficiency package",
+            "basis": efficiency_basis,
+            "usd": _round_pair(*eff_cost),
+            "usd_best": round(eff_best),
+        })
+    if package.solar_kw_dc > 0:
+        cost_items.append({
+            "item": "Rooftop solar",
+            "basis": f"{package.solar_kw_dc:,.1f} kW DC x ${solar_price[0]:,.0f}-{solar_price[1]:,.0f}/kW"
+            + (f" ({site.solar_price_basis})" if site.solar_price_basis else " (planning estimate)"),
+            "usd": _round_pair(*solar_cost),
+            "usd_best": round(solar_best),
+        })
+    if package.battery_kwh > 0:
+        cost_items.append({
+            "item": "Backup battery",
+            "basis": f"{package.battery_kwh:,.0f} kWh x ${battery_price[0]:,.0f}-{battery_price[1]:,.0f}/kWh"
+            + (f" ({site.battery_price_basis})" if site.battery_price_basis else " (planning estimate)"),
+            "usd": _round_pair(*battery_cost),
+            "usd_best": round(battery_best),
+        })
+    if credit[1] > 0:
+        cost_items.append({
+            "item": "Federal credit (30% of solar and battery)",
+            "basis": "Counted only because the incentives tool reported the program open",
+            "usd": _round_pair(-credit[0], -credit[1]),
+            "usd_best": -round(credit_best),
+        })
+
     return {
+        "cost_items": cost_items,
         "package": {
             "efficiency_level": package.efficiency_level,
             "solar_kw_dc": round(package.solar_kw_dc, 1),
             "battery_kwh": round(package.battery_kwh, 0),
         },
         "upfront_usd": _round_pair(*upfront),
+        "upfront_usd_best": round(upfront_best),
+        "net_cost_usd_best": round(net_best),
+        "payback_years_best": round(payback_best, 1) if payback_best else None,
         "incentives_counted_usd": _round_pair(*credit),
         "net_cost_usd": _round_pair(*net),
         "reduction_kwh": _round_pair(*reduction_kwh),

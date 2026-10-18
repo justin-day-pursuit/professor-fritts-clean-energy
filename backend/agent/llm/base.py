@@ -49,6 +49,15 @@ class LLMClient(ABC):
         Default no-op; override in scripted (and anthropic if needed).
         """
 
+    def take_usage(self) -> dict | None:
+        """
+        Token counts and estimated cost of the last model call, or None (v6).
+
+        The scripted model makes no API call, so it has none. The Anthropic client returns each reply's counts
+        once; the harness saves them as a "usage" run event so spend can be seen without the Anthropic console.
+        """
+        return None
+
     def submit_tool_result(self, tool_use_id: str, payload: str, notes_summary: str) -> None:
         """
         Optional hook after the harness runs a tool — Anthropic needs the real JSON here.

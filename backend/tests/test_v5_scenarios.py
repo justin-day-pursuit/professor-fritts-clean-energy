@@ -204,7 +204,7 @@ def test_case1_compares_three_scenarios_end_to_end(monkeypatch):
     md = run.output["markdown"]
     section6 = md.split("## 6.")[1].split("## 7.")[0]
     for sid in "ABC":
-        assert f"Scenario {sid}" in section6 and f"F-{sid}" in section6
+        assert f"Scenario {sid}" in section6 and f"plan {sid.lower()} costs and savings" in section6.lower()
     # The six comparison measures, in plain words, appear for every scenario.
     for word in ("of the 30% goal", "upfront cost", "net cost", "payback", "budget", "outage backup"):
         assert section6.count(word) >= 3

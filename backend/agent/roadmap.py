@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import re
 
+from agent.plain_names import calculation_name, strip_id_prefix
 from agent.claims import SECTION_TITLES, Claim, RoadmapPayload, RoadmapSection
 
 # What a reader sees when the model gave nothing for a section.
@@ -30,7 +31,10 @@ def _format_range(claim: Claim) -> str:
     low, high = claim.value_low, claim.value_high
     # Show whole numbers without decimals, and keep decimals for small values like $/kWh.
     def fmt(value: float) -> str:
-        return f"{value:,.0f}" if float(value).is_integer() else f"{value:,.4g}"
+        # Large numbers print in full ("20,028"), never as "2.003e+04"; small ones keep their decimals.
+        if float(value).is_integer() or abs(value) >= 1000:
+            return f"{value:,.0f}"
+        return f"{value:,.4g}"
 
     units = claim.units or ""
     if low == high:
@@ -50,17 +54,66 @@ def _format_claim(claim: Claim, *, section_id: str = "") -> str:
         extra = ""
         if claim.source_url or claim.calc_id:
             opt = claim.calc_id or claim.source_url
-            extra = f" — optional source/calc: `{opt}`"
+            extra = f" — based on: {calculation_name(opt) if claim.calc_id else opt}"
         return (
-            f"- **{claim.label}** ({claim.confidence}) [{claim.assumption_id}]: {claim.text}"
+            f"- **{claim.label}** ({claim.confidence}): {strip_id_prefix(claim.text)}"
             f"{value_part}{extra}"
         )
-    trace = claim.calc_id or claim.source_url or "n/a"
     _ = section_id  # reserved for section-specific layout later
     return (
         f"- **{claim.label}** ({claim.confidence}): {claim.text}{value_part} "
-        f"— source/calc: `{trace}`"
+        f"— {_trace_text(claim)}"
     )
+
+
+def _trace_text(claim: Claim) -> str:
+    """
+    How a claim points back to where it came from: a clickable link for a web source, the calculation id for math.
+
+    A claim that has both (a calculation built on a cited page) shows both. Calculations are explained, with
+    their inputs' links, in the "Source links" list at the end of the plan.
+    """
+    parts: list[str] = []
+    if claim.calc_id:
+        parts.append(f"from the {calculation_name(claim.calc_id).lower()}")
+    url = claim.source_url or ""
+    if url.startswith(("http://", "https://")):
+        parts.append(f"[source]({url})")
+    elif url:
+        parts.append(f"source: `{url}`")
+    return " and ".join(parts) if parts else "source: n/a"
+
+
+def render_next_steps(steps: list[dict]) -> list[str]:
+    """
+    The plan's "Who to contact" list: for each step, the official page, why this building needs it, and any
+    phone or email the agency itself publishes. Chosen by code from the building's facts, not written by the model.
+    """
+    if not steps:
+        return []
+    lines = ["## Who to contact and where to start", ""]
+    for step in steps:
+        contact = f" Contact: {step['contact']}." if step.get("contact") else ""
+        lines.append(f"- [{step['name']}]({step['url']}): {step['why']}{contact}")
+    lines.append("")
+    return lines
+
+
+def render_source_links(sources: list[dict]) -> list[str]:
+    """
+    The plan's closing list of links: every page the numbers and rules came from, with the date it was read.
+
+    Saved sample data is labeled as such, so a reader can tell a live government page from a stand-in.
+    """
+    if not sources:
+        return []
+    lines = ["## Source links", "", "Every page the numbers and rules in this plan rest on:"]
+    for source in sources:
+        date = f", retrieved {source['retrieved_at'][:10]}" if source.get("retrieved_at") else ""
+        sample = " (saved sample data, not a live source)" if source.get("sample") else ""
+        lines.append(f"- [{source['label']}]({source['url']}){date}{sample}")
+    lines.append("")
+    return lines
 
 
 def _assumption_sort_key(assumption_id: str) -> tuple[int, str]:
@@ -106,7 +159,9 @@ def ordered_sections(payload: RoadmapPayload) -> list[RoadmapSection]:
     return result
 
 
-def render_roadmap_markdown(payload: RoadmapPayload) -> str:
+def render_roadmap_markdown(
+    payload: RoadmapPayload, sources: list[dict] | None = None, next_steps: list[dict] | None = None
+) -> str:
     """
     Build human-readable Markdown with the 13 section headers and labeled claims.
 
@@ -130,17 +185,22 @@ def render_roadmap_markdown(payload: RoadmapPayload) -> str:
             lines.append(_format_claim(claim, section_id=section.section_id))
         lines.append("")
 
+    lines.extend(render_next_steps(next_steps or []))
+    lines.extend(render_source_links(sources or []))
     if payload.footer_note:
         lines.append("---")
         lines.append(f"*{payload.footer_note}*")
     return "\n".join(lines).rstrip() + "\n"
 
 
-def render_roadmap_json(payload: RoadmapPayload) -> dict:
+def render_roadmap_json(
+    payload: RoadmapPayload, sources: list[dict] | None = None, next_steps: list[dict] | None = None
+) -> dict:
     """JSON-serializable dict mirroring the structured payload plus rendered markdown."""
     return {
         "roadmap": payload.model_dump(),
-        "markdown": render_roadmap_markdown(payload),
+        "markdown": render_roadmap_markdown(payload, sources, next_steps),
+        "next_steps": next_steps or [],
     }
 
 

@@ -20,6 +20,8 @@ from agent.limits import MAX_CONSECUTIVE_THINK_STEPS, RunLimits
 from agent.llm.base import LLMConfigurationError, LLMStep
 from agent.llm.factory import get_llm_client
 from agent.notes import AgentNotes
+from agent.plan_summary import build_plan_summary
+from agent.profile_prep import effective_profile
 from agent.roadmap import render_follow_up_markdown, render_roadmap_json, render_roadmap_markdown
 from core.models import Run, Session
 from core import services
@@ -154,7 +156,7 @@ def _finish_with_roadmap(
     Call this for done, partial, or exhausted scripted fix with an existing roadmap object.
     Pass answer_summary when the final tool was write_answer so the main text is not dropped.
     """
-    rendered = render_roadmap_json(roadmap_payload)
+    rendered = render_roadmap_json(roadmap_payload, notes.source_links, notes.next_steps())
     markdown_out = rendered["markdown"]
     if final_tool_name == "write_answer" and answer_summary:
         markdown_out = render_follow_up_markdown(answer_summary, roadmap_payload)
@@ -169,7 +171,7 @@ def _finish_with_roadmap(
     if final_tool_name == "write_answer" and answer_summary:
         assistant_text = render_follow_up_markdown(answer_summary, roadmap_payload)
     else:
-        assistant_text = render_roadmap_markdown(roadmap_payload)
+        assistant_text = render_roadmap_markdown(roadmap_payload, notes.source_links, notes.next_steps())
 
     output: dict[str, Any] = {
         "roadmap": roadmap_payload.model_dump(),
@@ -179,6 +181,12 @@ def _finish_with_roadmap(
     }
     if answer_summary is not None:
         output["summary"] = answer_summary
+    if final_tool_name != "write_answer":
+        # Everything the run found and calculated, grouped for the screen. A bug here must never fail a run.
+        try:
+            output["plan_summary"] = build_plan_summary(run, output, notes.next_steps())
+        except Exception as exc:  # noqa: BLE001
+            output["plan_summary_error"] = f"{type(exc).__name__}: {exc}"
 
     services.add_message(session, role="assistant", content=assistant_text, run=run)
     services.finish_run(
@@ -277,7 +285,14 @@ def run_harness(
     seq = 0
     t0 = time.monotonic()
 
-    check1 = run_check1(session.profile or {}, user_message)
+    # The profile the agent runs on: the user's intake, tidied, with annual use filled from uploaded bills.
+    # The stored session profile is left untouched.
+    run_profile = effective_profile(
+        session.profile,
+        list(session.documents.values_list("parsed_summary", flat=True)),
+    )
+
+    check1 = run_check1(run_profile, user_message)
     seq = _append_check_event(run, seq, "check1", check1)
 
     if not check1.get("passed"):
@@ -367,6 +382,10 @@ def run_harness(
                 tool_call_count=limits.tool_call_count,
             )
         except RuntimeError as exc:
+            # A reply cut off at the token limit was still billed, so its usage is saved before the error.
+            failed_usage = llm.take_usage()
+            if failed_usage:
+                seq = _append_check_event(run, seq, "usage", failed_usage)
             services.append_event(run, seq=seq, kind="error", payload={"message": str(exc)})
             if roadmap_payload is not None:
                 check4 = {"passed": False, "message": str(exc)}
@@ -392,6 +411,11 @@ def run_harness(
             )
 
         fix_context = None
+        # v6: save what this model call used (tokens and estimated dollars) so spend is visible without the
+        # Anthropic console. The scripted model has none, so nothing is added for it.
+        usage = llm.take_usage()
+        if usage:
+            seq = _append_check_event(run, seq, "usage", usage)
 
         if step.kind == "exhausted":
             if roadmap_payload is not None:
@@ -482,6 +506,7 @@ def run_harness(
                         assumptions_register=notes.assumptions,
                         user_message=user_message,
                         require_all_sections=False,
+                        plain_language=provider != "scripted",
                     )
                 else:
                     wr = WriteRoadmapInput.model_validate(step.tool_input or {})
@@ -493,6 +518,7 @@ def run_harness(
                         user_message=user_message,
                         require_all_sections=True,
                         notes=notes,
+                        plain_language=provider != "scripted",
                     )
             except ValidationError as exc:
                 # A missing label never becomes a Claim. Treat that as a Check 4 miss so the
@@ -693,7 +719,7 @@ def run_harness(
             result = execute_tool(
                 tool_name,
                 tool_input,
-                session_profile=session.profile or {},
+                session_profile=run_profile,
                 fixture_case=session.fixture_case,
             )
         except Exception as exc:

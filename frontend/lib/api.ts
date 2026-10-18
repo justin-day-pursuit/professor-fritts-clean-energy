@@ -11,6 +11,8 @@ import type {
   MessageCreateRequest,
   MessageRunResponse,
   ProfileUpdateRequest,
+  ReplayCaseListResponse,
+  ReplayResponse,
   RoofSuggestion,
   RunResponse,
   SessionCreateRequest,
@@ -170,4 +172,20 @@ export async function downloadRoadmapJson(runId: number): Promise<string> {
 export async function getRoofSuggestion(address: string, borough: string): Promise<RoofSuggestion> {
   const params = new URLSearchParams({ address, borough });
   return requestJson<RoofSuggestion>(`/api/records/roof-suggestion?${params.toString()}`);
+}
+
+/**
+ * The saved demos the planner can replay. Replays never call Claude: the server plays a saved run back through
+ * its own checks, so they cost nothing and are safe on the public site.
+ */
+export async function listReplayCases(): Promise<ReplayCaseListResponse> {
+  return requestJson<ReplayCaseListResponse>("/api/replay/cases");
+}
+
+/**
+ * Replays one saved demo. The whole run comes back at once (about a second); the planner page then plays the
+ * run log back step by step so it looks like a live run.
+ */
+export async function replayCase(caseId: string): Promise<ReplayResponse> {
+  return requestJson<ReplayResponse>(`/api/replay/${encodeURIComponent(caseId)}`, { method: "POST", body: "{}" });
 }

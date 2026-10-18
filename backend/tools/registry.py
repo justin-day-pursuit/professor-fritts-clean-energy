@@ -105,7 +105,7 @@ TOOL_SPECS: dict[str, ToolSpec] = {
     "optimize_solar_storage": ToolSpec(
         name="optimize_solar_storage",
         description=(
-            "Size a battery for the critical loads (saved REopt sample data until v8). Returns battery_kwh, "
+            "Size a battery for the critical loads from the user's own critical load kW and backup hours (estimated and flagged when blank; saved sample only in mock mode). Returns battery_kwh, "
             "battery_kw and critical_load_kw; pass those to run_financial_model for scenario C."
         ),
         input_model=EmptyInput,
@@ -158,8 +158,8 @@ TOOL_SPECS: dict[str, ToolSpec] = {
     "get_hazard_context": ToolSpec(
         name="get_hazard_context",
         description=(
-            "Heat, flood, and winter-storm context from saved FEMA and NYC flood data "
-            "(mock until a later version; not a live FEMA call)."
+            "Flood context for the address: live mode reads the current FEMA flood zone (heat and storm ratings are "
+            "not looked up); mock mode returns saved sample ratings."
         ),
         input_model=EmptyInput,
         freshness_kind="hazard",
@@ -220,6 +220,145 @@ def _check_roof_formula(formula: str, inputs: dict[str, Any], profile: dict[str,
             )
 
 
+def _with_saved_price_ranges(inp: Any, fixture_case: str) -> Any:
+    """
+    Replays: price the scenarios with the real ranges saved next to a recorded case (cost_ranges.json), so a free
+    replay shows the same dollar figures the live run did. Cases with no such file keep the placeholder prices.
+    """
+    import json
+
+    from mocks.catalog import FIXTURES_ROOT
+
+    path = FIXTURES_ROOT / fixture_case / "cost_ranges.json"
+    if not path.exists():
+        return inp
+    saved = json.loads(path.read_text(encoding="utf-8"))
+    update: dict[str, Any] = {}
+    solar, battery, efficiency = saved.get("solar"), saved.get("battery"), saved.get("efficiency")
+    if solar and not inp.solar_usd_per_kw_low:
+        update.update(solar_usd_per_kw_low=solar["low"], solar_usd_per_kw_high=solar["high"], solar_usd_per_kw_mid=solar.get("mid"),
+                      solar_price_basis=solar["basis"], solar_price_source_url=solar.get("source_url") or "")
+    if battery and inp.battery_kwh > 0 and not inp.battery_usd_per_kwh_low:
+        update.update(battery_usd_per_kwh_low=battery["low"], battery_usd_per_kwh_high=battery["high"], battery_usd_per_kwh_mid=battery.get("mid"),
+                      battery_price_basis=battery["basis"], battery_price_source_url=battery.get("source_url") or "")
+    if saved.get("realization") and not inp.efficiency_realization:
+        update.update(efficiency_realization=saved["realization"])
+    if efficiency and not inp.efficiency_usd_per_kwh:
+        update.update(efficiency_usd_per_kwh=efficiency["prices"], efficiency_usd_per_kwh_mid=efficiency.get("mid"), efficiency_price_basis=efficiency["basis"],
+                      efficiency_price_source_url=efficiency.get("source_url") or "")
+    return inp.model_copy(update=update) if update else inp
+
+
+def _with_real_solar_price(inp: Any, fixture_case: str = "") -> tuple[Any, list[str]]:
+    """
+    In live mode, replace the placeholder solar price with real NYC project costs (NYSERDA data, tools/solar_costs.py).
+
+    The model's solar range becomes the 25th to 75th percentile cost per kW of comparable completed projects.
+    If the lookup fails or has too few projects, the placeholder stays and a flag says so. Mock mode is left alone
+    so saved demos replay with the same numbers.
+    """
+    from mocks.mock_mode import get_tool_mode
+    from tools.solar_costs import SolarCostError, fetch_solar_cost_range
+
+    if get_tool_mode() != "live":
+        return (_with_saved_price_ranges(inp, fixture_case) if fixture_case else inp), []
+    flags: list[str] = []
+    if not inp.solar_usd_per_kw_low:
+        inp, solar_flags = _with_real_solar_only(inp)
+        flags += solar_flags
+    if inp.battery_kwh > 0 and not inp.battery_usd_per_kwh_low:
+        inp, battery_flags = _with_real_battery_price(inp)
+        flags += battery_flags
+    if not inp.efficiency_usd_per_kwh:
+        inp, efficiency_flags = _with_real_efficiency_price(inp)
+        flags += efficiency_flags
+    if not inp.efficiency_realization:
+        from tools.financial import EFFICIENCY_REALIZATION
+
+        inp = inp.model_copy(update={"efficiency_realization": list(EFFICIENCY_REALIZATION)})
+    return inp, flags
+
+
+def _with_real_efficiency_price(inp: Any) -> tuple[Any, list[str]]:
+    """Fill the efficiency cost per kWh saved from NYSERDA's completed NYC projects; keep the placeholder (flagged) if unavailable."""
+    from tools.efficiency_costs import EfficiencyCostError, fetch_efficiency_cost_ranges
+
+    try:
+        found = fetch_efficiency_cost_ranges()
+    except EfficiencyCostError:
+        found = None
+    if not found:
+        return inp, ["efficiency_price_placeholder"]
+    standard, deep = found["standard"], found["deep"]
+    basis = (
+        f"the middle half of {standard['projects']} LED-lighting and {deep['projects']} comprehensive completed "
+        f"NYC public-sector projects since {found['since']}, NYSERDA data {found['source_url']}"
+    )
+    return inp.model_copy(update={
+        "efficiency_usd_per_kwh": {"standard": [standard["p25"], standard["p75"]], "deep": [deep["p25"], deep["p75"]]},
+        "efficiency_usd_per_kwh_mid": {"standard": standard["p50"], "deep": deep["p50"]},
+        "efficiency_price_basis": basis,
+        "efficiency_price_source_url": found["source_url"],
+    }), []
+
+
+def _with_real_battery_price(inp: Any) -> tuple[Any, list[str]]:
+    """Fill the battery price from NYSERDA's NYC storage projects; keep the placeholder (and flag it) if unavailable."""
+    from tools.solar_costs import SolarCostError, fetch_storage_cost_range
+
+    try:
+        found = fetch_storage_cost_range()
+    except SolarCostError:
+        found = None
+    if not found:
+        return inp, ["battery_price_placeholder"]
+    basis = (
+        f"the middle half of {found['projects']} completed or approved NYC commercial-scale storage projects, "
+        f"NYSERDA data {found['source_url']}"
+    )
+    return inp.model_copy(update={
+        "battery_usd_per_kwh_low": float(found["p25_usd_per_kwh"]),
+        "battery_usd_per_kwh_high": float(found["p75_usd_per_kwh"]),
+        "battery_usd_per_kwh_mid": float(found["p50_usd_per_kwh"]),
+        "battery_price_basis": basis,
+        "battery_price_source_url": found["source_url"],
+    }), []
+
+
+def _with_real_solar_only(inp: Any) -> tuple[Any, list[str]]:
+    """Fill the solar price from NYSERDA's NYC projects; keep the placeholder (and flag it) if unavailable."""
+    from tools.solar_costs import SolarCostError, fetch_solar_cost_range
+
+    try:
+        found = fetch_solar_cost_range(inp.full_array_kw_dc)
+    except SolarCostError:
+        found = None
+    if not found:
+        return inp, ["solar_price_placeholder"]
+    low, high = found["band_kw"]
+    basis = (
+        f"the middle half of {found['projects']} completed NYC non-residential projects of "
+        f"{low:g}-{high:g} kW since {found['since'][:4]}, NYSERDA data {found['source_url']}"
+    )
+    updated = inp.model_copy(update={
+        "solar_price_source_url": found["source_url"],
+        "solar_usd_per_kw_low": float(found["p25_usd_per_kw"]),
+        "solar_usd_per_kw_high": float(found["p75_usd_per_kw"]),
+        "solar_usd_per_kw_mid": float(found["p50_usd_per_kw"]),
+        "solar_price_basis": basis,
+    })
+    return updated, []
+
+
+def _goal_fraction_from_profile(profile: dict[str, Any]) -> float | None:
+    """The intake's goal percent (5 to 100) as a fraction, or None when it is blank or not a usable number."""
+    try:
+        pct = float(profile.get("goal_percent"))
+    except (TypeError, ValueError):
+        return None
+    return pct / 100.0 if 0 < pct <= 100 else None
+
+
 def execute_tool(
     name: str,
     raw_input: dict[str, Any],
@@ -241,7 +380,7 @@ def execute_tool(
     if name == "get_solar_production":
         return get_solar_production(fixture_case, session_profile, getattr(validated, "system_kw", None))
     if name == "optimize_solar_storage":
-        return optimize_solar_storage(fixture_case)
+        return optimize_solar_storage(fixture_case, session_profile)
     if name == "calculate":
         _check_roof_formula(validated.formula, validated.inputs, session_profile)
         calc_in = CalculateInput(
@@ -251,15 +390,23 @@ def execute_tool(
         )
         return run_calculate(calc_in)
     if name == "run_financial_model":
-        return run_financial_model(validated)
+        # The user's own goal percent decides the goal, not whatever number the model passes.
+        goal_pct = _goal_fraction_from_profile(session_profile)
+        if goal_pct is not None:
+            validated = validated.model_copy(update={"goal_fraction": goal_pct})
+        validated, price_flags = _with_real_solar_price(validated, fixture_case)
+        result = run_financial_model(validated)
+        if price_flags:
+            result = result.model_copy(update={"flags": list(result.flags) + price_flags})
+        return result
     if name == "get_utility_rates":
         return get_utility_rates(fixture_case, session_profile)
     if name == "get_utility_tariff":
-        return get_utility_tariff(fixture_case)
+        return get_utility_tariff(fixture_case, session_profile)
     if name == "search_ny_incentives_and_rules":
-        return search_ny_incentives_and_rules(fixture_case)
+        return search_ny_incentives_and_rules(fixture_case, session_profile)
     if name == "get_hazard_context":
-        return get_hazard_context(fixture_case)
+        return get_hazard_context(fixture_case, session_profile)
     if name == "upsert_reference_cache":
         return _upsert_cache_handler(
             record_id=validated.record_id,

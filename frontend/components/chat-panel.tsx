@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import { ClaimSource } from "@/components/claim-source";
 import { LabelBadge } from "@/components/label-badge";
 import type { Claim, MessageResponse } from "@/lib/types";
 import { useState } from "react";
@@ -30,10 +31,12 @@ export interface ChatPanelProps {
   onDraftChange?: (text: string) => void;
   /** Intake fields still empty; while any remain, sending is blocked and they are listed under the box. */
   missingFields?: string[];
+  /** When set, sending is switched off and this sentence is shown (used while a saved replay is on screen). */
+  lockedReason?: string;
 }
 
-export function ChatPanel({ messages, onSend, busy, draft, onDraftChange, missingFields = [] }: ChatPanelProps) {
-  const blocked = missingFields.length > 0;
+export function ChatPanel({ messages, onSend, busy, draft, onDraftChange, missingFields = [], lockedReason }: ChatPanelProps) {
+  const blocked = missingFields.length > 0 || Boolean(lockedReason);
   const [localDraft, setLocalDraft] = useState("");
   const text = draft ?? localDraft;
   const setText = onDraftChange ?? setLocalDraft;
@@ -86,6 +89,7 @@ export function ChatPanel({ messages, onSend, busy, draft, onDraftChange, missin
                       <li key={`${msg.id}-claim-${i}`} className="space-y-1">
                         <LabelBadge label={claim.label} confidence={claim.confidence} />
                         <p className="text-xs">{claim.text}</p>
+                        <ClaimSource claim={claim} />
                       </li>
                     ))}
                   </ul>
@@ -109,10 +113,14 @@ export function ChatPanel({ messages, onSend, busy, draft, onDraftChange, missin
             }
           }}
         />
-        {blocked && (
-          <p className="w-full text-xs text-muted-foreground">
-            Fill in the intake first. Still needed: {missingFields.join(", ")}
-          </p>
+        {lockedReason ? (
+          <p className="w-full text-xs text-muted-foreground">{lockedReason}</p>
+        ) : (
+          blocked && (
+            <p className="w-full text-xs text-muted-foreground">
+              Fill in the intake first. Still needed: {missingFields.join(", ")}
+            </p>
+          )
         )}
         <Button type="button" disabled={busy || blocked || !text.trim()} onClick={() => void submit()}>
           Send

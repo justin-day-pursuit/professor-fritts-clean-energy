@@ -8,18 +8,53 @@ pre-fetched live status and quoted text into the versioned cache, with a page ha
 from __future__ import annotations
 
 import hashlib
+from datetime import datetime, timezone
 from typing import Any
 
 from mocks.mock_mode import get_tool_mode, require_mock_or_fixture
 from tools.base import ToolResult
 from tools.cache import get_reference_cache, is_stale
 from tools.injection import has_hidden_instructions
+from tools.live_incentives import fetch_live_incentives
 from tools.live_rates import fetch_live_utility_rates
+from tools.live_tariff import fetch_live_tariff
 from tools.upsert_cache import upsert_reference_cache
 
 
+def user_electricity_rate(profile: dict[str, Any] | None) -> float | None:
+    """The electricity price (dollars per kWh) the user entered, or None when blank or not a believable price."""
+    try:
+        rate = float((profile or {}).get("electricity_rate_usd_per_kwh"))
+    except (TypeError, ValueError):
+        return None
+    return rate if 0.02 <= rate <= 2.0 else None
+
+
 def get_utility_rates(case: str, profile: dict[str, Any] | None = None) -> ToolResult:
-    """Return the live EIA price in live mode, or the saved tariff in mock mode."""
+    """
+    The electricity price the savings use.
+
+    A price the user entered (from a bill) always wins, in any mode: it is their own figure and needs no lookup. Otherwise
+    the live EIA state average in live mode, or the saved tariff in mock mode.
+    """
+    entered = user_electricity_rate(profile)
+    if entered is not None:
+        return ToolResult(
+            tool="get_utility_rates",
+            data={
+                "utility": (profile or {}).get("utility") or "Your utility",
+                "tariff_name": "The electricity price you entered",
+                "avg_energy_charge_usd_per_kwh": entered,
+                "price_low_usd_per_kwh": entered,
+                "price_high_usd_per_kwh": entered,
+                "price_units": "dollars per kilowatt-hour",
+            },
+            source_url="session://profile",
+            retrieved_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            dataset_version="user-entered",
+            mock=False,
+            flags=[],
+        )
     if get_tool_mode() == "live":
         return fetch_live_utility_rates(profile or {})
     return require_mock_or_fixture(case, "get_utility_rates")
@@ -78,7 +113,7 @@ def _quarantine_entry(program: dict[str, Any], source_url: str) -> dict[str, Any
     }
 
 
-def search_ny_incentives_and_rules(case: str) -> ToolResult:
+def search_ny_incentives_and_rules(case: str, profile: dict[str, Any] | None = None) -> ToolResult:
     """
     Return saved incentive snippets, and refresh any program whose cache row is stale.
 
@@ -90,7 +125,11 @@ def search_ny_incentives_and_rules(case: str) -> ToolResult:
     hidden_instruction_pattern. A program where DSIRE (a finder, not a source) disagrees with the
     official page adds finder_official_conflict; the official status is the one used and saved.
     """
-    result = require_mock_or_fixture(case, "search_ny_incentives_and_rules")
+    if get_tool_mode() == "live":
+        # Live: the curated register, each program's official page re-read and verified today (tools/live_incentives.py).
+        result = fetch_live_incentives(profile or {})
+    else:
+        result = require_mock_or_fixture(case, "search_ny_incentives_and_rules")
     flags = list(result.flags)
     programs: list[dict[str, Any]] = []
     quarantined: list[dict[str, Any]] = []
@@ -117,7 +156,7 @@ def search_ny_incentives_and_rules(case: str) -> ToolResult:
     return result.model_copy(update={"flags": flags, "data": data})
 
 
-def get_utility_tariff(case: str) -> ToolResult:
+def get_utility_tariff(case: str, profile: dict[str, Any] | None = None) -> ToolResult:
     """
     Return the named utility tariff (OpenEI-style) with its effective date and price ranges.
 
@@ -125,4 +164,6 @@ def get_utility_tariff(case: str) -> ToolResult:
     marks it 'mock_data_in_live_run' so the plan never presents it as live data. The tariff is
     flagged for the user to confirm, because picking the wrong tariff skews savings widely.
     """
+    if get_tool_mode() == "live":
+        return fetch_live_tariff(profile or {})
     return require_mock_or_fixture(case, "get_utility_tariff")

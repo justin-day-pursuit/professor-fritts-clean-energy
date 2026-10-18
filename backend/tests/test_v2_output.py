@@ -95,7 +95,7 @@ def test_register_lists_each_assumption_once_sorted_by_number():
     md = render_roadmap_markdown(payload)
     # Section 3 is built from the register even though the model wrote nothing there.
     section3 = md.split("## 3.")[1].split("## 4.")[0]
-    assert "[A2]" in section3 and "[A10]" in section3
+    assert "two" in section3 and "ten" in section3 and "[A2]" not in section3  # ids stay in the data, not in the words
 
 
 # --- coverage script --------------------------------------------------------------------------

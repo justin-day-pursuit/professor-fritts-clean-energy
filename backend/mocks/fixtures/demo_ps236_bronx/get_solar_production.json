@@ -1,0 +1,53 @@
+{
+  "tool": "get_solar_production",
+  "data": {
+    "system_kw_dc": 85.50000000000001,
+    "annual_ac_kwh": 106100.7120587212,
+    "annual_ac_kwh_low": 101099.6543370472,
+    "annual_ac_kwh_high": 111098.4036110823,
+    "range_assumption": "ASSUMPTION: system losses of 18% (low) to 10% (high) around PVWatts' 14% default; weather is typical-year data.",
+    "capacity_factor": 0.1416602740510046,
+    "solar_radiation_kwh_m2_day": 4.421094011550492,
+    "monthly_ac_kwh": [
+      5407.30395289039,
+      6960.772125437045,
+      9200.39144233324,
+      9409.476877057452,
+      11957.85861387832,
+      11992.13670000596,
+      12274.94995285621,
+      10882.16861721299,
+      9312.318895979932,
+      7805.414019535976,
+      5932.634327940181,
+      4965.286533593821
+    ],
+    "pvwatts_inputs": {
+      "lat": 40.848888,
+      "lon": -73.90984,
+      "system_capacity": 85.50000000000001,
+      "module_type": 0,
+      "losses": 14,
+      "array_type": 1,
+      "tilt": 10,
+      "azimuth": 180
+    },
+    "location": {
+      "label": "1871 WALTON AVENUE, Bronx, NY, USA",
+      "borough": "Bronx",
+      "postalcode": "10453",
+      "match_type": "fallback",
+      "confidence": 0.8,
+      "bbl": "2028510021",
+      "lat": 40.848888,
+      "lon": -73.90984
+    },
+    "weather_data_source": "NSRDB PSM V3 GOES tmy-2020 3.2.0"
+  },
+  "source_url": "https://developer.nlr.gov/docs/solar/pvwatts/v8/",
+  "retrieved_at": "2026-10-16T15:30:41Z",
+  "dataset_version": "pvwatts-v8.5.0",
+  "mock": false,
+  "stale": false,
+  "flags": []
+}

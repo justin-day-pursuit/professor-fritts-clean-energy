@@ -23,6 +23,7 @@ from tools.financial import (
     Package,
     Site,
     benchmark_assumption_text,
+    efficiency_cost_range,
     model_package,
 )
 
@@ -48,10 +49,33 @@ class FinancialModelInput(BaseModel):
     battery_kwh: float = Field(default=0, ge=0, description="Battery size from optimize_solar_storage; used by scenario C only")
     critical_load_kw: float = Field(default=0, ge=0, description="Critical load from optimize_solar_storage")
     goal_fraction: float = Field(default=0.30, gt=0, le=1, description="Reduction goal as a fraction, 0.30 for 30%")
+    solar_usd_per_kw_low: float | None = Field(default=None, gt=0, description="Set by the system from real NYC project costs; leave blank")
+    solar_usd_per_kw_high: float | None = Field(default=None, gt=0, description="Set by the system from real NYC project costs; leave blank")
+    solar_price_basis: str = Field(default="", description="Set by the system; where the solar price came from")
+    solar_price_source_url: str = Field(default="", description="Set by the system; web page of the solar price data")
+    battery_usd_per_kwh_low: float | None = Field(default=None, gt=0, description="Set by the system from real NYC project costs; leave blank")
+    battery_usd_per_kwh_high: float | None = Field(default=None, gt=0, description="Set by the system from real NYC project costs; leave blank")
+    battery_price_basis: str = Field(default="", description="Set by the system; where the battery price came from")
+    battery_price_source_url: str = Field(default="", description="Set by the system; web page of the battery price data")
+    efficiency_usd_per_kwh: dict[str, list[float]] | None = Field(default=None, description="Set by the system from real NYC project costs; leave blank")
+    efficiency_price_basis: str = Field(default="", description="Set by the system; where the efficiency price came from")
+    efficiency_price_source_url: str = Field(default="", description="Set by the system; web page of the efficiency price data")
+    solar_usd_per_kw_mid: float | None = Field(default=None, gt=0, description="Set by the system: the median solar price; leave blank")
+    battery_usd_per_kwh_mid: float | None = Field(default=None, gt=0, description="Set by the system: the median battery price; leave blank")
+    efficiency_usd_per_kwh_mid: dict[str, float] | None = Field(default=None, description="Set by the system: median efficiency prices; leave blank")
+    efficiency_realization: list[float] | None = Field(default=None, description="Set by the system from the City's measured results; leave blank")
     federal_credit_open: bool = Field(
         default=False,
         description="True ONLY if search_ny_incentives_and_rules reported the federal credit as open",
     )
+
+
+def _efficiency_prices(inp: FinancialModelInput) -> dict[str, tuple[float, float]] | None:
+    """The real efficiency prices the system set on the input, as (low, high) pairs by level, or None."""
+    prices = inp.efficiency_usd_per_kwh
+    if not prices or not all(level in prices and len(prices[level]) == 2 for level in ("standard", "deep")):
+        return None
+    return {level: (float(pair[0]), float(pair[1])) for level, pair in prices.items()}
 
 
 def build_package(scenario_id: str, inp: FinancialModelInput) -> Package:
@@ -62,9 +86,12 @@ def build_package(scenario_id: str, inp: FinancialModelInput) -> Package:
     if sid == "B":
         # Spend on efficiency first, then put whatever budget is left into solar. The worst-case
         # (high) prices are used so the scenario stays within budget even if costs come in high.
-        eff_cost_high = inp.floor_area_sqft * EFFICIENCY_LEVELS["standard"]["usd_per_sqft"][1]
+        eff_cost_high = efficiency_cost_range(
+            "standard", inp.floor_area_sqft, inp.annual_use_kwh, _efficiency_prices(inp)
+        )[1]
         left = max(0.0, inp.budget_usd - eff_cost_high) if inp.budget_usd > 0 else 0.0
-        affordable_kw = left / COST_BENCHMARKS["solar_usd_per_kw_dc"][1]
+        high_price = inp.solar_usd_per_kw_high or COST_BENCHMARKS["solar_usd_per_kw_dc"][1]
+        affordable_kw = left / high_price
         return Package(efficiency_level="standard", solar_kw_dc=min(inp.full_array_kw_dc, affordable_kw))
     if sid == "C":
         return Package(
@@ -102,6 +129,24 @@ def run_financial_model(inp: FinancialModelInput) -> ToolResult:
         critical_load_kw=inp.critical_load_kw,
         goal_fraction=inp.goal_fraction,
         federal_credit_open=inp.federal_credit_open,
+        solar_usd_per_kw=(
+            (inp.solar_usd_per_kw_low, inp.solar_usd_per_kw_high)
+            if inp.solar_usd_per_kw_low and inp.solar_usd_per_kw_high
+            else None
+        ),
+        solar_price_basis=inp.solar_price_basis,
+        battery_usd_per_kwh=(
+            (inp.battery_usd_per_kwh_low, inp.battery_usd_per_kwh_high)
+            if inp.battery_usd_per_kwh_low and inp.battery_usd_per_kwh_high
+            else None
+        ),
+        battery_price_basis=inp.battery_price_basis,
+        efficiency_usd_per_kwh=_efficiency_prices(inp),
+        efficiency_price_basis=inp.efficiency_price_basis,
+        solar_usd_per_kw_mid=inp.solar_usd_per_kw_mid,
+        battery_usd_per_kwh_mid=inp.battery_usd_per_kwh_mid,
+        efficiency_usd_per_kwh_mid=inp.efficiency_usd_per_kwh_mid,
+        efficiency_realization=tuple(inp.efficiency_realization) if inp.efficiency_realization else None,
     )
     result = model_package(package, site)
 
@@ -119,7 +164,23 @@ def run_financial_model(inp: FinancialModelInput) -> ToolResult:
         # Solar sized for the whole roof can out-produce the building's use (v6); the part above 100% is surplus.
         "solar_alone_exceeds_use": solar_alone[1] > 100.0,
         "goal_pct": inp.goal_fraction * 100.0,
-        "assumption_text": benchmark_assumption_text(),
+        "assumption_text": benchmark_assumption_text(
+            site.solar_usd_per_kw, inp.solar_price_basis, site.battery_usd_per_kwh, inp.battery_price_basis,
+            site.efficiency_usd_per_kwh, inp.efficiency_price_basis, site.efficiency_realization,
+        ),
+        "solar_usd_per_kw": [inp.solar_usd_per_kw_low, inp.solar_usd_per_kw_high] if inp.solar_usd_per_kw_low else None,
+        "battery_usd_per_kwh": [inp.battery_usd_per_kwh_low, inp.battery_usd_per_kwh_high] if inp.battery_usd_per_kwh_low else None,
+        "solar_price_basis": inp.solar_price_basis or None,
+        "solar_price_source_url": inp.solar_price_source_url or None,
+        "efficiency_usd_per_kwh": inp.efficiency_usd_per_kwh,
+        "solar_usd_per_kw_mid": inp.solar_usd_per_kw_mid,
+        "battery_usd_per_kwh_mid": inp.battery_usd_per_kwh_mid,
+        "efficiency_usd_per_kwh_mid": inp.efficiency_usd_per_kwh_mid,
+        "efficiency_realization": inp.efficiency_realization,
+        "efficiency_price_basis": inp.efficiency_price_basis or None,
+        "efficiency_price_source_url": inp.efficiency_price_source_url or None,
+        "battery_price_basis": inp.battery_price_basis or None,
+        "battery_price_source_url": inp.battery_price_source_url or None,
         **result,
     }
     return ToolResult(

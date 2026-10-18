@@ -79,7 +79,7 @@ def _has_budget(profile: dict[str, Any]) -> bool:
 
 
 def _has_goal(profile: dict[str, Any]) -> bool:
-    goal = profile.get("goal") or profile.get("energy_goal")
+    goal = profile.get("goal") or profile.get("energy_goal") or profile.get("goal_percent")
     return bool(str(goal or "").strip())
 
 
@@ -671,6 +671,8 @@ def _run_context_issues(payload: RoadmapPayload, notes: AgentNotes) -> list[str]
                 issues.append(f"Solar production number used after PVWatts failed: {claim.text[:80]}")
 
     issues.extend(_roof_and_existing_issues(payload, notes, claims))
+    issues.extend(_intake_detail_issues(payload, notes, claims))
+    issues.extend(_law_link_issues(payload))
     issues.extend(_budget_gap_issues(payload, notes))
     issues.extend(_calc_id_issues(claims, notes))
 
@@ -749,6 +751,121 @@ def _roof_and_existing_issues(payload: RoadmapPayload, notes: AgentNotes, claims
     return issues
 
 
+_SCHOOL_OWNER_WORDS = re.compile(r"\bDCAS\b|public schools|\bSCA\b|school construction authority", re.I)
+_REROOF_WORDS = re.compile(
+    r"re-?roof\w*|roof[^.]{0,40}(?:replac|repair)\w*|(?:replac|repair)\w*[^.]{0,20}roof", re.I
+)
+_FUEL_WORDS = re.compile(r"natural gas|\boil\b|\bsteam\b|non-electric|heating fuel|\bfuel\b|gas[- ]fired", re.I)
+_NOT_MODELED_WORDS = re.compile(r"not modeled|does not model|did not model|not calculated|not covered|outside (?:the|this) model", re.I)
+_ANNUAL_BUDGET_WORDS = re.compile(r"annual|per year|each year|every year|yearly", re.I)
+_UPFRONT_WORDS = re.compile(r"total|upfront|up-front|one-time|lump", re.I)
+_LED_WORD = re.compile(r"\bLED\b")
+_LED_ALREADY = re.compile(
+    r"\b(?:already|existing|installed|have|has|in place|beyond|no further|nothing more|not a new)\b", re.I
+)
+
+
+_LAW_MENTION = re.compile(
+    r"\bLocal Law \d+|\bLL ?\d{2,3}\b|elective pay|direct pay|\bNY-Sun\b|\bU\.S\.C\.|\bIRC \d+", re.I
+)
+
+
+def _law_link_issues(payload: RoadmapPayload) -> list[str]:
+    """
+    v7: in section 7 (cost, financing and incentives), a FACT or ESTIMATE that names a law or incentive program must
+    carry a web link to its source.
+
+    A calculation id or the intake is not a source for a law, and without a link the reader cannot check the
+    rule. Only section 7 is held to this so far: it is where rules turn into dollars.
+    """
+    issues = []
+    for section in payload.sections:
+        if section.section_id != "7":
+            continue
+        for claim in section.claims:
+            if claim.label not in ("FACT", "ESTIMATE") or not _LAW_MENTION.search(claim.text):
+                continue
+            if not str(claim.source_url or "").startswith(("http://", "https://")):
+                issues.append(f"A law or program is named without a web link to its source: {claim.text[:80]}")
+    return issues
+
+
+_SNAKE_CASE = re.compile(r"\b[a-z]{2,}(?:_[a-z0-9]+)+\b")
+_INTERNAL_ID = re.compile(r"\b(?:A[1-9]\d?|C[1-4]|F-[ABC])\b")
+_TEAM_WORDS = re.compile(r"\bteam (?:placeholder|estimate|figure)s?\b|\bplaceholder\b", re.I)
+
+
+def _plain_language_issues(payload: RoadmapPayload) -> list[str]:
+    """
+    v7: a plan written for a facilities manager must not use the code's own words.
+
+    Rejected in any claim: internal field and flag names (words_with_underscores) and "team placeholder" / "placeholder".
+    Rejected in claims that are not assumptions: internal ids (A7, C1, F-B); the id belongs in the claim's assumption_id or
+    calc_id field, not in its sentence. An assumption sentence may begin with its id ("A4: ..."), which the screen strips.
+    Enforced for live runs only, so saved recordings made before this rule still replay as they were.
+    """
+    issues: list[str] = []
+    for section in payload.sections:
+        for claim in section.claims:
+            text = claim.text
+            if _SNAKE_CASE.search(text):
+                issues.append(f"Internal field or flag name in the text (write it in plain words): {text[:80]}")
+            if _TEAM_WORDS.search(text):
+                issues.append(f"Say 'planning estimate', not 'team placeholder' or 'placeholder': {text[:80]}")
+            if claim.label != "ASSUMPTION" and _INTERNAL_ID.search(text):
+                issues.append(f"Internal id (like A7, C1 or F-B) in the text; put it in the id field instead: {text[:80]}")
+    return issues
+
+
+def _intake_detail_issues(payload: RoadmapPayload, notes: AgentNotes, claims: list[Claim]) -> list[str]:
+    """
+    v7 rules for the optional intake answers (owner, roof condition, lighting, heating fuel, goal type, budget type).
+
+    Each rule only fires when the user answered that question, so a skipped question adds no requirement:
+    - all-LED lighting: LED cannot be recommended as a new measure.
+    - a poor roof: re-roofing is mentioned (sections 5, 8 or 10) because solar should not go on a failing roof.
+    - school owner (DOE): the plan names DCAS, NYC Public Schools or the SCA as the route (section 10).
+    - heating fuel that is not electricity: the plan says the fuel is outside an electricity goal (sections 2, 4 or 6).
+    - a goal that is not a percent cut: the plan says that goal is not modeled (section 1 or 12).
+    - an annual budget: the plan says the model treats the amount as one total (sections 6, 7 or 12).
+    """
+    issues: list[str] = []
+    site = notes.site_context
+    if site.get("lighting_type") == "led_all":
+        for claim in claims:
+            if (
+                claim.label == "RECOMMENDATION"
+                and _LED_WORD.search(claim.text)
+                and not _LED_ALREADY.search(claim.text)
+            ):
+                issues.append(f"LED lighting recommended as a new measure, but the user says all lighting is LED: {claim.text[:80]}")
+    if site.get("roof_condition") == "poor" or site.get("roof_age_20_plus"):
+        where = [t for sid in ("5", "8", "10") for t in _section_claims(payload, sid)]
+        if not any(_REROOF_WORDS.search(t) for t in where):
+            issues.append(
+                "The roof is rated poor or is 20 years old or more (the user or the city's LL24 record says so): "
+                "section 5, 8 or 10 must say the roof may need replacing or repair before solar."
+            )
+    if site.get("owner_agency") == "doe":
+        if not any(_SCHOOL_OWNER_WORDS.search(t) for t in _section_claims(payload, "10")):
+            issues.append("The building is a DOE school: section 10 must name DCAS, NYC Public Schools or the SCA as the approval route.")
+    fuel = site.get("heating_fuel")
+    if fuel and fuel != "electric":
+        where = [t for sid in ("2", "4", "6") for t in _section_claims(payload, sid)]
+        if not any(_FUEL_WORDS.search(t) for t in where):
+            issues.append("Heating is not electric: section 2, 4 or 6 must say the heating fuel is outside an electricity-use goal.")
+    goal_type = site.get("goal_type")
+    if goal_type and goal_type != "percent_reduction":
+        where = [t for sid in ("1", "12") for t in _section_claims(payload, sid)]
+        if not any(_NOT_MODELED_WORDS.search(t) for t in where):
+            issues.append("The goal is not a percent cut in electricity: section 1 or 12 must say that goal is not modeled.")
+    if site.get("budget_type_annual"):
+        where = [t for sid in ("6", "7", "12") for t in _section_claims(payload, sid)]
+        if not any(_ANNUAL_BUDGET_WORDS.search(t) and _UPFRONT_WORDS.search(t) for t in where):
+            issues.append("The budget is annual: section 6, 7 or 12 must say the model treats the amount as one total upfront figure.")
+    return issues
+
+
 def _budget_gap_issues(payload: RoadmapPayload, notes: AgentNotes) -> list[str]:
     """
     v6: when any scenario costs more than the budget, section 6 or 7 must say so in plain words.
@@ -813,6 +930,7 @@ def run_check4(
     user_message: str = "",
     require_all_sections: bool = True,
     notes: AgentNotes | None = None,
+    plain_language: bool = False,
 ) -> CheckResult:
     """
     Share gate: labels, sections, NYC-only rules, referrals, and no closed program in net cost.
@@ -866,6 +984,8 @@ def run_check4(
 
     if notes is not None and require_all_sections:
         issues.extend(_run_context_issues(payload, notes))
+    if plain_language:
+        issues.extend(_plain_language_issues(payload))
 
     promises = _has_promise_words(payload)
     if promises:

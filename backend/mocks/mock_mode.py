@@ -8,6 +8,9 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
 from pathlib import Path
 
 from django.conf import settings
@@ -17,8 +20,26 @@ from tools.base import ToolResult, ToolUnavailableError
 FIXTURES_ROOT = Path(__file__).resolve().parent / "fixtures"
 
 
+# A mode forced for the current request only (v6). The replay endpoint uses it so a saved demo always reads its
+# saved tool answers, even on a server set to live, without changing the setting other requests are using.
+_forced_tool_mode: ContextVar[str | None] = ContextVar("forced_tool_mode", default=None)
+
+
+@contextmanager
+def forced_tool_mode(mode: str) -> Iterator[None]:
+    """Make get_tool_mode() return this mode inside the with-block, for this request only."""
+    token = _forced_tool_mode.set(mode.strip().lower())
+    try:
+        yield
+    finally:
+        _forced_tool_mode.reset(token)
+
+
 def get_tool_mode() -> str:
-    """Read TOOL_MODE from Django settings or the environment (default mock)."""
+    """Read TOOL_MODE from a forced mode, Django settings or the environment (default mock)."""
+    forced = _forced_tool_mode.get()
+    if forced:
+        return forced
     return getattr(settings, "TOOL_MODE", os.environ.get("TOOL_MODE", "mock")).strip().lower()
 
 

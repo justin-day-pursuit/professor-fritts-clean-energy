@@ -120,7 +120,25 @@ export interface IntakeProfile {
   goal?: string;
   target_year?: number | string;
   critical_loads?: string;
+  /** Old name for backup_hours_wanted; kept so saved sessions still load. The form no longer writes it. */
   critical_load_hours?: number | string;
+  /** Size in kW of the loads that must keep running in an outage, and how many hours of backup are wanted. */
+  critical_load_kw?: number | string;
+  /** The user's own electricity price in dollars per kWh (optional). When set, savings use it instead of the state average. */
+  electricity_rate_usd_per_kwh?: number | string;
+  backup_hours_wanted?: number | string;
+  /** Goal as a percent cut in grid electricity (5 to 100). The financial model uses this number directly. */
+  goal_percent?: number | string;
+  /** What the goal is about; only "percent_reduction" is calculated, the rest are noted in the plan. */
+  goal_type?: string;
+  /** Pick-list answers; "unknown" means the user chose "Don't know". */
+  owner_agency?: string;
+  roof_condition?: string;
+  lighting_type?: string;
+  lighting_retrofit_year?: number | string;
+  heating_fuel?: string;
+  cooling_type?: string;
+  has_building_controls?: string;
   /** Usable roof area (sq ft) an engineer or roofer verified. Needed before solar is sized on a roof that is not flat. */
   verified_usable_roof_sqft?: number | string;
   /** Solar already on the roof: size in kW DC and what it makes in a year. */
@@ -189,4 +207,25 @@ export interface RoofSuggestion {
   source_url: string;
   retrieved_at: string;
   note: string;
+}
+
+/** One saved demo the planner can replay (GET /api/replay/cases). kind says whether it is Claude's own recorded run or our script. */
+export interface ReplayCase {
+  id: string;
+  label: string;
+  tag: string;
+  kind: "recorded" | "scripted" | string;
+  question: string;
+}
+
+export interface ReplayCaseListResponse {
+  cases: ReplayCase[];
+}
+
+/** POST /api/replay/{case}: the session, the plan message and the whole run, returned at once so the page can play it back. */
+export interface ReplayResponse {
+  session: SessionResponse;
+  message: MessageResponse | null;
+  run: RunResponse;
+  case: ReplayCase;
 }

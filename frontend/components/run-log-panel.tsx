@@ -6,6 +6,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useEffect, useRef } from "react";
 import type { RunEventResponse, RunResponse, ToolResultPayload } from "@/lib/types";
 
 export interface RunLogPanelProps {
@@ -123,6 +124,12 @@ function EventRow({ event }: { event: RunEventResponse }) {
 export function RunLogPanel({ runs, selectedRunId, onSelectRun }: RunLogPanelProps) {
   const run = runs.find((r) => r.id === selectedRunId) ?? runs[runs.length - 1];
   const events = [...(run?.events ?? [])].sort((a, b) => a.seq - b.seq);
+  // While a run is still going (a live run, or a saved replay playing back), keep the newest step in view.
+  const endRef = useRef<HTMLDivElement | null>(null);
+  const running = run?.status === "running";
+  useEffect(() => {
+    if (running) endRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+  }, [running, events.length]);
 
   return (
     <div className="flex flex-col h-full min-h-0 gap-2">
@@ -155,6 +162,7 @@ export function RunLogPanel({ runs, selectedRunId, onSelectRun }: RunLogPanelPro
           {events.map((ev) => (
             <EventRow key={ev.id} event={ev} />
           ))}
+          <div ref={endRef} />
         </div>
       </ScrollArea>
     </div>

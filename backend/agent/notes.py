@@ -18,6 +18,18 @@ from tools.roof import number_from_profile, roof_kind, verified_usable_area
 NO_SYSTEM_WORDS = frozenset({"none", "no", "n/a", "na", "nothing", "not applicable", "0"})
 
 
+# Plain names for the link list, instead of the internal tool names.
+TOOL_SOURCE_LABELS = {
+    "lookup_ny_building_records": "NYC PLUTO tax-lot record",
+    "get_solar_production": "NREL PVWatts solar output",
+    "get_utility_rates": "EIA electricity prices",
+    "get_utility_tariff": "Utility tariff",
+    "search_ny_incentives_and_rules": "Incentive and rules page",
+    "get_hazard_context": "FEMA flood map",
+    "optimize_solar_storage": "Battery sizing",
+}
+
+
 class AgentNotes(BaseModel):
     """
     In-memory state for one run; saved inside run output for debugging.
@@ -41,6 +53,52 @@ class AgentNotes(BaseModel):
     quarantined_sources: list[dict[str, str]] = Field(default_factory=list)
     # Site facts that trigger extra referrals in Check 4: flood_zone, landmark, parkland.
     site_context: dict[str, Any] = Field(default_factory=dict)
+    # Every web page the plan's numbers and rules rest on, collected by code (not by the model) so the plan can
+    # always link back to them: {label, url, retrieved_at, sample}. "sample" is True for saved sample data.
+    source_links: list[dict[str, Any]] = Field(default_factory=list)
+
+    def next_steps(self) -> list[dict[str, str]]:
+        """Official pages to go to next, picked from what this run learned about the building (tools/next_steps.py)."""
+        from tools.next_steps import next_steps_for
+
+        has_battery = any(
+            cid.startswith("F-") and (data.get("package") or {}).get("battery_kwh", 0) > 0
+            for cid, data in self.calculations.items()
+        )
+        return next_steps_for(self.site_context, has_battery)
+
+    def add_source_link(self, label: str, url: str | None, retrieved_at: str = "", sample: bool = False) -> None:
+        """Remember one clickable source (web addresses only, once per address; quarantined pages are skipped)."""
+        if not url or not str(url).startswith(("http://", "https://")):
+            return
+        if url in self.quarantined_urls() or any(s["url"] == url for s in self.source_links):
+            return
+        self.source_links.append({"label": label, "url": url, "retrieved_at": retrieved_at, "sample": sample})
+
+    def _collect_source_links(self, tool_name: str, result: ToolResult) -> None:
+        """Pull every web link out of a tool result: its own source, the extra sources in its data, and each program's pages."""
+        data = result.data
+        label = TOOL_SOURCE_LABELS.get(tool_name, tool_name)
+        self.add_source_link(label, result.source_url, result.retrieved_at, sample=result.mock)
+        for key, label in (
+            ("footprints_source_url", "NYC building footprints"),
+            ("ll84_source_url", "NYC Local Law 84 energy report"),
+            ("ll24_source_url", "NYC Local Law 24 solar readiness"),
+            ("solar_price_source_url", "NYSERDA solar project costs"),
+            ("battery_price_source_url", "NYSERDA battery storage project costs"),
+            ("efficiency_price_source_url", "NYSERDA completed efficiency project costs"),
+        ):
+            self.add_source_link(label, data.get(key), result.retrieved_at)
+        if data.get("efficiency_realization"):
+            from tools.financial import EFFICIENCY_REALIZATION_URL
+
+            self.add_source_link("NYC DCAS Local Law 87 report (measured savings realization)", EFFICIENCY_REALIZATION_URL, result.retrieved_at)
+        for tariff in data.get("candidate_tariffs") or []:
+            self.add_source_link(str(tariff.get("tariff_name") or "Utility tariff"), tariff.get("openei_url"), result.retrieved_at)
+        for program in data.get("programs") or []:
+            name = str(program.get("name") or "program")
+            self.add_source_link(name, program.get("source_url"), result.retrieved_at, sample=result.mock)
+            self.add_source_link(f"{name} (statute or rule text)", program.get("statute_url"), result.retrieved_at, sample=result.mock)
 
     def record_tool_failure(self, tool_name: str, error: str) -> None:
         """Remember that a tool returned no data, and flag it so section 12 must explain the gap."""
@@ -61,6 +119,7 @@ class AgentNotes(BaseModel):
         verified = verified_usable_area(profile)
         if verified is not None:
             self.site_context["verified_usable_roof_sqft"] = verified
+        self._record_intake_details(profile)
         parts: list[str] = []
         solar_kw = number_from_profile(profile, "existing_solar_kw")
         if solar_kw:
@@ -72,6 +131,48 @@ class AgentNotes(BaseModel):
                 parts.append(f"{label}: {text}")
         if parts:
             self.site_context["existing_systems"] = "; ".join(parts)
+
+    def _record_intake_details(self, profile: dict[str, Any]) -> None:
+        """
+        Remember the optional intake answers that change what the plan must say (Check 4 reads them).
+
+        Only answers that matter are kept: "unknown" and blank are skipped, so a user who skipped these
+        questions adds no new requirement.
+        """
+
+        def answer(key: str) -> str:
+            value = str(profile.get(key) or "").strip().lower()
+            return "" if value in ("", "unknown") else value
+
+        owner = answer("owner_agency")
+        if owner:
+            self.site_context["owner_agency"] = owner
+            if owner == "parks":
+                self.site_context["parkland"] = True
+        for key in ("roof_condition", "lighting_type", "heating_fuel", "goal_type"):
+            if answer(key):
+                self.site_context[key] = answer(key)
+
+    def _record_city_records(self, data: dict[str, Any]) -> None:
+        """
+        Remember what the city's LL24 roof assessment says, so Check 4 can hold the plan to it (v7).
+
+        The city's word fills a blank only: anything the user answered in the intake is kept. An agency of DOE
+        means a public school, a roof rated poor (or between fair and poor) counts as poor, and a roof 20 years
+        old or more is noted so the plan raises re-roofing before solar.
+        """
+        ll24 = data.get("ll24") or {}
+        if not ll24:
+            return
+        if str(ll24.get("agency") or "").strip().upper() == "DOE":
+            self.site_context.setdefault("owner_agency", "doe")
+        if "poor" in str(ll24.get("roof_condition") or "").lower():
+            self.site_context.setdefault("roof_condition", "poor")
+        age = str(ll24.get("roof_age") or "").lower()
+        if age.startswith(("20", "> 20", ">20", "over 20", "more than 20")):
+            self.site_context["roof_age_20_plus"] = True
+        if ll24.get("solar_ready") is False:
+            self.site_context["city_not_solar_ready"] = True
 
     def record_quarantine(self, tool_name: str, source_url: str, reason: str, name: str = "") -> None:
         """Remember a page that was ignored for hidden instructions (once per address)."""
@@ -99,6 +200,7 @@ class AgentNotes(BaseModel):
             "data_keys": list(result.data.keys()),
         }
         self.tool_calls.append(entry)
+        self._collect_source_links(tool_name, result)
         if result.source_url:
             self.sources.append(
                 {
@@ -107,6 +209,8 @@ class AgentNotes(BaseModel):
                     "retrieved_at": result.retrieved_at,
                 }
             )
+        if tool_name == "lookup_ny_building_records":
+            self._record_city_records(result.data)
         if tool_name == "get_building_profile":
             self.building_facts.update(result.data.get("profile", {}))
             building_type = str(result.data.get("profile", {}).get("building_type") or "").lower()
@@ -117,8 +221,12 @@ class AgentNotes(BaseModel):
             # A7 (v2): until a building model exists (phase 2), efficiency savings are a benchmark range.
             self.assumptions.setdefault(
                 "A7",
-                "Efficiency measures (LED and controls) save 10-20% of annual use, from published benchmarks, not a building model.",
+                "Efficiency measures (LED and controls) save 10-20% of annual use. This is a planning estimate, not a cited benchmark and not a building model.",
             )
+            # The user chose annual funding, but the model treats the amount as one upfront total. Say so.
+            if str(result.data.get("profile", {}).get("budget_type") or "").strip().lower() in ("annual", "per year", "yearly"):
+                self.flags.append("budget_type_annual_not_modeled")
+                self.site_context["budget_type_annual"] = True
             # A8 (case 2): no bills means the baseline is a benchmark, which must be labeled as a guess.
             if "annual_kwh" in (result.data.get("missing_fields") or []):
                 floor_area = result.data.get("profile", {}).get("floor_area_sqft")
@@ -126,7 +234,7 @@ class AgentNotes(BaseModel):
                     "A8",
                     "No bills uploaded: annual use is a benchmark of 9 kWh per sq ft"
                     + (f" x {floor_area} sq ft" if floor_area else "")
-                    + " for a NYC school, not measured use.",
+                    + " (a planning estimate for a typical NYC public building, not measured use).",
                 )
 
         # Check 4 only accepts an ASSUMPTION whose id is already in this register.
@@ -162,7 +270,7 @@ class AgentNotes(BaseModel):
             self.calculations[result.data["calc_id"]] = result.data
             self.assumptions.setdefault("A9", str(result.data.get("assumption_text", "Benchmark prices")))
 
-        if tool_name == "optimize_solar_storage" and result.mock:
+        if tool_name == "optimize_solar_storage" and (result.mock or "battery_inputs_estimated" in result.flags):
             notes_desc = result.data.get("notes") or "Sample battery sizing for 8-hour backup; critical loads are not metered"
             self.assumptions.setdefault("A4", str(notes_desc))
 

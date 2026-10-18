@@ -1,0 +1,65 @@
+{
+  "tool": "lookup_ny_building_records",
+  "data": {
+    "address": "1869 WALTON AVENUE",
+    "borough": "Bronx",
+    "bbl": "2028510021",
+    "zipcode": "10453",
+    "gross_floor_area_sqft": 46700.0,
+    "lot_area_sqft": 23750.0,
+    "lot_matches_intake_floor": false,
+    "num_floors": 4.0,
+    "year_built": 1994,
+    "building_class": "W1",
+    "land_use_code": "8",
+    "landmark_flag": false,
+    "differs_from_intake": [],
+    "geocoder_match": "1871 WALTON AVENUE, Bronx, NY, USA",
+    "footprint_total_sqft": 10255,
+    "footprint_building_count": 1,
+    "footprint_buildings_sqft": [
+      10255
+    ],
+    "footprints_error": null,
+    "footprints_source_url": "https://data.cityofnewyork.us/City-Government/Building-Footprints/5zhs-2jue",
+    "ll84": {
+      "report_year": 2024,
+      "property_name": "X173 (OECID: 0201232; BBL: 2028510021)",
+      "property_type": "K-12 School",
+      "gross_floor_area_sqft": 43760.0,
+      "site_eui_kbtu_per_sqft": 57.6,
+      "weather_normalized_site_eui": 58.3,
+      "energy_star_score": 69.0,
+      "electricity_kwh": 456834.0,
+      "natural_gas_kbtu": 893000.0,
+      "fuel_oil_kbtu": 69276.0,
+      "district_steam_kbtu": null,
+      "year_built": 1994
+    },
+    "ll84_source_url": "https://data.cityofnewyork.us/Environment/NYC-Building-Energy-and-Water-Data-Disclosure-for-Local-Law-84/5zyy-y8am",
+    "ll24": {
+      "agency": "DOE",
+      "site": "X173",
+      "status": "Not Solar Ready",
+      "solar_ready": false,
+      "roof_condition": "Fair",
+      "roof_age": "20 years or more",
+      "report_year": 2024,
+      "installed_kw": null,
+      "estimated_annual_production_kwh": null,
+      "upfront_project_cost_usd": null,
+      "financing_mechanism": null,
+      "city_council_district": "14"
+    },
+    "ll24_source_url": "https://data.cityofnewyork.us/City-Government/Solar-Readiness-Assessments-Local-Law-24/cfz5-6fvh",
+    "city_energy_errors": []
+  },
+  "source_url": "https://data.cityofnewyork.us/City-Government/Primary-Land-Use-Tax-Lot-Output-PLUTO-/64uk-42ks",
+  "retrieved_at": "2026-10-17T07:31:55Z",
+  "dataset_version": "pluto-26v2",
+  "mock": false,
+  "stale": false,
+  "flags": [
+    "city_roof_not_solar_ready"
+  ]
+}

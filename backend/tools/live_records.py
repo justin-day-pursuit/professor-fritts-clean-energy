@@ -15,6 +15,13 @@ from typing import Any
 import httpx
 
 from tools.base import ToolResult
+from tools.city_energy import (
+    LL24_SOURCE_URL,
+    LL84_SOURCE_URL,
+    CityEnergyError,
+    fetch_ll24,
+    fetch_ll84,
+)
 from tools.footprints import FOOTPRINTS_SOURCE_URL, FootprintError, fetch_footprints
 from tools.geocode import borough_of, geocode_nyc_address, is_approximate
 from tools.web import get_with_retry
@@ -118,6 +125,20 @@ def compare_roof_with_footprints(profile: dict[str, Any], footprint_total: float
     return {"field": "roof_area_sqft", "intake": typed, "city_record": footprint_total}
 
 
+# A typed annual use is flagged when it is more than a quarter away from the city's measured electricity.
+ENERGY_MISMATCH_SHARE = 0.25
+
+
+def compare_energy_with_ll84(profile: dict[str, Any], city_kwh: float | None) -> dict[str, Any] | None:
+    """Return a difference note when the typed annual kWh is far from the LL84 measured kWh, else None."""
+    typed = _number(profile.get("annual_kwh"))
+    if not typed or not city_kwh:
+        return None
+    if abs(typed - city_kwh) / city_kwh <= ENERGY_MISMATCH_SHARE:
+        return None
+    return {"field": "annual_kwh", "intake": typed, "city_record": city_kwh}
+
+
 def fetch_live_building_records(profile: dict[str, Any], address: str | None = None) -> ToolResult:
     """Look up the tax lot for the building's address and return its city records."""
     address = address or profile.get("address")
@@ -165,7 +186,28 @@ def fetch_live_building_records(profile: dict[str, Any], address: str | None = N
     if roof_difference:
         differences.append(roof_difference)
 
+    # v7: the city's own energy report (LL84) and roof assessment (LL24) for this lot. Each lookup can fail or
+    # find nothing without failing the records tool; the plan then just has no city record for that part.
+    ll84: dict[str, Any] | None = None
+    ll24: dict[str, Any] | None = None
+    city_energy_errors: list[str] = []
+    for label, fetch in (("ll84", fetch_ll84), ("ll24", fetch_ll24)):
+        try:
+            found = fetch(place["bbl"])
+        except CityEnergyError as exc:
+            city_energy_errors.append(f"{label}: {exc}")
+            continue
+        if label == "ll84":
+            ll84 = found
+        else:
+            ll24 = found
+    energy_difference = compare_energy_with_ll84(profile, (ll84 or {}).get("electricity_kwh"))
+    if energy_difference:
+        differences.append(energy_difference)
+
     flags = [f"intake_mismatch:{d['field']}" for d in differences]
+    if ll24 and not ll24["solar_ready"]:
+        flags.append("city_roof_not_solar_ready")
     if is_approximate(place):
         flags.append("address_match_approximate")
     # Confidence 0.8 can still point at a lot whose official street is not the one we asked for.
@@ -198,6 +240,12 @@ def fetch_live_building_records(profile: dict[str, Any], address: str | None = N
             "footprints_error": footprints_error,
             # The outlines come from a different dataset than the rest of this record; cite this address for them.
             "footprints_source_url": FOOTPRINTS_SOURCE_URL if footprints else None,
+            # Local Law 84 energy report (measured use) and Local Law 24 roof assessment, each with its own source.
+            "ll84": ll84,
+            "ll84_source_url": LL84_SOURCE_URL if ll84 else None,
+            "ll24": ll24,
+            "ll24_source_url": LL24_SOURCE_URL if ll24 else None,
+            "city_energy_errors": city_energy_errors,
         },
         source_url=PLUTO_SOURCE_URL,
         retrieved_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),

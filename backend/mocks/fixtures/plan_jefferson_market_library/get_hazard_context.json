@@ -1,0 +1,18 @@
+{
+  "tool": "get_hazard_context",
+  "data": {
+    "flood_zone": "X",
+    "zone_subtype": "AREA OF MINIMAL FLOOD HAZARD",
+    "special_flood_hazard_area": false,
+    "notes": "FEMA effective flood map (current), read at the address point. NYC code uses the more restrictive of the effective and 2015 preliminary maps; the preliminary map was not checked. Heat and winter-storm ratings were not looked up.",
+    "geocoder_match": "425 6 AVENUE, New York, NY, USA"
+  },
+  "source_url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
+  "retrieved_at": "2026-10-17T07:39:28Z",
+  "dataset_version": "fema-nfhl-effective",
+  "mock": false,
+  "stale": false,
+  "flags": [
+    "hazard_partial"
+  ]
+}

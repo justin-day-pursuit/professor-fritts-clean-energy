@@ -1,0 +1,15 @@
+{
+  "retrieved_at": "2026-10-16T15:00:00Z",
+  "dataset_version": "fema-nfhl-effective-2026-10-16",
+  "mock": false,
+  "stale": false,
+  "source_url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer",
+  "tool": "get_hazard_context",
+  "data": {
+    "flood_zone": "X",
+    "zone_subtype": "AREA OF MINIMAL FLOOD HAZARD",
+    "flood_rating": "minimal",
+    "notes": "FEMA National Flood Hazard Layer, effective map, point lookup at the school (40.8489, -73.9095). Heat and winter-storm ratings were not looked up."
+  },
+  "flags": []
+}

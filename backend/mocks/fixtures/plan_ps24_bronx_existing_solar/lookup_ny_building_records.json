@@ -1,0 +1,74 @@
+{
+  "tool": "lookup_ny_building_records",
+  "data": {
+    "address": "660 WEST 235 STREET",
+    "borough": "Bronx",
+    "bbl": "2059170140",
+    "zipcode": "10471",
+    "gross_floor_area_sqft": 135600.0,
+    "lot_area_sqft": 140975.0,
+    "lot_matches_intake_floor": false,
+    "num_floors": 3.0,
+    "year_built": 1953,
+    "building_class": "W1",
+    "land_use_code": "8",
+    "landmark_flag": false,
+    "differs_from_intake": [
+      {
+        "field": "floor_area_sqft",
+        "intake": 115325.0,
+        "city_record": 135600.0
+      }
+    ],
+    "geocoder_match": "660 WEST 236 STREET, Bronx, NY, USA",
+    "footprint_total_sqft": 40497,
+    "footprint_building_count": 2,
+    "footprint_buildings_sqft": [
+      40051,
+      446
+    ],
+    "footprints_error": null,
+    "footprints_source_url": "https://data.cityofnewyork.us/City-Government/Building-Footprints/5zhs-2jue",
+    "ll84": {
+      "report_year": 2024,
+      "property_name": "X024 (OECID: 0200059; BBL: 2059170140)",
+      "property_type": "K-12 School",
+      "gross_floor_area_sqft": 115325.0,
+      "site_eui_kbtu_per_sqft": 48.4,
+      "weather_normalized_site_eui": 51.9,
+      "energy_star_score": 93.0,
+      "electricity_kwh": 226605.0,
+      "natural_gas_kbtu": 4353100.1,
+      "fuel_oil_kbtu": null,
+      "district_steam_kbtu": null,
+      "year_built": 1953
+    },
+    "ll84_source_url": "https://data.cityofnewyork.us/Environment/NYC-Building-Energy-and-Water-Data-Disclosure-for-Local-Law-84/5zyy-y8am",
+    "ll24": {
+      "agency": "DOE",
+      "site": "X024 - Spuyten Duyvil School",
+      "status": "Completed",
+      "solar_ready": false,
+      "roof_condition": null,
+      "roof_age": null,
+      "report_year": 2024,
+      "installed_kw": 228.2,
+      "estimated_annual_production_kwh": 249879.0,
+      "upfront_project_cost_usd": null,
+      "financing_mechanism": "PPA",
+      "city_council_district": "11"
+    },
+    "ll24_source_url": "https://data.cityofnewyork.us/City-Government/Solar-Readiness-Assessments-Local-Law-24/cfz5-6fvh",
+    "city_energy_errors": []
+  },
+  "source_url": "https://data.cityofnewyork.us/City-Government/Primary-Land-Use-Tax-Lot-Output-PLUTO-/64uk-42ks",
+  "retrieved_at": "2026-10-17T07:42:38Z",
+  "dataset_version": "pluto-26v2",
+  "mock": false,
+  "stale": false,
+  "flags": [
+    "intake_mismatch:floor_area_sqft",
+    "city_roof_not_solar_ready",
+    "address_street_mismatch"
+  ]
+}

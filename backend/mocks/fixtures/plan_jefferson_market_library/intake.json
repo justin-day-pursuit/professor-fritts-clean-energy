@@ -1,0 +1,23 @@
+{
+  "city": "New York",
+  "state": "NY",
+  "utility": "Con Edison",
+  "goal": "Cut grid electricity 30% by 2030",
+  "target_year": 2030,
+  "building_name": "Jefferson Market Library (NYPL)",
+  "address": "425 6th Avenue",
+  "borough": "Manhattan",
+  "building_type": "library",
+  "floor_area_sqft": 18643,
+  "year_built": 1877,
+  "roof_type": "pitched",
+  "roof_area_sqft": 7020,
+  "annual_kwh": 268331,
+  "budget_amount": 500000,
+  "budget_year": 2027,
+  "budget_type": "capital",
+  "critical_loads": "reading room cooling and lighting",
+  "existing_renewables": "none",
+  "existing_efficiency": "none",
+  "goal_percent": 30
+}

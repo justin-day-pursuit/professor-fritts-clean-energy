@@ -5,6 +5,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { ClaimSource } from "@/components/claim-source";
 import { LabelBadge } from "@/components/label-badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { downloadRoadmapJson, downloadRoadmapMarkdown } from "@/lib/api";
@@ -96,6 +97,7 @@ export function RoadmapPanel({ run }: RoadmapPanelProps) {
               <li key={`ref-${i}`} className="text-sm space-y-1">
                 <LabelBadge label={claim.label} confidence={claim.confidence} />
                 <p>{claim.text}</p>
+                <ClaimSource claim={claim} />
               </li>
             ))}
           </ul>
@@ -105,7 +107,18 @@ export function RoadmapPanel({ run }: RoadmapPanelProps) {
       <ScrollArea className="flex-1 min-h-[240px] rounded-md border p-3">
         {markdown ? (
           <article className="prose prose-sm dark:prose-invert max-w-none">
-            <ReactMarkdown>{markdown}</ReactMarkdown>
+            {/* Links in the plan (claim sources and the closing "Source links" list) open in a new tab. */}
+            <ReactMarkdown
+              components={{
+                a: ({ href, children }) => (
+                  <a href={href} target="_blank" rel="noreferrer">
+                    {children}
+                  </a>
+                ),
+              }}
+            >
+              {markdown}
+            </ReactMarkdown>
           </article>
         ) : (
           <p className="text-sm text-muted-foreground">No markdown on this run yet.</p>
@@ -120,6 +133,7 @@ export function RoadmapPanel({ run }: RoadmapPanelProps) {
               <li key={`claim-${i}`} className="flex flex-col gap-1">
                 <LabelBadge label={claim.label} confidence={claim.confidence} />
                 <span>{claim.text}</span>
+                <ClaimSource claim={claim} />
               </li>
             ))}
           </ul>

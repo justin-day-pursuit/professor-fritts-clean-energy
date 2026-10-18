@@ -1,0 +1,49 @@
+{
+ "status": "done",
+ "tool_calls": 15,
+ "usage": {
+  "input_tokens": 64,
+  "output_tokens": 13694,
+  "cache_creation_input_tokens": 35739,
+  "cache_read_input_tokens": 325409,
+  "calls": 16,
+  "estimated_usd": 0.2915,
+  "models": [
+   "claude-sonnet-5-5"
+  ]
+ },
+ "check4": "check4_pass",
+ "issues": null,
+ "notes_flags": [
+  "missing_field:roof_replaced_year",
+  "city_roof_not_solar_ready",
+  "statewide_average_rate",
+  "hazard_partial",
+  "battery_inputs_estimated"
+ ],
+ "site_context": {
+  "roof_kind": "flat",
+  "owner_agency": "doe",
+  "roof_age_20_plus": true,
+  "city_not_solar_ready": true,
+  "flood_zone": "X"
+ },
+ "tools": [
+  "get_building_profile",
+  "lookup_ny_building_records",
+  "calculate",
+  "calculate",
+  "get_solar_production",
+  "get_utility_rates",
+  "calculate",
+  "calculate",
+  "calculate",
+  "search_ny_incentives_and_rules",
+  "get_hazard_context",
+  "optimize_solar_storage",
+  "run_financial_model",
+  "run_financial_model",
+  "run_financial_model"
+ ],
+ "errors": []
+}

@@ -382,10 +382,10 @@ def test_approved_sources_keep_state_pages_and_only_con_edison():
 
 
 def test_hazard_fixture_has_prd_fields_and_stays_mock(monkeypatch):
-    """get_hazard_context stays a saved FEMA stand-in, with the fields the PRD lists."""
+    """In mock mode get_hazard_context is a saved FEMA stand-in, with the fields the PRD lists (live mode reads FEMA)."""
     from django.conf import settings
 
-    monkeypatch.setattr(settings, "TOOL_MODE", "live")
+    monkeypatch.setattr(settings, "TOOL_MODE", "mock")
     for case in ("case1_queens_library", "case2_bronx_school"):
         result = execute_tool("get_hazard_context", {}, session_profile={}, fixture_case=case)
         assert result.mock is True

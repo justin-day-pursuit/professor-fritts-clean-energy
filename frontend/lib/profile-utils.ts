@@ -13,6 +13,11 @@ const NUMERIC_KEYS: (keyof IntakeProfile)[] = [
   "budget_year",
   "target_year",
   "critical_load_hours",
+  "critical_load_kw",
+  "electricity_rate_usd_per_kwh",
+  "backup_hours_wanted",
+  "goal_percent",
+  "lighting_retrofit_year",
   "verified_usable_roof_sqft",
   "existing_solar_kw",
   "existing_solar_kwh",
@@ -88,7 +93,7 @@ export function missingRequiredFields(profile: IntakeProfile): string[] {
 }
 
 export function emptyProfile(): IntakeProfile {
-  return { state: "NY", budget_type: "capital" };
+  return { state: "NY", budget_type: "capital", goal_percent: DEFAULT_GOAL_PERCENT };
 }
 
 /**
@@ -109,3 +114,69 @@ export const ROOF_TYPES = [
 export function isNotFlat(roofType: string | undefined): boolean {
   return roofType === "pitched" || roofType === "mixed" || roofType === "other";
 }
+
+/** The goal percent the form starts with, and the quick-pick presets under the slider. */
+export const DEFAULT_GOAL_PERCENT = 30;
+export const GOAL_PRESETS = [10, 20, 30, 50] as const;
+
+/** Added to every optional pick-list so a user is never forced to guess. The backend treats "unknown" as blank. */
+const DONT_KNOW = { value: "unknown", label: "Don't know" } as const;
+
+/**
+ * Pick-lists for the optional intake questions. The values are what the backend reads (see
+ * backend/agent/notes.py, _record_intake_details, and agent/checks.py, _intake_detail_issues), so
+ * change a value there and here together. A new option only needs a row here.
+ */
+export const OWNER_AGENCIES = [
+  { value: "doe", label: "NYC Department of Education (public school)" },
+  { value: "parks", label: "NYC Parks" },
+  { value: "hhc", label: "NYC Health + Hospitals" },
+  { value: "nycha", label: "NYCHA" },
+  { value: "other_city", label: "Other city agency" },
+  { value: "other", label: "Other" },
+  DONT_KNOW,
+] as const;
+
+export const ROOF_CONDITIONS = [
+  { value: "good", label: "Good (under about 10 years old)" },
+  { value: "fair", label: "Fair" },
+  { value: "poor", label: "Poor or near the end of its life" },
+  DONT_KNOW,
+] as const;
+
+export const LIGHTING_TYPES = [
+  { value: "led_all", label: "All LED" },
+  { value: "led_partial", label: "Some LED" },
+  { value: "fluorescent", label: "Mostly fluorescent" },
+  { value: "incandescent_mixed", label: "Incandescent or mixed" },
+  DONT_KNOW,
+] as const;
+
+export const HEATING_FUELS = [
+  { value: "electric", label: "Electric" },
+  { value: "natural_gas", label: "Natural gas" },
+  { value: "oil", label: "Oil" },
+  { value: "steam", label: "District steam" },
+  { value: "mixed", label: "Mixed" },
+  DONT_KNOW,
+] as const;
+
+export const COOLING_TYPES = [
+  { value: "central_ac", label: "Central air conditioning" },
+  { value: "window_units", label: "Window units" },
+  { value: "none", label: "No cooling" },
+  DONT_KNOW,
+] as const;
+
+export const YES_NO = [
+  { value: "yes", label: "Yes" },
+  { value: "no", label: "No" },
+  DONT_KNOW,
+] as const;
+
+export const GOAL_TYPES = [
+  { value: "percent_reduction", label: "Cut grid electricity by a percent" },
+  { value: "cost_savings", label: "Lower energy bills" },
+  { value: "resilience", label: "Backup power in outages" },
+  { value: "net_zero", label: "Net zero or fully renewable" },
+] as const;
