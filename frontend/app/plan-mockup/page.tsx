@@ -22,7 +22,9 @@ import { buildingTypeLabel, fetchBuildingRecord, numberOf, ownerKind, type Addre
 import { FrittsGuide, type GuideAction } from "./fritts/FrittsGuide";
 import { poseForStep, type Placement, type PoseName } from "./fritts/poses";
 import { planRun } from "./fritts/runPlan";
-import { ADDRESS_ERROR, ADDRESS_LOOKING, ADDRESS_NOT_FOUND, ADDRESS_START, BRING, BRING_REPLY, CONFIRM_REPLY, HELLO, INTAKE_STEP, PDF_SAYS, PRIVATE_BUILDING, REPORT_MENU, foundLine, readyLine, shareLine, unclearOwner, workingLine } from "./fritts/script";
+import { getBuildingPrefill } from "@/lib/api";
+import type { BuildingPrefill, PrefillItem } from "@/lib/types";
+import { ADDRESS_ERROR, ADDRESS_LOOKING, ADDRESS_NOT_FOUND, ADDRESS_START, BRING, BRING_REPLY, CONFIRM_REPLY, HELLO, INTAKE_STEP, PDF_SAYS, PREFILL_STEP, PRIVATE_BUILDING, REPORT_MENU, foundLine, readyLine, shareLine, unclearOwner, workingLine } from "./fritts/script";
 import { plainify } from "./plain";
 import { copyShareLink, downloadPlanPdf } from "./plan-actions";
 import { Results } from "./plan-view";
@@ -203,6 +205,22 @@ function Field({ label, value, hint }: { label: string; value: string | number |
   );
 }
 
+/** The values the city's records suggested for the form, found by name, with a sentence saying where each came from. */
+function prefillOf(prefill: BuildingPrefill | null, field: string): PrefillItem | undefined {
+  return prefill?.items.find((item) => item.field === field);
+}
+
+/** The number or text to show in a box (the yes/no solar-ready answer is shown as a sentence instead, so it has no box value). */
+function prefillValue(prefill: BuildingPrefill | null, field: string): string | number | undefined {
+  const value = prefillOf(prefill, field)?.value;
+  return typeof value === "boolean" ? undefined : value;
+}
+
+/** The small print under a pre-filled box: where the value came from and what to keep in mind. */
+function prefillHint(item: PrefillItem | undefined, fallback?: string): string | undefined {
+  return item ? `From ${item.source}. ${item.note}` : fallback;
+}
+
 function Found({ children }: { children: ReactNode }) {
   return (
     <div className="flex items-start gap-2 text-sm text-[var(--fr-ink)]">
@@ -238,6 +256,8 @@ interface IntakeProps {
   /** "search": the visitor looks up their own address. "sample": the form is pre-filled from a saved sample. */
   mode: "search" | "sample";
   found: FoundBuilding | null;
+  /** What the city's free records suggest for this building, or null while it is loading, was not reachable, or no address is chosen. */
+  prefill: BuildingPrefill | null;
   /** Changes when the address box should be emptied and started again. */
   searchKey: number;
   searchValue: string;
@@ -250,7 +270,7 @@ interface IntakeProps {
   onRun: () => void;
 }
 
-function Intake({ sample, mode, found, searchKey, searchValue, onPickAddress, onEditAddress, onSearched, onPickSample, step, setStep, onRun }: IntakeProps) {
+function Intake({ sample, mode, found, prefill, searchKey, searchValue, onPickAddress, onEditAddress, onSearched, onPickSample, step, setStep, onRun }: IntakeProps) {
   const searching = mode === "search";
   const rec = found?.record ?? null;
   // In search mode the form starts with only what the city's records say; in sample mode it is filled from the sample.
@@ -344,7 +364,11 @@ function Intake({ sample, mode, found, searchKey, searchValue, onPickAddress, on
 
         {step === 2 && (
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Electricity used per year (kWh)" value={p.annual_kwh} hint="Or attach a recent bill below." />
+            <Field
+              label="Electricity used per year (kWh)"
+              value={searching ? prefillValue(prefill, "annual_kwh") : p.annual_kwh}
+              hint={prefillHint(prefillOf(prefill, "annual_kwh"), "Or attach a recent bill below.")}
+            />
             <Field label="Capital budget" value={dollars(p.budget_amount)} hint={searching ? "The most you could spend on the work." : `${p.budget_year} · capital`} />
             <div className="sm:col-span-2"><Field label="Your goal" value={p.goal == null ? "" : String(p.goal)} hint={searching ? "For example: cut grid electricity 30% by 2030." : undefined} /></div>
             <div className="sm:col-span-2"><Field label="Anything that must keep running in an outage?" value={p.critical_loads ?? ""} /></div>
@@ -356,7 +380,26 @@ function Intake({ sample, mode, found, searchKey, searchValue, onPickAddress, on
           <div className="space-y-3">
             <p className="text-sm text-[var(--fr-mute)]">Tell us what the building already has, so the plan builds on it. Write &ldquo;none&rdquo; if there&rsquo;s nothing to list.</p>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Solar already on the roof (kW)" value={searching ? "" : (p.existing_solar_kw ?? "0")} />
+              {searching && (
+                <>
+                  <Field label="Roof area (sq ft)" value={prefillValue(prefill, "roof_area_sqft")} hint={prefillHint(prefillOf(prefill, "roof_area_sqft"), "Not sure? An engineer or roofer can measure the usable area.")} />
+                  <Field
+                    label="Roof condition (the city's assessment)"
+                    value={prefillOf(prefill, "roof_condition")?.display}
+                    hint={prefillHint(prefillOf(prefill, "roof_condition"), "The city has no roof assessment for this building.")}
+                  />
+                  {prefillOf(prefill, "solar_ready") && (
+                    <div className="sm:col-span-2">
+                      <Found>{prefillOf(prefill, "solar_ready")?.display}</Found>
+                    </div>
+                  )}
+                </>
+              )}
+              <Field
+                label="Solar already on the roof (kW)"
+                value={searching ? (prefillValue(prefill, "existing_solar_kw") ?? "") : (p.existing_solar_kw ?? "0")}
+                hint={prefillHint(prefillOf(prefill, "existing_solar_kw"))}
+              />
               <Field label="Other renewables" value={searching ? "" : (p.existing_renewables ?? "none")} />
               <div className="sm:col-span-2"><Field label="Efficiency work already done" value={searching ? "" : (p.existing_efficiency ?? "none")} /></div>
             </div>
@@ -472,6 +515,8 @@ export default function PlanMockup() {
   const [view, setView] = useState<View>("home");
   const [sampleId, setSampleId] = useState<string>(PLANS[0]?.id ?? "");
   const [step, setStep] = useState(1);
+  // What the city's free records suggest for each lot the visitor has picked, kept by lot number; "failed" means the backend did not answer.
+  const [prefills, setPrefills] = useState<Record<string, BuildingPrefill | "failed">>({});
   const sample = PLANS.find((s) => s.id === sampleId) ?? PLANS[0];
 
   // What Fritts is in the middle of: the greeting, the answers he has been given, the working list and the report menu.
@@ -502,6 +547,8 @@ export default function PlanMockup() {
     chosen && hasRecord
       ? { label: chosen.label, borough: chosen.borough, bbl: chosen.bbl, record: records[chosen.bbl], kind: ownerKind(records[chosen.bbl]), accepted }
       : null;
+  // The records for the lot chosen now (never an earlier choice's), or null while loading or when the backend did not answer.
+  const chosenPrefill = chosen && prefills[chosen.bbl] !== "failed" ? (prefills[chosen.bbl] as BuildingPrefill | undefined) ?? null : null;
   const lookup: "idle" | "looking" | "empty" | "error" =
     chosen && !hasRecord ? (failedBbl === chosen.bbl ? "error" : "looking") : searchStatus;
   // The steps in the order of Fritts's scenes, with when each one starts (see ./fritts/runPlan.ts).
@@ -603,6 +650,13 @@ export default function PlanMockup() {
     fetchBuildingRecord(choice.bbl)
       .then((record) => setRecords((prev) => ({ ...prev, [choice.bbl]: record })))
       .catch(() => setFailedBbl(choice.bbl));
+    // Ask the backend for the free city records that fill the energy and roof questions (no Claude). If it is not
+    // reachable the form simply stays blank, as before.
+    if (!(choice.bbl in prefills)) {
+      getBuildingPrefill(choice.bbl, choice.label, choice.borough)
+        .then((result) => setPrefills((prev) => ({ ...prev, [choice.bbl]: result })))
+        .catch(() => setPrefills((prev) => ({ ...prev, [choice.bbl]: "failed" })));
+    }
   };
   /** The visitor typed again, so the earlier choice no longer stands. */
   const editAddress = () => {
@@ -687,7 +741,13 @@ export default function PlanMockup() {
         }
         return { placement: "form", pose: answered === "unsure" ? "reassuring" : "listening", line: CONFIRM_REPLY[answered], actions: [] };
       }
-      return { placement: "form", pose: step === 4 ? "explaining" : "listening", line: INTAKE_STEP[step], actions: [] };
+      // When the city's records filled something in on this step, Fritts says so instead of the usual line.
+      const filled =
+        mode === "search" &&
+        chosenPrefill !== null &&
+        ((step === 2 && prefillOf(chosenPrefill, "annual_kwh")) ||
+          (step === 3 && (prefillOf(chosenPrefill, "roof_area_sqft") || prefillOf(chosenPrefill, "roof_condition") || prefillOf(chosenPrefill, "existing_solar_kw"))));
+      return { placement: "form", pose: step === 4 ? "explaining" : "listening", line: filled ? PREFILL_STEP[step] : INTAKE_STEP[step], actions: [] };
     }
     if (view === "running") {
       const current = runLines[Math.min(runShown, runLines.length - 1)] ?? "";
@@ -749,6 +809,7 @@ export default function PlanMockup() {
           sample={sample}
           mode={mode}
           found={found}
+          prefill={chosenPrefill}
           searchKey={searchKey}
           searchValue={searchValue}
           onPickAddress={pickAddress}

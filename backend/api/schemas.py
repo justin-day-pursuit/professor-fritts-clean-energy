@@ -193,6 +193,28 @@ class RoofSuggestionResponse(BaseModel):
     note: str
 
 
+class PrefillItem(BaseModel):
+    """One value the city's records suggest for the form, with where it came from and what to keep in mind."""
+
+    field: str
+    label: str
+    # The number, text or yes/no the form should show.
+    value: float | int | str | bool
+    # The same value written for a person to read.
+    display: str
+    source: str
+    source_url: str
+    note: str
+
+
+class BuildingPrefillResponse(BaseModel):
+    """What the city already knows about one tax lot, as form values, plus a sentence for each part it could not find."""
+
+    bbl: str
+    items: list[PrefillItem]
+    missing: list[str]
+
+
 class ReplayCase(BaseModel):
     """One saved demo the planner can replay: what it is, and whether it is a recording or a script."""
 

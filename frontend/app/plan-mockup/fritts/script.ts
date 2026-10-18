@@ -26,6 +26,12 @@ export const CONFIRM_REPLY = {
   unsure: "That's fine. I'll leave it blank, and the plan will say what it assumed. Press Continue when you're ready.",
 } as const;
 
+/** What he says at the energy and building steps when the city's records filled something in for the visitor to check. */
+export const PREFILL_STEP: Record<number, string> = {
+  2: "I've filled in what the city's records show about your electricity use. Please check it against a recent bill.",
+  3: "I've added the city's own roof assessment below. A roofer should confirm it before any design.",
+};
+
 /** What he says at each step of the form. Step 1 depends on the building, so it is built in the page. */
 export const INTAKE_STEP: Record<number, string> = {
   2: "Now your energy and goals. If you have a recent Con Edison bill, you can attach it below.",
