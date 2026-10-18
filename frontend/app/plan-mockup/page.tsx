@@ -86,7 +86,7 @@ function TopBar({ onHome, onStart }: { onHome: () => void; onStart: () => void }
 
 // ------------------------------------------------------------------------------------------------- home
 
-function Home({ onPick, onStart }: { onPick: (id: string) => void; onStart: () => void }) {
+function Home({ onOpen, onRerun, onStart }: { onOpen: (id: string) => void; onRerun: (id: string) => void; onStart: () => void }) {
   return (
     <>
       <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 md:grid-cols-[1.25fr_1fr]">
@@ -149,7 +149,7 @@ function Home({ onPick, onStart }: { onPick: (id: string) => void; onStart: () =
           <SectionTitle eyebrow="Sample plans" title="See what you'd get" sub="Five real NYC buildings, planned from public data. Not every building gets a yes, and the plan says so honestly." />
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {PLANS.map((s) => (
-              <button key={s.id} type="button" onClick={() => onPick(s.id)} className="flex h-full flex-col rounded-2xl border border-[var(--fr-line)] bg-white p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg">
+              <div key={s.id} className="flex h-full flex-col rounded-2xl border border-[var(--fr-line)] bg-white p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg">
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <span
                     className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
@@ -167,8 +167,11 @@ function Home({ onPick, onStart }: { onPick: (id: string) => void; onStart: () =
                 {s.profile.goal && <p className="mt-0.5 text-sm text-[var(--fr-mute)]">{String(s.profile.goal)}</p>}
                 <p className="mt-3 text-sm leading-snug text-[var(--fr-ink)]">&ldquo;{s.question}&rdquo;</p>
                 <p className="mt-3 border-t border-[var(--fr-line)] pt-3 text-xs text-[var(--fr-mute)]">{s.tag}</p>
-                <div className="mt-auto pt-3 text-sm font-medium text-[var(--fr-teal)]">Open this plan →</div>
-              </button>
+                <div className="mt-auto flex items-center gap-3 pt-3">
+                  <button type="button" onClick={() => onOpen(s.id)} className="text-sm font-medium text-[var(--fr-teal)] hover:underline">Open this plan →</button>
+                  <button type="button" onClick={() => onRerun(s.id)} className="rounded-full border border-[var(--fr-ink)] px-3 py-1 text-sm font-medium text-[var(--fr-ink)] hover:bg-[var(--fr-ink)] hover:text-white">Rerun</button>
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -746,14 +749,21 @@ export default function PlanMockup() {
     resetSearch();
     goTo("welcome");
   };
-  /** A sample card on the home page: straight to the form, filled in from that sample. */
-  const pick = (id: string) => {
+  /** "Open this plan" on a sample card: straight to that plan's finished report. */
+  const openPlan = (id: string) => {
     setLivePlan(null);
     setSampleId(id);
-    setStep(1);
     setMode("sample");
-    setConfirm(null);
-    goTo("intake");
+    setRunMode("sample");
+    goTo("results");
+  };
+  /** "Rerun" on a sample card: plays the recorded run again, step by step with Fritts at work, then offers the report. */
+  const rerunPlan = (id: string) => {
+    setLivePlan(null);
+    setSampleId(id);
+    setMode("sample");
+    setRunMode("sample");
+    goTo("running");
   };
   /** A sample chosen on the form's first step (or, with no id, a return to searching). */
   const pickSample = (id: string) => {
@@ -943,7 +953,7 @@ export default function PlanMockup() {
   return (
     <div style={PALETTE} className="min-h-screen bg-[var(--fr-cream)] text-[var(--fr-ink)]">
       <TopBar onHome={() => goTo("home")} onStart={startExperience} />
-      {view === "home" && <Home onPick={pick} onStart={startExperience} />}
+      {view === "home" && <Home onOpen={openPlan} onRerun={rerunPlan} onStart={startExperience} />}
       {view === "welcome" && <Backdrop eyebrow="Renewable energy planning for NYC public buildings" title="Professor Fritts" />}
       {view === "intake" && (
         <Intake
