@@ -31,7 +31,6 @@ import { ADDRESS_ERROR, ADDRESS_LOOKING, ADDRESS_NOT_FOUND, ADDRESS_START, BRING
 import { plainify } from "./plain";
 import { copyShareLink, downloadPlanPdf } from "./plan-actions";
 import { useDevView } from "./dev-view";
-import { HowArt, LabelArt } from "./home-art";
 import { Results } from "./plan-view";
 import { PLANS, type PlanView } from "./plans";
 import { Card, Chip, LABELS, PALETTE, SectionTitle } from "./ui";
@@ -183,7 +182,6 @@ function Home({ onOpen, onRerun, onStart }: { onOpen: (id: string) => void; onRe
             ["3", "Get a plan you can act on", "Three costed options, a step-by-step roadmap, and the professionals you'll need before any money is spent."],
           ].map(([n, t, d]) => (
             <Card key={n}>
-              <div className="mb-3 overflow-hidden rounded-xl bg-[var(--fr-soft)] px-6 py-2"><HowArt n={n} /></div>
               <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--fr-gold)] font-bold text-[var(--fr-ink)]">{n}</div>
               <h3 className="font-semibold text-[var(--fr-ink)]">{t}</h3>
               <p className="mt-1 text-sm text-[var(--fr-mute)]">{d}</p>
@@ -198,7 +196,6 @@ function Home({ onOpen, onRerun, onStart }: { onOpen: (id: string) => void; onRe
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {Object.entries(LABELS).map(([name, l]) => (
               <div key={name} className="rounded-xl border border-[var(--fr-line)] p-4">
-                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full" style={{ background: `${l.color}1f` }}><LabelArt name={name} color={l.color} /></div>
                 <Chip label={name} />
                 <p className="mt-2 text-sm text-[var(--fr-ink)]">{l.blurb}</p>
               </div>
