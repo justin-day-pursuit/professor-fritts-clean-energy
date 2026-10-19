@@ -177,11 +177,12 @@ function Home({ onOpen, onRerun, onStart }: { onOpen: (id: string) => void; onRe
         <SectionTitle eyebrow="How it works" title="From an address to a plan you can bring to your board" />
         <div className="grid gap-4 md:grid-cols-3">
           {[
-            ["1", "Tell us about your building", "Start with the address. We pull what the city already knows, so you only fill in what it can't."],
-            ["2", "Watch the Professor work", "He checks city records, estimates solar, looks up prices and rules, and costs three scenarios."],
-            ["3", "Get a plan you can act on", "Three costed options, a step-by-step roadmap, and the professionals you'll need before any money is spent."],
-          ].map(([n, t, d]) => (
+            ["1", "Tell us about your building", "Start with the address. We pull what the city already knows, so you only fill in what it can't.", "/fritts/how-1.webp", "A city building with a map pin, and the New York skyline behind it"],
+            ["2", "Watch the Professor work", "He checks city records, estimates solar, looks up prices and rules, and costs three scenarios.", "/fritts/how-2.webp", "A laptop showing a map, with a calculator, a solar panel and a chart beside it"],
+            ["3", "Get a plan you can act on", "Three costed options, a step-by-step roadmap, and the professionals you'll need before any money is spent.", "/fritts/how-3.webp", "A clipboard with a chart and a checklist, a stack of plan reports, and the city skyline behind trees"],
+          ].map(([n, t, d, img, alt]) => (
             <Card key={n}>
+              {img && <Image src={img} alt={alt} width={1100} height={733} sizes="(min-width: 768px) 33vw, 100vw" className="mb-3 block h-auto w-full" />}
               <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--fr-gold)] font-bold text-[var(--fr-ink)]">{n}</div>
               <h3 className="font-semibold text-[var(--fr-ink)]">{t}</h3>
               <p className="mt-1 text-sm text-[var(--fr-mute)]">{d}</p>
