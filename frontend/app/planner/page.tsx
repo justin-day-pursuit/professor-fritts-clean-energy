@@ -205,6 +205,7 @@ export default function PlannerPage() {
           ...prev,
           {
             ...result.message!,
+            run_id: result.message!.run_id ?? result.run.id,
             claims: claims.length ? claims : undefined,
           },
         ]);

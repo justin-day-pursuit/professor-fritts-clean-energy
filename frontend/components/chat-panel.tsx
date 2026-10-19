@@ -9,6 +9,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { ClaimSource } from "@/components/claim-source";
+import { downloadRoadmapMarkdown } from "@/lib/api";
 import { LabelBadge } from "@/components/label-badge";
 import type { Claim, MessageResponse } from "@/lib/types";
 import { useState } from "react";
@@ -21,6 +22,147 @@ import { useState } from "react";
 export interface ChatMessage extends Omit<MessageResponse, "id"> {
   id: number | string;
   claims?: Claim[];
+}
+
+interface FollowUpBoxProps {
+  onSend: (text: string) => Promise<void>;
+  busy: boolean;
+  runId?: number | null;
+}
+
+/**
+ * Inline follow-up box displayed inside the completed-plan speech bubble.
+ * Includes prompt pills for natural next steps and a text box to continue brainstorming.
+ */
+function FollowUpBox({ onSend, busy, runId }: FollowUpBoxProps) {
+  const [draft, setDraft] = useState("");
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (!runId || downloading) return;
+    setDownloading(true);
+    try {
+      const text = await downloadRoadmapMarkdown(runId);
+      const blob = new Blob([text], { type: "text/markdown" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `roadmap-run-${runId}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to download roadmap", err);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handlePillClick = async (promptText: string) => {
+    if (busy) return;
+    setDraft(promptText);
+    try {
+      await onSend(promptText);
+      setDraft("");
+    } catch {
+      // Keep draft if send fails
+    }
+  };
+
+  const submit = async () => {
+    const trimmed = draft.trim();
+    if (!trimmed || busy) return;
+    setDraft("");
+    try {
+      await onSend(trimmed);
+    } catch {
+      setDraft(trimmed);
+    }
+  };
+
+  return (
+    <div className="mt-3 pt-3 border-t border-dashed space-y-2.5">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-foreground">
+          Continue chatting with Professor Fritts:
+        </span>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5">
+        {runId ? (
+          <button
+            type="button"
+            disabled={downloading}
+            onClick={() => void handleDownload()}
+            className="inline-flex items-center gap-1 rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50"
+          >
+            📥 {downloading ? "Downloading…" : "Download roadmap (.md)"}
+          </button>
+        ) : null}
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() =>
+            void handlePillClick(
+              "Could you explain Section 6 (Costs & Financing Scenarios) in simpler terms?"
+            )
+          }
+          className="inline-flex items-center gap-1 rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50"
+        >
+          🔍 Explain Section 6 (Costs)
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() =>
+            void handlePillClick(
+              "What missing information or professional verifications do we need next to make this plan actionable?"
+            )
+          }
+          className="inline-flex items-center gap-1 rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50"
+        >
+          ✏️ Add missing information / Next steps
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() =>
+            void handlePillClick(
+              "How can we reduce the upfront capital cost or improve payback?"
+            )
+          }
+          className="inline-flex items-center gap-1 rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50"
+        >
+          💡 Reduce upfront cost
+        </button>
+      </div>
+
+      <div className="flex gap-2 items-end pt-1">
+        <Textarea
+          rows={2}
+          placeholder="Ask a question or brainstorm adjustments to this plan…"
+          value={draft}
+          disabled={busy}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              void submit();
+            }
+          }}
+          className="min-h-[50px] text-xs bg-background"
+        />
+        <Button
+          type="button"
+          size="sm"
+          disabled={busy || !draft.trim()}
+          onClick={() => void submit()}
+          className="h-8 text-xs shrink-0"
+        >
+          Ask
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export interface ChatPanelProps {
@@ -70,32 +212,42 @@ export function ChatPanel({ messages, onSend, busy, draft, onDraftChange, missin
                 Ask a planning question after filling intake (or load Dana&apos;s example).
               </p>
             )}
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={
-                  msg.role === "user"
-                    ? "ml-8 rounded-lg bg-primary/10 p-3 text-sm"
-                    : "mr-8 rounded-lg border bg-card p-3 text-sm space-y-2"
-                }
-              >
-                <div className="text-xs font-medium text-muted-foreground mb-1">
-                  {msg.role === "user" ? "You" : "Professor Fritts"}
+            {(() => {
+              const lastPlanIndex = messages.reduce(
+                (acc, m, i) =>
+                  m.role === "assistant" && m.claims && m.claims.length > 0 ? i : acc,
+                -1
+              );
+              return messages.map((msg, index) => (
+                <div
+                  key={msg.id}
+                  className={
+                    msg.role === "user"
+                      ? "ml-8 rounded-lg bg-primary/10 p-3 text-sm"
+                      : "mr-8 rounded-lg border bg-card p-3 text-sm space-y-2"
+                  }
+                >
+                  <div className="text-xs font-medium text-muted-foreground mb-1">
+                    {msg.role === "user" ? "You" : "Professor Fritts"}
+                  </div>
+                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                  {msg.claims && msg.claims.length > 0 && (
+                    <ul className="space-y-2 pt-2 border-t">
+                      {msg.claims.map((claim, i) => (
+                        <li key={`${msg.id}-claim-${i}`} className="space-y-1">
+                          <LabelBadge label={claim.label} confidence={claim.confidence} />
+                          <p className="text-xs">{claim.text}</p>
+                          <ClaimSource claim={claim} />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {index === lastPlanIndex && (
+                    <FollowUpBox onSend={onSend} busy={busy} runId={msg.run_id} />
+                  )}
                 </div>
-                <div className="whitespace-pre-wrap">{msg.content}</div>
-                {msg.claims && msg.claims.length > 0 && (
-                  <ul className="space-y-2 pt-2 border-t">
-                    {msg.claims.map((claim, i) => (
-                      <li key={`${msg.id}-claim-${i}`} className="space-y-1">
-                        <LabelBadge label={claim.label} confidence={claim.confidence} />
-                        <p className="text-xs">{claim.text}</p>
-                        <ClaimSource claim={claim} />
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
+              ));
+            })()}
           </div>
         </ScrollArea>
       </CardContent>
