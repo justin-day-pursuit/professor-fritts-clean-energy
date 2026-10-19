@@ -1,17 +1,13 @@
 {
+  "tool": "get_solar_production",
   "data": {
-    "location": {
-      "bbl": "3005820001",
-      "lat": 40.672436,
-      "lon": -74.004228,
-      "label": "155 BAY STREET, Brooklyn, NY, USA",
-      "borough": "Brooklyn",
-      "confidence": 0.8,
-      "match_type": "fallback",
-      "postalcode": "11231"
-    },
     "system_kw_dc": 262.4,
     "annual_ac_kwh": 329666.9443029753,
+    "annual_ac_kwh_low": 314134.0823803837,
+    "annual_ac_kwh_high": 345149.677784144,
+    "range_assumption": "ASSUMPTION: system losses of 18% (low) to 10% (high) around PVWatts' 14% default; weather is typical-year data.",
+    "capacity_factor": 0.1434192561736818,
+    "solar_radiation_kwh_m2_day": 4.381658825054564,
     "monthly_ac_kwh": [
       17456.40017304726,
       20992.98420738792,
@@ -29,27 +25,31 @@
     "pvwatts_inputs": {
       "lat": 40.672436,
       "lon": -74.004228,
-      "tilt": 10,
-      "losses": 14,
-      "azimuth": 180,
-      "array_type": 1,
+      "system_capacity": 262.4,
       "module_type": 0,
-      "system_capacity": 262.4
+      "losses": 14,
+      "array_type": 1,
+      "tilt": 10,
+      "azimuth": 180
     },
-    "capacity_factor": 0.1434192561736818,
-    "free_capacity_kw": 262.4,
-    "range_assumption": "ASSUMPTION: system losses of 18% (low) to 10% (high) around PVWatts' 14% default; weather is typical-year data.",
-    "annual_ac_kwh_low": 314134.0823803837,
-    "existing_solar_kw": 11.4,
-    "annual_ac_kwh_high": 345149.677784144,
+    "location": {
+      "label": "155 BAY STREET, Brooklyn, NY, USA",
+      "borough": "Brooklyn",
+      "postalcode": "11231",
+      "match_type": "fallback",
+      "confidence": 0.8,
+      "bbl": "3005820001",
+      "lat": 40.672436,
+      "lon": -74.004228
+    },
     "weather_data_source": "NSRDB PSM V3 GOES tmy-2020 3.2.0",
-    "solar_radiation_kwh_m2_day": 4.381658825054564
+    "existing_solar_kw": 11.4,
+    "free_capacity_kw": 262.4
   },
-  "mock": false,
-  "tool": "get_solar_production",
-  "flags": [],
-  "stale": false,
   "source_url": "https://developer.nlr.gov/docs/solar/pvwatts/v8/",
-  "retrieved_at": "2026-10-19T02:22:49Z",
-  "dataset_version": "pvwatts-v8.5.0"
+  "retrieved_at": "2026-10-19T12:17:18Z",
+  "dataset_version": "pvwatts-v8.5.0",
+  "mock": false,
+  "stale": false,
+  "flags": []
 }

@@ -6,20 +6,27 @@
     "basis": "the middle half of 239 completed NYC non-residential projects of 100-500 kW since 2022, NYSERDA data https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
     "source_url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs"
   },
+  "battery": {
+    "low": 546.0,
+    "high": 812.0,
+    "mid": 687.0,
+    "basis": "the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
+    "source_url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy"
+  },
   "efficiency": {
     "prices": {
-      "deep": [
-        1.09,
-        3.83
-      ],
       "standard": [
         1.17,
         4.02
+      ],
+      "deep": [
+        1.09,
+        3.83
       ]
     },
     "mid": {
-      "deep": 2.49,
-      "standard": 2.56
+      "standard": 2.56,
+      "deep": 2.49
     },
     "basis": "the middle half of 139 LED-lighting and 42 comprehensive completed NYC public-sector projects since 2016, NYSERDA data https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
     "source_url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx"
@@ -27,12 +34,5 @@
   "realization": [
     0.62,
     0.88
-  ],
-  "battery": {
-    "low": 546.0,
-    "high": 812.0,
-    "mid": 687.0,
-    "basis": "the middle half of 56 completed or approved NYC commercial-scale storage projects, NYSERDA data https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
-    "source_url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy"
-  }
+  ]
 }

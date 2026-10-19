@@ -18,9 +18,8 @@
   "building_type": "elementary school",
   "critical_loads": "emergency lighting and communications",
   "roof_area_sqft": 40500,
-  "floor_area_sqft": 135600,
+  "floor_area_sqft": 115325,
   "existing_solar_kw": 228.2,
-  "existing_solar_kwh": 457512,
   "existing_efficiency": "none",
   "existing_renewables": "none"
 }
