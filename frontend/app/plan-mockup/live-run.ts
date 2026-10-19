@@ -24,7 +24,9 @@ export type RunForm = Partial<
     | "annual_kwh" | "budget_amount" | "goal" | "goal_percent" | "target_year" | "critical_loads" | "backup_hours_wanted"
     | "floor_area_sqft" | "roof_area_sqft" | "roof_type" | "existing_solar_kw" | "existing_renewables" | "existing_efficiency"
     // The visitor's own question (when they edited it) and the suggestion it was written from, so we can tell when it has gone stale.
-    | "question" | "question_base",
+    | "question" | "question_base"
+    // An edit made to a saved sample's question box, and which sample it was made on (a saved plan still answers its own question).
+    | "sample_question" | "sample_question_for",
     string
   >
 >;
@@ -99,7 +101,7 @@ export function buildProfile(found: FoundBuilding, form: RunForm): Record<string
   return Object.fromEntries(Object.entries(profile).filter(([, value]) => value !== null && value !== "")) as Record<string, string | number>;
 }
 
-/** The suggested question, in the visitor's own terms. The visitor can edit it before it is sent (see the last step of the form). */
+/** The suggested question, written from the visitor's answers. The visitor can edit it on the Energy and goals step before it is sent. */
 export function buildQuestion(form: RunForm): string {
   const goal = goalNumbers(form);
   const budget = parseMoney(form.budget_amount);

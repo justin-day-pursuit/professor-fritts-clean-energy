@@ -25,7 +25,7 @@ import { FrittsGuide, type GuideAction, type GuideChatProps } from "./fritts/Fri
 import { poseForStep, type Placement, type PoseName } from "./fritts/poses";
 import { planRun } from "./fritts/runPlan";
 import { askPlanQuestion, getBuildingPrefill } from "@/lib/api";
-import { LiveRunError, buildProfile, buildQuestion, missingForRun, narrationFor as narrationForTools, planFromRun, runLive, stepsSoFar, type RunForm } from "./live-run";
+import { LiveRunError, buildProfile, buildQuestion, goalNumbers, missingForRun, parseMoney, parseNumber, narrationFor as narrationForTools, planFromRun, runLive, stepsSoFar, type RunForm } from "./live-run";
 import type { BuildingPrefill, PrefillItem, RunResponse } from "@/lib/types";
 import { ADDRESS_ERROR, ADDRESS_LOOKING, ADDRESS_NOT_FOUND, ADDRESS_START, BRING, BRING_REPLY, CONFIRM_REPLY, HELLO, INTAKE_STEP, PDF_SAYS, PREFILL_STEP, PRIVATE_BUILDING, REPORT_MENU, SHARE_LIVE, foundLine, readyLine, shareLine, unclearOwner, workingLine } from "./fritts/script";
 import { plainify } from "./plain";
@@ -244,16 +244,16 @@ function Home({ onOpen, onRerun, onStart }: { onOpen: (id: string) => void; onRe
 
 const STEPS = ["Find your building", "Energy and goals", "What you already have", "Your question"];
 
-function Field({ label, value, hint, onChange, readOnly }: { label: string; value: string | number | null | undefined; hint?: string; onChange?: (value: string) => void; readOnly?: boolean }) {
+function Field({ label, value, hint, onChange, readOnly, placeholder }: { label: string; value: string | number | null | undefined; hint?: string; onChange?: (value: string) => void; readOnly?: boolean; placeholder?: string }) {
   const box = "mt-1 w-full rounded-lg border border-[var(--fr-line)] bg-white px-3 py-2 text-[var(--fr-ink)] outline-none focus:border-[var(--fr-teal)]";
   return (
     <label className="block">
       <span className="text-sm font-medium text-[var(--fr-ink)]">{label}</span>
       {onChange ? (
         // Typed into: the page keeps what was typed, so it can be sent to the planner.
-        <input value={value ?? ""} onChange={(e) => onChange(e.target.value)} className={box} />
+        <input value={value ?? ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={box} />
       ) : (
-        <input defaultValue={value ?? ""} key={String(value)} readOnly={readOnly} className={box} />
+        <input defaultValue={value ?? ""} key={String(value)} readOnly={readOnly} placeholder={placeholder} className={box} />
       )}
       {hint && <span className="mt-1 block text-xs text-[var(--fr-mute)]">{hint}</span>}
     </label>
@@ -371,7 +371,7 @@ interface IntakeProps {
   step: number;
   setStep: (n: number) => void;
   onRun: () => void;
-  /** Throws away the visitor's edited question, so the one suggested from their answers shows again. */
+  /** Throws away the visitor's edited question, so the one written from their answers shows again. */
   onResetQuestion: () => void;
 }
 
@@ -383,8 +383,11 @@ function Intake({ sample, mode, found, prefill, values, onChange, onResetQuestio
     ? { address: found?.label, borough: found?.borough }
     : sample.profile;
   const pitched = String(p.roof_type ?? "").includes("pitch");
-  // The question suggested from the visitor's answers, and whether their edited question was written from different answers.
+  // The question, written from the visitor's answers, and whether an edited version was written from different answers.
   const suggestedQuestion = buildQuestion(values);
+  // What the question box shows: the visitor's edit if there is one, else the question written from their answers (or, for a saved sample, its own).
+  const sampleEdited = !searching && values.sample_question_for === sample.id && values.sample_question !== undefined;
+  const questionShown = searching ? (values.question !== undefined ? values.question : suggestedQuestion) : sampleEdited ? (values.sample_question ?? "") : sample.question;
   const questionStale = values.question !== undefined && values.question_base !== undefined && values.question_base !== suggestedQuestion;
   const canContinue = step > 1 || !searching || (found !== null && (found.kind === "public" || found.accepted));
   return (
@@ -474,18 +477,41 @@ function Intake({ sample, mode, found, prefill, values, onChange, onResetQuestio
               hint={prefillHint(prefillOf(prefill, "annual_kwh"), "Or attach a recent bill below.")}
             />
             <Field label="Capital budget" value={searching ? values.budget_amount : dollars(p.budget_amount)} onChange={searching ? (v) => onChange("budget_amount", v) : undefined} hint={searching ? "The most you could spend on the work, for example $400,000." : `${p.budget_year} · capital`} />
-            {searching ? (
-              <>
-                <Field label="Cut grid electricity by (%)" value={values.goal_percent} onChange={(v) => onChange("goal_percent", v)} hint="The share of the electricity you buy from the grid that you want to cut. For example 30." />
-                <Field label="By year" value={values.target_year} onChange={(v) => onChange("target_year", v)} hint="For example 2030." />
-              </>
-            ) : (
-              <div className="sm:col-span-2"><Field label="Your goal" value={p.goal == null ? "" : String(p.goal)} /></div>
-            )}
+            <div className="grid gap-3 sm:col-span-2 sm:grid-cols-3">
+              <Field label="Cut grid power by (%)" value={searching ? values.goal_percent : p.goal_percent} onChange={searching ? (v) => onChange("goal_percent", v) : undefined} />
+              <Field label="By year" value={searching ? values.target_year : p.target_year} onChange={searching ? (v) => onChange("target_year", v) : undefined} />
+              <Field label="Backup hours needed" value={searching ? values.backup_hours_wanted : p.backup_hours_wanted} onChange={searching ? (v) => onChange("backup_hours_wanted", v) : undefined} placeholder="Optional" />
+            </div>
             <div className="sm:col-span-2"><Field label="Anything that must keep running in an outage?" value={searching ? values.critical_loads : (p.critical_loads ?? "")} onChange={searching ? (v) => onChange("critical_loads", v) : undefined} /></div>
-            {(searching || p.backup_hours_wanted != null) && (
-              <Field label="Hours of backup power you need (optional)" value={searching ? values.backup_hours_wanted : p.backup_hours_wanted} onChange={searching ? (v) => onChange("backup_hours_wanted", v) : undefined} hint={searching ? "Leave blank if you are not sure." : undefined} />
-            )}
+            {/* The question, written from the answers above. The visitor can add to it or edit it here; the last step then shows the final
+                question as a quote. A saved sample shows the question it was recorded with, locked, because a saved plan answers that one. */}
+            <div className="sm:col-span-2">
+              <label htmlFor="your-question" className="text-sm font-medium text-[var(--fr-ink)]">Your question for Professor Fritts</label>
+              <textarea
+                id="your-question"
+                rows={4}
+                maxLength={500}
+                value={questionShown}
+                onChange={(e) => {
+                  if (searching) {
+                    if (values.question === undefined) onChange("question_base", suggestedQuestion);
+                    onChange("question", e.target.value);
+                  } else {
+                    onChange("sample_question_for", sample.id);
+                    onChange("sample_question", e.target.value);
+                  }
+                }}
+                className="mt-1 w-full rounded-lg border border-[var(--fr-line)] bg-white px-3 py-2 text-[var(--fr-ink)] outline-none focus:border-[var(--fr-teal)]"
+              />
+              <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--fr-mute)]">
+                <span>Written from your answers above. Add your own context or change the wording, for example: &ldquo;Our rec center flooded in Hurricane Sandy and is a cooling center.&rdquo;</span>
+                <span>{questionShown.length}/500</span>
+              </div>
+              {searching && questionStale && <p className="mt-1 text-xs text-[var(--fr-warn)]">Your goal, budget or what must keep running changed since you edited this question. Reset to update it.</p>}
+              {(searching ? values.question !== undefined : sampleEdited) && (
+                <button type="button" onClick={onResetQuestion} className="mt-1 text-xs font-semibold text-[var(--fr-teal)] underline">Reset the question</button>
+              )}
+            </div>
             <BillUpload onFile={onBill} forRun={searching} />
           </div>
         )}
@@ -531,34 +557,18 @@ function Intake({ sample, mode, found, prefill, values, onChange, onResetQuestio
 
         {step === 4 && (
           <div className="space-y-3">
+            {/* The last step only shows the final question and a few points, then the visitor runs it. The question is edited on the
+                Energy and goals step (a saved sample shows the question it was recorded with). */}
+            <p className="text-sm text-[var(--fr-mute)]">Here&rsquo;s the question we&rsquo;ll answer:</p>
+            <blockquote className="rounded-xl border-l-4 border-[var(--fr-gold)] bg-[var(--fr-soft)] p-4 text-[var(--fr-ink)]">&ldquo;{searching ? (values.question?.trim() ? values.question.trim() : suggestedQuestion) : sample.question}&rdquo;</blockquote>
             {searching ? (
               <>
-                <p className="text-sm text-[var(--fr-mute)]">Here&rsquo;s the building I&rsquo;ll plan for:</p>
                 <div className="grid gap-1.5 text-sm text-[var(--fr-ink)] sm:grid-cols-2">
                   <Found>{found?.label ?? "No address chosen yet"}</Found>
                   {rec && <Found>{buildingTypeLabel(rec)}</Found>}
-                </div>
-                <div>
-                  <label htmlFor="your-question" className="text-sm font-medium text-[var(--fr-ink)]">Your question for Professor Fritts</label>
-                  <textarea
-                    id="your-question"
-                    rows={4}
-                    maxLength={500}
-                    value={values.question !== undefined ? values.question : suggestedQuestion}
-                    onChange={(e) => {
-                      if (values.question === undefined) onChange("question_base", suggestedQuestion);
-                      onChange("question", e.target.value);
-                    }}
-                    className="mt-1 w-full rounded-lg border border-[var(--fr-line)] bg-white px-3 py-2 text-[var(--fr-ink)] outline-none focus:border-[var(--fr-teal)]"
-                  />
-                  <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--fr-mute)]">
-                    <span>Add your own context if you like, for example: &ldquo;Our rec center flooded in Hurricane Sandy and is a cooling center.&rdquo;</span>
-                    <span>{(values.question !== undefined ? values.question : suggestedQuestion).length}/500</span>
-                  </div>
-                  {questionStale && <p className="mt-1 text-xs text-[var(--fr-warn)]">Your goal, budget or what must keep running changed since you edited this question. Reset to update it.</p>}
-                  {values.question !== undefined && (
-                    <button type="button" onClick={onResetQuestion} className="mt-1 text-xs font-semibold text-[var(--fr-teal)] underline">Reset to the suggested question</button>
-                  )}
+                  {parseMoney(values.budget_amount) !== null && <Found>${parseMoney(values.budget_amount)?.toLocaleString()} capital budget</Found>}
+                  {parseNumber(values.annual_kwh) !== null && <Found>{parseNumber(values.annual_kwh)?.toLocaleString()} kWh a year</Found>}
+                  {goalNumbers(values).percent !== null && <Found>Cut grid electricity {goalNumbers(values).percent}%{goalNumbers(values).year ? ` by ${goalNumbers(values).year}` : ""}</Found>}
                 </div>
                 <p className="rounded-xl bg-[var(--fr-soft)] p-3 text-xs text-[var(--fr-mute)]">
                   Pressing Run starts a real analysis of this building. It takes about two minutes, and it uses your answers and the city&rsquo;s public records.
@@ -566,16 +576,12 @@ function Intake({ sample, mode, found, prefill, values, onChange, onResetQuestio
                 {runProblem && <p className="rounded-xl border border-[var(--fr-gold)] bg-white p-3 text-sm text-[var(--fr-ink)]">{runProblem}</p>}
               </>
             ) : (
-              <>
-                <p className="text-sm text-[var(--fr-mute)]">Here&rsquo;s the question we&rsquo;ll answer:</p>
-                <blockquote className="rounded-xl border-l-4 border-[var(--fr-gold)] bg-[var(--fr-soft)] p-4 text-[var(--fr-ink)]">&ldquo;{sample.question}&rdquo;</blockquote>
-                <div className="grid gap-1.5 text-sm text-[var(--fr-ink)] sm:grid-cols-2">
-                  <Found>{String(p.building_name)}</Found>
-                  <Found>${Number(p.budget_amount).toLocaleString()} capital budget</Found>
-                  <Found>{Number(p.annual_kwh).toLocaleString()} kWh a year</Found>
-                  <Found>{String(p.goal)}</Found>
-                </div>
-              </>
+              <div className="grid gap-1.5 text-sm text-[var(--fr-ink)] sm:grid-cols-2">
+                <Found>{String(p.building_name)}</Found>
+                <Found>${Number(p.budget_amount).toLocaleString()} capital budget</Found>
+                <Found>{Number(p.annual_kwh).toLocaleString()} kWh a year</Found>
+                <Found>{String(p.goal)}</Found>
+              </div>
             )}
           </div>
         )}
@@ -585,7 +591,7 @@ function Intake({ sample, mode, found, prefill, values, onChange, onResetQuestio
           {step < 4 ? (
             <button type="button" disabled={!canContinue} onClick={() => setStep(step + 1)} className="rounded-xl bg-[var(--fr-ink)] px-5 py-2.5 font-semibold text-white disabled:opacity-40">Continue</button>
           ) : (
-            <button type="button" onClick={onRun} className="rounded-xl bg-[var(--fr-teal)] px-5 py-2.5 font-semibold text-white">Run Professor Fritts</button>
+            <button type="button" onClick={onRun} className="rounded-xl bg-[var(--fr-teal)] px-5 py-2.5 font-semibold text-white">Ask Professor Fritts</button>
           )}
         </div>
       </Card>
@@ -1178,7 +1184,7 @@ function PlanMockupContent() {
           prefill={chosenPrefill}
           values={values}
           onChange={(name, value) => setTyped((prev) => ({ ...prev, [name]: value }))}
-          onResetQuestion={() => setTyped((prev) => Object.fromEntries(Object.entries(prev).filter(([name]) => name !== "question" && name !== "question_base")))}
+          onResetQuestion={() => setTyped((prev) => Object.fromEntries(Object.entries(prev).filter(([name]) => !["question", "question_base", "sample_question", "sample_question_for"].includes(name))))}
           runProblem={runProblem}
           onBill={setBill}
           searchKey={searchKey}
