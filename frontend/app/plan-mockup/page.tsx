@@ -206,7 +206,7 @@ function Home({ onOpen, onRerun, onStart }: { onOpen: (id: string) => void; onRe
 
       <section id="samples" className="bg-[var(--fr-soft)]">
         <div className="mx-auto max-w-6xl px-4 py-12">
-          <SectionTitle eyebrow="Sample plans" title="See what you'd get" sub="Five real NYC buildings, planned from public data. Not every building gets a yes, and the plan says so honestly." />
+          <SectionTitle eyebrow="Sample plans" title="See what you'd get" sub="Six real NYC buildings, one in each borough, planned from public data. Not every building gets a yes, and the plan says so honestly." />
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {PLANS.map((s) => (
               <div key={s.id} className="flex h-full flex-col rounded-2xl border border-[var(--fr-line)] bg-white p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg">
@@ -214,8 +214,9 @@ function Home({ onOpen, onRerun, onStart }: { onOpen: (id: string) => void; onRe
                   <span
                     className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
                     style={{
-                      background: s.outcome.tone === "good" ? "#dff3ea" : s.outcome.tone === "caution" ? "#fdf0cf" : "#e3ecf6",
-                      color: "#12303d",
+                      // Red when the answer is over budget, green when it is a clear yes, amber for other cautions, blue for a next step.
+                      background: s.outcome.code === "reached_over_budget" ? "#f6d2cb" : s.outcome.tone === "good" ? "#dff3ea" : s.outcome.tone === "caution" ? "#fdf0cf" : "#e3ecf6",
+                      color: s.outcome.code === "reached_over_budget" ? "#8a1f11" : "#12303d",
                     }}
                   >
                     {s.outcome.label}

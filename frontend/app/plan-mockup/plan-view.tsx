@@ -236,13 +236,17 @@ function ScenarioCard({ id, s, budget, recommended, reason }: { id: "A" | "B" | 
           <div className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">Plan {id}{dev && <span className="ml-1 font-mono text-[var(--fr-warn)]">{s.calc_id}</span>}</div>
           <div className="text-lg font-semibold text-[var(--fr-ink)]">{SCENARIO_NAME[id]}</div>
         </div>
-        {recommended ? (
-          <span className="rounded-full bg-[var(--fr-gold)] px-2.5 py-1 text-[11px] font-bold text-[var(--fr-ink)]">Recommended</span>
-        ) : over ? (
-          <span className="rounded-full bg-[#fbe3d9] px-2.5 py-1 text-[11px] font-bold text-[var(--fr-warn)]">Over budget</span>
-        ) : (
-          <span className="rounded-full bg-[#dff3ea] px-2.5 py-1 text-[11px] font-bold text-[var(--fr-ink)]">{s.budget_strain === "within budget" ? "Fits budget" : "May exceed budget"}</span>
-        )}
+        {/* The budget answer is always shown, and its colour says it: green fits, amber may run over, red is over. "Recommended" sits beside it, so a recommended plan never hides that it costs more than the budget. */}
+        <div className="flex flex-col items-end gap-1">
+          {recommended && <span className="rounded-full bg-[var(--fr-gold)] px-2.5 py-1 text-[11px] font-bold text-[var(--fr-ink)]">Recommended</span>}
+          {s.budget_strain === "over budget" ? (
+            <span className="rounded-full bg-[#f6d2cb] px-2.5 py-1 text-[11px] font-bold text-[#8a1f11]">Over budget</span>
+          ) : s.budget_strain === "within budget" ? (
+            <span className="rounded-full bg-[#dff3ea] px-2.5 py-1 text-[11px] font-bold text-[var(--fr-ink)]">Fits budget</span>
+          ) : (
+            <span className="rounded-full bg-[#fdf0cf] px-2.5 py-1 text-[11px] font-bold text-[var(--fr-ink)]">May run over budget</span>
+          )}
+        </div>
       </div>
       <p className="mt-1 text-xs text-[var(--fr-mute)]">
         {s.package.efficiency_level === "standard" ? "Standard efficiency (lighting and controls)" : s.package.efficiency_level === "deep" ? "Expanded efficiency (lighting, controls and building systems)" : ""}
@@ -775,6 +779,7 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
   const nearest1k = (n: number) => moneyExact(Math.round(n / 1000) * 1000);
   const holdsBack = !rec || o.code === "needs_roof_check";
   const overBudget = rec?.budget_strain === "over budget";
+  const mayExceed = rec?.budget_strain === "may exceed budget";
   const goalWord = goalPct != null ? `the ${goalPct}% goal` : "your goal";
   const backupGap = !!backupNote && !hasBackup;
   const batteryCost = byId("C");
@@ -782,8 +787,8 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
   const answerHeadline = holdsBack || !rec
     ? o.headline
     : (rec.reaches_goal
-        ? overBudget ? `Yes to ${goalWord}, but over your budget.` : `Yes to ${goalWord}, inside your budget.`
-        : overBudget ? `Falls short of ${goalWord} and goes over your budget.` : `Not quite ${goalWord}, but inside your budget.`) + (backupGap ? " Outage backup is the gap." : "");
+        ? overBudget ? `Yes to ${goalWord}, but over your budget.` : mayExceed ? `Yes to ${goalWord}, but it may run over your budget.` : `Yes to ${goalWord}, inside your budget.`
+        : overBudget ? `Falls short of ${goalWord} and goes over your budget.` : mayExceed ? `Not quite ${goalWord}, and it may run over your budget.` : `Not quite ${goalWord}, but inside your budget.`) + (backupGap ? " Outage backup is the gap." : "");
   const answerBody = holdsBack || !rec
     ? o.subhead
     : `Plan ${rec.scenario_id} cuts ${pctRange(rec.reduction_pct_of_use)} of your grid power for ${rec.upfront_usd_best != null ? `about ${nearest1k(rec.upfront_usd_best)}` : moneyRange(rec.upfront_usd)}.` +
