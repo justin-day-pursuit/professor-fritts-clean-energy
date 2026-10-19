@@ -247,7 +247,7 @@ function Home({ onOpen, onRerun, onStart }: { onOpen: (id: string) => void; onRe
           width={2172}
           height={724}
           sizes="100vw"
-          className="block aspect-[5/2] w-full object-cover object-[78%_8%] sm:aspect-[4/1]"
+          className="block aspect-[5/2] w-full object-cover object-[78%_8%] opacity-[0.92] saturate-[0.9] sm:aspect-[4/1]"
         />
         <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[17%]" style={{ backgroundImage: "linear-gradient(to bottom, var(--fr-soft) 0%, rgba(241,236,223,0.7) 40%, rgba(241,236,223,0) 100%)" }} />
       </footer>
