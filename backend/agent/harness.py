@@ -184,7 +184,7 @@ def _finish_with_roadmap(
     if final_tool_name != "write_answer":
         # Everything the run found and calculated, grouped for the screen. A bug here must never fail a run.
         try:
-            output["plan_summary"] = build_plan_summary(run, output, notes.next_steps())
+            output["plan_summary"] = build_plan_summary(run, output, notes.next_steps(), getattr(run, "question_asked", ""))
         except Exception as exc:  # noqa: BLE001
             output["plan_summary_error"] = f"{type(exc).__name__}: {exc}"
 
@@ -284,6 +284,8 @@ def run_harness(
     )
     seq = 0
     t0 = time.monotonic()
+    # Remembered (not saved) so the plan summary can tell whether the visitor asked for backup power when it picks the pill.
+    run.question_asked = user_message
 
     # The profile the agent runs on: the user's intake, tidied, with annual use filled from uploaded bills.
     # The stored session profile is left untouched.

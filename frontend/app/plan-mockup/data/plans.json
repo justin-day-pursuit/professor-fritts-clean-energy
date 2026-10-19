@@ -34,8 +34,8 @@
    "version": 3,
    "plain_answer": "You asked how P.S. 236 can cut the electricity it buys from the grid by 30% by 2030 on an $800,000 capital budget. The plan estimates that it can be done, but only with the full package: deeper efficiency work, solar on the whole roof and a backup battery. That package is estimated to cut 31% to 46% of your 456,834 kWh a year, and it costs between $592,242 and $1,083,593 before credits, so it could run up to $283,593 over your budget. A smaller package of standard efficiency plus solar fits the budget and is estimated to cut 28% to 42%, so it could fall just short of 30%. Solar alone covers only about 22% to 24% of your use. You have no solar or efficiency work in place today, so the baseline is all grid electricity. The roof is 20 years or older and the city lists it as not solar ready, and no cost here includes roof repair or replacement. Next steps: get a structural engineer and a roofer to review the roof, and confirm your bills and the federal credit with the city agencies that approve school work. All figures are estimates with ranges.",
    "outcome": {
-    "code": "reached_over_budget",
-    "label": "Goal reachable, over budget",
+    "code": "reached_may_exceed",
+    "label": "Reachable, may run over budget",
     "tone": "caution",
     "headline": "Plan C reaches your 30% goal and could cost up to $284k more than your $800,000 budget.",
     "subhead": "Full path to the goal (deep efficiency + full solar + backup battery): cuts grid use 31.4-46.3% for $592k-$1.08M (the median of similar NYC projects is about $823k). Reaching the goal may take more than the amount set aside.",
@@ -1222,25 +1222,25 @@
     {
      "label": "NYSERDA solar project costs",
      "url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
-     "retrieved_at": "2026-10-19T13:04:39Z",
+     "retrieved_at": "2026-10-19T13:22:10Z",
      "sample": false
     },
     {
      "label": "NYSERDA battery storage project costs",
      "url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
-     "retrieved_at": "2026-10-19T13:04:39Z",
+     "retrieved_at": "2026-10-19T13:22:10Z",
      "sample": false
     },
     {
      "label": "NYSERDA completed efficiency project costs",
      "url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "retrieved_at": "2026-10-19T13:04:39Z",
+     "retrieved_at": "2026-10-19T13:22:10Z",
      "sample": false
     },
     {
      "label": "NYC DCAS Local Law 87 report (measured savings realization)",
      "url": "https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf",
-     "retrieved_at": "2026-10-19T13:04:39Z",
+     "retrieved_at": "2026-10-19T13:22:10Z",
      "sample": false
     },
     {
@@ -2176,7 +2176,7 @@
      "tool": "run_financial_model",
      "mock": false,
      "source_url": "internal://run_financial_model",
-     "retrieved_at": "2026-10-19T13:04:39Z",
+     "retrieved_at": "2026-10-19T13:22:10Z",
      "dataset_version": "v5-simple-payback",
      "flags": []
     }
@@ -2219,11 +2219,11 @@
    "version": 3,
    "plain_answer": "You asked how P.S. 38 can cut electricity bought from the grid by 30% by 2030 on a $600,000 capital budget. The plan estimates that it can, but not with efficiency work alone. Efficiency alone is estimated to cut only 6.2% to 17.6% of grid use, short of the goal. Efficiency plus a smaller rooftop solar array (about 114 kW) is estimated to cut 53.6% to 69.7%, at a typical upfront cost of $338,628 to $600,000, which fits your budget. The whole-roof array plus a backup battery could cover all of your use, but is estimated to cost $473,046 to $1,119,287 more than your budget, so extending it is your decision. The school has no solar or efficiency work today. Limits: city records list the roof as not solar ready and 20 years or more old, and no cost here includes roof repair. The budget option gives no backup power in an outage. Heating fuel is outside this goal. Next steps: have a licensed engineer and a roofer review the roof, and confirm your bills and tariff.",
    "outcome": {
-    "code": "reached_within_budget",
-    "label": "Goal reached within budget",
-    "tone": "good",
-    "headline": "Yes. Plan B reaches your 30% goal within your $600,000 budget.",
-    "subhead": "Efficiency + solar within budget: cuts grid use 53.6-69.7% for $339k-$600k (the median of similar NYC projects is about $452k) before incentives.",
+    "code": "reached_roof_first",
+    "label": "Goal reached, roof review first",
+    "tone": "next-step",
+    "headline": "Yes. Plan B reaches your 30% goal within your $600,000 budget, if the roof passes review.",
+    "subhead": "Efficiency + solar within budget: cuts grid use 53.6-69.7% for $339k-$600k (the median of similar NYC projects is about $452k) before incentives. None of the costs include repairing or replacing the roof.",
     "recommended": "B"
    },
    "building": {
@@ -3408,25 +3408,25 @@
     {
      "label": "NYSERDA solar project costs",
      "url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
-     "retrieved_at": "2026-10-19T13:04:40Z",
+     "retrieved_at": "2026-10-19T13:22:11Z",
      "sample": false
     },
     {
      "label": "NYSERDA battery storage project costs",
      "url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
-     "retrieved_at": "2026-10-19T13:04:40Z",
+     "retrieved_at": "2026-10-19T13:22:11Z",
      "sample": false
     },
     {
      "label": "NYSERDA completed efficiency project costs",
      "url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "retrieved_at": "2026-10-19T13:04:40Z",
+     "retrieved_at": "2026-10-19T13:22:11Z",
      "sample": false
     },
     {
      "label": "NYC DCAS Local Law 87 report (measured savings realization)",
      "url": "https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf",
-     "retrieved_at": "2026-10-19T13:04:40Z",
+     "retrieved_at": "2026-10-19T13:22:11Z",
      "sample": false
     },
     {
@@ -4374,7 +4374,7 @@
      "tool": "run_financial_model",
      "mock": false,
      "source_url": "internal://run_financial_model",
-     "retrieved_at": "2026-10-19T13:04:40Z",
+     "retrieved_at": "2026-10-19T13:22:11Z",
      "dataset_version": "v5-simple-payback",
      "flags": []
     }
@@ -4416,11 +4416,11 @@
    "version": 3,
    "plain_answer": "You asked how to cut grid electricity 30% by 2030 and keep critical loads running in outages on $750,000. On paper the goal can be reached. A roof array sized to fit your budget is estimated to cut grid purchases by about 51% to 67%, at a typical cost of $418,771 to $750,000, but it gives no backup power in an outage. The full path adds deeper efficiency and a battery. It is estimated to cut 93% to 100% and cover about 8 to 9 hours of critical loads, but it costs $134,342 to $728,885 more than your budget. Whether to extend the budget is your decision once you compare that gap with the savings. The figures count electricity bought from the grid, and the 11.4 kW of solar already on the roof is treated as existing. The building sits in a mapped flood zone, is a landmark on parkland, and still needs structural and roof reviews. The battery size rests on an estimated load and an assumed 8 hours. Next, confirm your bills, critical-load figures and budget timing. Then commission the structural and roof reviews and ask for quotes with the battery and electrical gear placed above flood level.",
    "outcome": {
-    "code": "reached_within_budget",
-    "label": "Goal reached within budget",
-    "tone": "good",
-    "headline": "Yes. Plan B reaches your 30% goal within your $750,000 budget.",
-    "subhead": "Efficiency + solar within budget: cuts grid use 50.8-66.6% for $419k-$750k (the median of similar NYC projects is about $563k) before incentives.",
+    "code": "reached_no_backup",
+    "label": "Goal reached, no backup yet",
+    "tone": "caution",
+    "headline": "Yes. Plan B reaches your 30% goal within your $750,000 budget, but it gives no backup power.",
+    "subhead": "Efficiency + solar within budget: cuts grid use 50.8-66.6% for $419k-$750k (the median of similar NYC projects is about $563k) before incentives. Backup power needs a battery, which costs more.",
     "recommended": "B"
    },
    "building": {
@@ -5470,25 +5470,25 @@
     {
      "label": "NYSERDA solar project costs",
      "url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
-     "retrieved_at": "2026-10-19T13:04:40Z",
+     "retrieved_at": "2026-10-19T13:22:11Z",
      "sample": false
     },
     {
      "label": "NYSERDA battery storage project costs",
      "url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
-     "retrieved_at": "2026-10-19T13:04:40Z",
+     "retrieved_at": "2026-10-19T13:22:11Z",
      "sample": false
     },
     {
      "label": "NYSERDA completed efficiency project costs",
      "url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "retrieved_at": "2026-10-19T13:04:40Z",
+     "retrieved_at": "2026-10-19T13:22:11Z",
      "sample": false
     },
     {
      "label": "NYC DCAS Local Law 87 report (measured savings realization)",
      "url": "https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf",
-     "retrieved_at": "2026-10-19T13:04:40Z",
+     "retrieved_at": "2026-10-19T13:22:11Z",
      "sample": false
     }
    ],
@@ -6453,7 +6453,7 @@
      "tool": "run_financial_model",
      "mock": false,
      "source_url": "internal://run_financial_model",
-     "retrieved_at": "2026-10-19T13:04:40Z",
+     "retrieved_at": "2026-10-19T13:22:11Z",
      "dataset_version": "v5-simple-payback",
      "flags": []
     }
@@ -7192,19 +7192,19 @@
     {
      "label": "NYSERDA solar project costs",
      "url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
-     "retrieved_at": "2026-10-19T13:04:40Z",
+     "retrieved_at": "2026-10-19T13:22:11Z",
      "sample": false
     },
     {
      "label": "NYSERDA completed efficiency project costs",
      "url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "retrieved_at": "2026-10-19T13:04:40Z",
+     "retrieved_at": "2026-10-19T13:22:11Z",
      "sample": false
     },
     {
      "label": "NYC DCAS Local Law 87 report (measured savings realization)",
      "url": "https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf",
-     "retrieved_at": "2026-10-19T13:04:40Z",
+     "retrieved_at": "2026-10-19T13:22:11Z",
      "sample": false
     },
     {
@@ -7927,7 +7927,7 @@
      "tool": "run_financial_model",
      "mock": false,
      "source_url": "internal://run_financial_model",
-     "retrieved_at": "2026-10-19T13:04:40Z",
+     "retrieved_at": "2026-10-19T13:22:11Z",
      "dataset_version": "v5-simple-payback",
      "flags": []
     }
@@ -9126,25 +9126,25 @@
     {
      "label": "NYSERDA solar project costs",
      "url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
-     "retrieved_at": "2026-10-19T13:04:41Z",
+     "retrieved_at": "2026-10-19T13:22:12Z",
      "sample": false
     },
     {
      "label": "NYSERDA battery storage project costs",
      "url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
-     "retrieved_at": "2026-10-19T13:04:41Z",
+     "retrieved_at": "2026-10-19T13:22:12Z",
      "sample": false
     },
     {
      "label": "NYSERDA completed efficiency project costs",
      "url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "retrieved_at": "2026-10-19T13:04:41Z",
+     "retrieved_at": "2026-10-19T13:22:12Z",
      "sample": false
     },
     {
      "label": "NYC DCAS Local Law 87 report (measured savings realization)",
      "url": "https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf",
-     "retrieved_at": "2026-10-19T13:04:41Z",
+     "retrieved_at": "2026-10-19T13:22:12Z",
      "sample": false
     }
    ],
@@ -9977,7 +9977,7 @@
      "tool": "run_financial_model",
      "mock": false,
      "source_url": "internal://run_financial_model",
-     "retrieved_at": "2026-10-19T13:04:41Z",
+     "retrieved_at": "2026-10-19T13:22:12Z",
      "dataset_version": "v5-simple-payback",
      "flags": []
     }
@@ -10020,10 +10020,10 @@
    "version": 3,
    "plain_answer": "You asked how the Flushing Library can cut grid electricity 30% by 2030 and keep its cooling running in outages on a $1,500,000 capital budget. The plan estimates that none of the three paths clearly reaches 30%. Efficiency alone is estimated to cut 6.2% to 17.6% of the 2,241,970 kWh a year the library buys from the grid, and adding a solar array that fits the budget raises that to 8.3% to 19.9%. The full path (deeper efficiency, solar on the whole roof and a backup battery) is estimated to cut 17.0% to 30.4%, so it reaches 30% only at the top of its range, and it costs up to $1,345,721 more than your budget. Rooftop solar alone covers only about 7.7% to 8.4% of your use, because the building is large and the roof is small. The city rates the roof Poor, not solar ready and 20 years or more old, and none of the costs include repairing or replacing it. Next: have an engineer and a roofer review the roof, then book an energy audit before deciding whether to extend the budget.",
    "outcome": {
-    "code": "close",
-    "label": "Close, but not certain",
-    "tone": "caution",
-    "headline": "Close: 30% is within reach, but not certain.",
+    "code": "not_within_budget",
+    "label": "Not within budget",
+    "tone": "bad",
+    "headline": "Not on your $1,500,000 budget. Within it, the best plan (Plan B) cuts grid use 8.3-19.9%. The full path reaches 30% only at its best, and could cost up to $1.35M more.",
     "subhead": "Plan C cuts grid use 17-30.4%, so the goal is met only if savings land at the high end.",
     "recommended": "C"
    },
@@ -11174,25 +11174,25 @@
     {
      "label": "NYSERDA solar project costs",
      "url": "https://data.ny.gov/Energy-Environment/Solar-Electric-Programs-Reported-by-NYSERDA-Beginn/3x8r-34rs",
-     "retrieved_at": "2026-10-19T13:04:41Z",
+     "retrieved_at": "2026-10-19T13:22:12Z",
      "sample": false
     },
     {
      "label": "NYSERDA battery storage project costs",
      "url": "https://data.ny.gov/Energy-Environment/Residential-Retail-and-Bulk-Energy-Storage-Incentive/ugya-enpy",
-     "retrieved_at": "2026-10-19T13:04:41Z",
+     "retrieved_at": "2026-10-19T13:22:12Z",
      "sample": false
     },
     {
      "label": "NYSERDA completed efficiency project costs",
      "url": "https://data.ny.gov/Energy-Environment/Energy-Efficiency-Completed-Projects-Beginning-1987/erjw-j2zx",
-     "retrieved_at": "2026-10-19T13:04:41Z",
+     "retrieved_at": "2026-10-19T13:22:12Z",
      "sample": false
     },
     {
      "label": "NYC DCAS Local Law 87 report (measured savings realization)",
      "url": "https://www.nyc.gov/assets/dcas/downloads/pdf/energy/reportsandpublication/local-law-87-annual-report-fy-2022.pdf",
-     "retrieved_at": "2026-10-19T13:04:41Z",
+     "retrieved_at": "2026-10-19T13:22:12Z",
      "sample": false
     },
     {
@@ -12129,7 +12129,7 @@
      "tool": "run_financial_model",
      "mock": false,
      "source_url": "internal://run_financial_model",
-     "retrieved_at": "2026-10-19T13:04:41Z",
+     "retrieved_at": "2026-10-19T13:22:12Z",
      "dataset_version": "v5-simple-payback",
      "flags": []
     }

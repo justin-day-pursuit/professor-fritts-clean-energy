@@ -11,6 +11,7 @@ sees always agrees with the figures. Every function is plain code with no Claude
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from agent.plain_names import calculation_formula, calculation_name, tool_name
@@ -89,15 +90,39 @@ def _money(pair: list[float] | None) -> str:
     return f"{short(pair[0])}-{short(pair[1])}"
 
 
-def decide_outcome(scenarios: list[dict[str, Any]], site_context: dict[str, Any], budget: float | None) -> dict[str, Any]:
-    """
-    The headline for the plan, decided from the numbers.
+# Words that show the visitor asked for backup power (an outage, a blackout, a battery). Used to say plainly when a plan has none.
+_BACKUP_WORDS = re.compile(r"outage|blackout|power cut|storm|resilien|keep .{0,60}running|batter|back-?up|back up", re.I)
 
-    needs_roof_check  a roof that is not flat and not verified: no solar was sized
-    reached_within_budget  the cheapest scenario that reaches the goal at its low end and fits the budget
-    reached_over_budget    a scenario reaches the goal but costs more than the budget
-    close                  no scenario is sure, but at least one reaches the goal at its high end
-    not_reached            no scenario reaches the goal
+
+def asks_for_backup(question: str | None) -> bool:
+    """True when the question the visitor asked is about keeping power on, not only about cutting use."""
+    return bool(question and _BACKUP_WORDS.search(question))
+
+
+def has_roof_problem(site_context: dict[str, Any]) -> bool:
+    """True when the city rates the roof not solar ready, poor or 20+ years old: a yes on solar then depends on the roof passing review."""
+    return bool(
+        site_context.get("city_not_solar_ready")
+        or str(site_context.get("roof_condition") or "").lower() == "poor"
+        or site_context.get("roof_age_20_plus")
+    )
+
+
+def decide_outcome(scenarios: list[dict[str, Any]], site_context: dict[str, Any], budget: float | None, question: str = "") -> dict[str, Any]:
+    """
+    The answer to the visitor's question, decided from the numbers: the pill (label and tone) and the headline.
+
+    The tone is the colour: good is green, caution is amber, next-step is blue, bad is red.
+
+    needs_roof_check       a roof that is not flat and not verified: no solar was sized (blue)
+    reached_within_budget  the cheapest scenario that reaches the goal at its low end and fits the budget (green)
+    reached_roof_first     the same, but the city rates the roof not solar ready, poor or 20+ years old, so the roof comes first (blue)
+    reached_no_backup      the same, but the visitor asked for backup power and the plan has none (amber)
+    reached_may_exceed     a scenario reaches the goal but may cost more than the budget (amber)
+    reached_over_budget    a scenario reaches the goal but costs more than the budget even at its low end (red)
+    close                  no scenario is sure, the best one reaches the goal only at its high end, and it fits the budget (amber)
+    not_within_budget      the same, but the best one does not fit the budget: the goal is not reachable on this budget (red)
+    not_reached            no scenario reaches the goal (red)
     partial                no scenario was calculated
     """
     if site_context.get("roof_kind") == "non_flat" and not site_context.get("verified_usable_roof_sqft"):
@@ -115,37 +140,67 @@ def decide_outcome(scenarios: list[dict[str, Any]], site_context: dict[str, Any]
     reaching = [s for s in scenarios if s.get("reaches_goal")]
     within = [s for s in reaching if s.get("budget_strain") == "within budget"]
     budget_text = f" your ${budget:,.0f} budget" if budget else " your budget"
+
+    def cut(s: dict[str, Any]) -> str:
+        return f"cuts grid use {s['reduction_pct_of_use'][0]:g}-{s['reduction_pct_of_use'][1]:g}%"
+
     if within:
         best = min(within, key=lambda s: s["upfront_usd"][0])
+        subhead = f"{best['scenario_name']}: {cut(best)} for {_about(best)} before incentives."
+        if has_roof_problem(site_context):
+            return {
+                "code": "reached_roof_first", "label": "Goal reached, roof review first", "tone": "next-step",
+                "headline": f"Yes. Plan {best['scenario_id']} reaches your {goal:g}% goal within{budget_text}, if the roof passes review.",
+                "subhead": f"{subhead} None of the costs include repairing or replacing the roof.",
+                "recommended": best["scenario_id"],
+            }
+        if asks_for_backup(question) and (best.get("outage_hours") or [0, 0])[1] <= 0:
+            return {
+                "code": "reached_no_backup", "label": "Goal reached, no backup yet", "tone": "caution",
+                "headline": f"Yes. Plan {best['scenario_id']} reaches your {goal:g}% goal within{budget_text}, but it gives no backup power.",
+                "subhead": f"{subhead} Backup power needs a battery, which costs more.",
+                "recommended": best["scenario_id"],
+            }
         return {
             "code": "reached_within_budget", "label": "Goal reached within budget", "tone": "good",
             "headline": f"Yes. Plan {best['scenario_id']} reaches your {goal:g}% goal within{budget_text}.",
-            "subhead": f"{best['scenario_name']}: cuts grid use {best['reduction_pct_of_use'][0]:g}-{best['reduction_pct_of_use'][1]:g}% "
-                       f"for {_about(best)} before incentives.",
+            "subhead": subhead,
             "recommended": best["scenario_id"],
         }
     if reaching:
         best = min(reaching, key=lambda s: s["upfront_usd"][0])
         gap = best.get("budget_gap_usd")
         gap_text = f" and could cost up to {_money([gap[1], gap[1]]).split('-')[0]} more than{budget_text}" if gap and gap[1] > 0 else ""
+        over = best.get("budget_strain") == "over budget"
         return {
-            "code": "reached_over_budget", "label": "Goal reachable, over budget", "tone": "caution",
+            "code": "reached_over_budget" if over else "reached_may_exceed",
+            "label": "Reachable, over budget" if over else "Reachable, may run over budget",
+            "tone": "bad" if over else "caution",
             "headline": f"Plan {best['scenario_id']} reaches your {goal:g}% goal{gap_text}.",
-            "subhead": f"{best['scenario_name']}: cuts grid use {best['reduction_pct_of_use'][0]:g}-{best['reduction_pct_of_use'][1]:g}% "
-                       f"for {_about(best)}. Reaching the goal may take more than the amount set aside.",
+            "subhead": f"{best['scenario_name']}: {cut(best)} for {_about(best)}. Reaching the goal may take more than the amount set aside.",
             "recommended": best["scenario_id"],
         }
     nearest = max(scenarios, key=lambda s: s["reduction_pct_of_use"][1])
     if nearest["reduction_pct_of_use"][1] >= goal:
+        subhead = f"Plan {nearest['scenario_id']} {cut(nearest)}, so the goal is met only if savings land at the high end."
+        if nearest.get("budget_strain") == "within budget":
+            return {
+                "code": "close", "label": "Goal possible, not guaranteed", "tone": "caution",
+                "headline": f"Plan {nearest['scenario_id']} could reach {goal:g}% within{budget_text}, but it is not guaranteed.",
+                "subhead": subhead, "recommended": nearest["scenario_id"],
+            }
+        fits = [s for s in scenarios if s.get("budget_strain") == "within budget"]
+        best_fit = max(fits, key=lambda s: s["reduction_pct_of_use"][1]) if fits else None
+        gap = nearest.get("budget_gap_usd")
+        within_text = f" Within it, the best plan (Plan {best_fit['scenario_id']}) {cut(best_fit)}." if best_fit else ""
+        gap_text = f", and could cost up to {_money([gap[1], gap[1]]).split('-')[0]} more" if gap and gap[1] > 0 else ""
         return {
-            "code": "close", "label": "Close, but not certain", "tone": "caution",
-            "headline": f"Close: {goal:g}% is within reach, but not certain.",
-            "subhead": f"Plan {nearest['scenario_id']} cuts grid use {nearest['reduction_pct_of_use'][0]:g}-{nearest['reduction_pct_of_use'][1]:g}%, "
-                       "so the goal is met only if savings land at the high end.",
-            "recommended": nearest["scenario_id"],
+            "code": "not_within_budget", "label": "Not within budget", "tone": "bad",
+            "headline": f"Not on{budget_text}.{within_text} The full path reaches {goal:g}% only at its best{gap_text}.",
+            "subhead": subhead, "recommended": nearest["scenario_id"],
         }
     return {
-        "code": "not_reached", "label": "Goal not reached", "tone": "caution",
+        "code": "not_reached", "label": "Goal not reached", "tone": "bad",
         "headline": f"No plan reaches {goal:g}%." if len(scenarios) < 3 else f"None of the three plans reaches {goal:g}%.",
         "subhead": f"The best, Plan {nearest['scenario_id']}, cuts grid use {nearest['reduction_pct_of_use'][0]:g}-{nearest['reduction_pct_of_use'][1]:g}%.",
         "recommended": nearest["scenario_id"],
@@ -282,7 +337,7 @@ def _roof_refusals(run: Any) -> dict[str, str]:
     return reasons
 
 
-def build_plan_summary(run: Any, output: dict[str, Any], next_steps: list[dict[str, str]] | None = None) -> dict[str, Any]:
+def build_plan_summary(run: Any, output: dict[str, Any], next_steps: list[dict[str, str]] | None = None, question: str = "") -> dict[str, Any]:
     """
     Gather everything the run found and calculated into one structured block.
 
@@ -338,7 +393,7 @@ def build_plan_summary(run: Any, output: dict[str, Any], next_steps: list[dict[s
     return {
         "version": SUMMARY_VERSION,
         "plain_answer": (roadmap.get("plain_answer") or "").strip() or None,
-        "outcome": decide_outcome(scenarios, site, budget),
+        "outcome": decide_outcome(scenarios, site, budget, question),
         "building": {
             "intake": profile,
             "city_records": records,

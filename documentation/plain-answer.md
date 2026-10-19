@@ -28,3 +28,23 @@ Code checks it before a live plan is accepted (`agent/checks.py`, `_plain_answer
 Their building details are now filled from the city's records, the way the website fills them for a visitor (`python manage.py build_city_intakes`), so the "please confirm" list holds only real items. Re-record them with live runs, and re-export the saved plans with `python manage.py export_plan_summaries --out ../frontend/app/plan-mockup/data`.
 
 The sixth sample, the Flushing Library in Queens (41-17 Main Street, a real Queens Public Library building), was not recorded from a Claude run. Its plan text was written by hand by following the agent's own instructions step by step, using the real results of the city, solar, price, flood and incentive lookups (all free), so it cost no credits. It is listed like the other samples. Its sources and numbers are real; only the wording was authored.
+
+## The answer pill and headline
+
+The pill on each home card and the headline at the top of the report come from one rule, `decide_outcome` in `backend/agent/plan_summary.py`, so the card, the report and the PDF always say the same thing. It looks at whether a plan reaches the goal (tested at the low end of its range) and whether it fits the budget:
+
+| Answer | Pill | Colour |
+|---|---|---|
+| Reaches the goal within budget | Goal reached within budget | green |
+| The same, but the city rates the roof not solar ready, poor or 20+ years old (the costs leave out replacing it) | Goal reached, roof review first | blue |
+| The same, but the visitor asked for backup power and the plan has none | Goal reached, no backup yet | amber |
+| Reaches the goal, but may cost more than the budget | Reachable, may run over budget | amber |
+| Reaches the goal, but costs more than the budget even at the low end | Reachable, over budget | red |
+| No plan is sure; the best reaches the goal only at its high end and fits the budget | Goal possible, not guaranteed | amber |
+| The same, but the best does not fit the budget | Not within budget | red |
+| No plan reaches the goal | Goal not reached | red |
+| A pitched roof, no verified area | Needs a roofer first | blue |
+
+When a plan has both a roof problem and no backup, the roof comes first, because it can change the whole plan. Whether the visitor asked for backup is read from their question (words like outage, blackout or battery).
+
+The three plan cards each show two pills: whether that plan reaches the goal (green reaches it, amber only at its best, red short of it) and whether it fits the budget (green fits, amber may run over, red over). "Recommended" sits on the card's top edge.
