@@ -128,7 +128,7 @@ class RoadmapPayload(BaseModel):
         default="",
         description=(
             "One short plain-words answer to the user's question (about 80 to 200 words, no bullet points): what was asked, "
-            "the answer, why, what limits it, what does not line up, and what to do next. Use only facts that are in the sections."
+            "the answer, why, what limits it, and what to do next. Leave out record mismatches (they are listed under Confirm first). Use only facts that are in the sections."
         ),
     )
 

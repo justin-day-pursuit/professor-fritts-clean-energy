@@ -111,13 +111,22 @@ def test_a_number_the_plan_never_stated_is_rejected():
 # ---------------------------------------------------------------------------------------------- what it must not leave out
 
 
-def test_a_mismatch_with_the_city_record_must_be_mentioned():
+def test_a_mismatch_with_the_city_record_is_not_required_in_the_opening_answer():
+    # The mismatch is listed under "Confirm first", so the paragraph can stay on the answer, the plan and the goal.
     notes = AgentNotes(flags=["intake_mismatch:floor_area_sqft"])
     silent = GOOD.replace("confirm the size and ownership of the existing array", "confirm the lighting type")
-    issues = _plain_answer_issues(_plan(silent), notes, required=True)
-    assert any("differs from the city's record" in issue for issue in issues)
-    mentioned = silent + " The floor area you entered differs from the city record."
-    assert _plain_answer_issues(_plan(mentioned), notes, required=True) == []
+    assert _plain_answer_issues(_plan(silent), notes, required=True) == []
+
+
+def test_talk_about_records_that_do_not_line_up_is_kept_out_of_the_opening_answer():
+    notes = AgentNotes(flags=["intake_mismatch:floor_area_sqft"])
+    for sentence in (
+        " The floor area you entered differs from the city record.",
+        " Several records do not line up, so please confirm them.",
+        " The city lists the lot as 235th Street, not 236th.",
+    ):
+        issues = _plain_answer_issues(_plan(GOOD + sentence), notes, required=True)
+        assert any("record mismatches" in issue for issue in issues), sentence
 
 
 def test_a_roof_rule_that_turned_solar_down_must_be_explained():

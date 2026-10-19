@@ -820,7 +820,9 @@ def _plain_language_issues(payload: RoadmapPayload) -> list[str]:
 PLAIN_ANSWER_MIN_WORDS = 50
 PLAIN_ANSWER_MAX_WORDS = 240
 _NUMBER_TOKEN = re.compile(r"\$?\d[\d,]*(?:\.\d+)?\s*(?:thousand|million|k|m)?\b", re.I)
-_DIFFERS_WORDS = ("differ", "does not match", "doesn't match", "do not match", "disagree", "mismatch", "city record", "city's record")
+# Phrases that mean the paragraph is talking about entered values or records that disagree. That belongs in the "Confirm first"
+# list, not in the opening answer, so the paragraph is kept to the answer, the plan and the goal.
+_RECORD_MISMATCH_TALK = ("line up", "differs from the city", "differ from the city", "city lists the lot", "tax-lot record", "does not match the city", "do not match the city")
 
 
 def _number_values(text: str) -> list[float]:
@@ -849,8 +851,8 @@ def _plain_answer_issues(payload: RoadmapPayload, notes: AgentNotes | None, *, r
 
     Required in live runs (a missing answer sends the plan back once). Whenever one is present it must be the right length,
     use no promise wording, no internal names or ids, and state no number that is not already in the plan's own statements, so
-    it cannot say more than the plan supports. It must also mention the two things a reader would otherwise miss: that an
-    entered value differs from the city's record, and that solar was ruled out by the roof rules.
+    it cannot say more than the plan supports. It must explain it when solar was ruled out by the roof rules. It must NOT
+    talk about entered values that differ from the city's records: those go in the "Confirm first" list instead.
     """
     text = (payload.plain_answer or "").strip()
     if not text:
@@ -880,11 +882,11 @@ def _plain_answer_issues(payload: RoadmapPayload, notes: AgentNotes | None, *, r
         shown = ", ".join(f"{v:,.0f}" if v >= 100 else f"{v:g}" for v in unsupported[:4])
         issues.append(f"The plain-words answer states numbers that are not in the plan's statements: {shown}. Use only numbers the sections give.")
 
+    lower = text.lower()
+    if any(phrase in lower for phrase in _RECORD_MISMATCH_TALK):
+        issues.append("Leave record mismatches (an address, floor area or output that differs from the city's records) out of the plain-words answer. They are listed under \"Confirm first\" already.")
+
     if notes is not None:
-        lower = text.lower()
-        mismatched = [f.split(":", 1)[1].replace("_", " ") for f in notes.flags if f.startswith("intake_mismatch:")]
-        if mismatched and not any(word in lower for word in _DIFFERS_WORDS):
-            issues.append(f"The plain-words answer must say that what was entered ({', '.join(mismatched)}) differs from the city's record.")
         from tools.roof import plain_refusal
 
         if any(plain_refusal(str(err)) for err in notes.failed_tools.values()):

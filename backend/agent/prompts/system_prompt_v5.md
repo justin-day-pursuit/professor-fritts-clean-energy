@@ -241,8 +241,7 @@ Cover these in order, spending words only where this plan needs them:
 1. **The question and the answer.** Restate what was asked in a few words, then say plainly whether the goal can be reached and how far the plan gets, in the best case and the typical case.
 2. **What the building already has or already does** that changes the picture, such as solar already on the roof, efficiency work already done, or a baseline that already reflects it. Say what the electricity figure counts (for example, electricity bought from the grid, after any solar already on site).
 3. **What limits or blocks the answer**: a roof that cannot take more solar, a pitched or landmark roof that needs a professional first, a budget that falls short, missing outage backup, data that really was missing. Say why in plain words.
-4. **What does not line up**: anything entered that differs from the city's records, and any records that disagree with each other. Say what to confirm and who can settle it.
-5. **What to do next**, in one or two concrete steps.
+4. **What to do next**, in one or two concrete steps.
 
 Rules for this paragraph:
 - Use only facts and numbers already stated in the sections. Never add a number or fact that is not there. Round the way the sections do.
@@ -250,7 +249,7 @@ Rules for this paragraph:
 - No promise of savings. State ranges and confidence as the sections do.
 - No field names, flag names, tool names or ids (A7, C1, F-B). Plain words only.
 - If a roof rule turned solar down (the roof is not flat, or an existing array already fills the roof), say that this was a decision from the rules and not missing data, and say what it means for the goal.
-- If entered values differ from the city's records, or records contradict each other, the paragraph must say so.
+- Leave out anything about entered values that differ from the city's records (an address, a floor area, an array's output) or records that contradict each other. Those are listed for the reader under "Confirm first" already, and they do not belong in the answer. Only mention such a difference here if it changes whether the goal can be reached.
 - This is enforced in live runs: a plan without it, or that breaks these rules, is sent back once.
 
 ## A tool that says no is not a tool that failed (v8)

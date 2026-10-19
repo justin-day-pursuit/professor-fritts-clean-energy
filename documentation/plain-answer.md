@@ -8,7 +8,7 @@ The agent used to hand back about 45 separate labelled statements across 13 sect
 
 ## Who writes it, and how it is checked
 
-The agent writes it as part of the plan it already writes (the `plain_answer` field of `write_roadmap`), so it sees the whole picture and it is saved in the recording, which means saved plans replay for free. The instructions are in `backend/agent/prompts/system_prompt_v5.md` ("The plain-words answer"). They are general, not tied to a building: what was asked and the answer, what the building already has, what limits it, what does not line up, and what to do next.
+The agent writes it as part of the plan it already writes (the `plain_answer` field of `write_roadmap`), so it sees the whole picture and it is saved in the recording, which means saved plans replay for free. The instructions are in `backend/agent/prompts/system_prompt_v5.md` ("The plain-words answer"). They are general, not tied to a building: what was asked and the answer, what the building already has, what limits it, and what to do next. Record mismatches are left out of it and shown under "Confirm first" instead.
 
 Code checks it before a live plan is accepted (`agent/checks.py`, `_plain_answer_issues`). A plan that fails is sent back once, as with every other check:
 
@@ -16,7 +16,7 @@ Code checks it before a live plan is accepted (`agent/checks.py`, `_plain_answer
 - about 50 to 240 words;
 - no promise of savings, no internal names or ids;
 - every number in it must already appear in the plan's own statements, so it cannot say more than the plan supports;
-- it must say when something entered differs from the city's record, and why solar was not sized when a roof rule turned it down.
+- it must say why solar was not sized when a roof rule turned it down, and it must not talk about entered values that differ from the city's records (those are listed under "Confirm first").
 
 ## Two data fixes that came with it
 
