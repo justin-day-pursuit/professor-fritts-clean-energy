@@ -935,11 +935,11 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
           {nextSteps.length > 0 && (
             <div className="min-w-0 self-start rounded-2xl bg-white/80 p-4">
               <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--fr-mute)]">Start here</div>
-              {/* Plain dots, not numbers or checkboxes: these jobs can happen side by side, the roadmap further down is the real order, and nothing in a report should look tick-able. */}
+              {/* Outlined circles, not numbers or checkboxes (nothing here should look tick-able or done): these jobs can happen side by side, the roadmap further down is the real order, and nothing in a report should look tick-able. */}
               <ul className="mt-3 space-y-2.5 text-sm leading-snug text-[var(--fr-ink)]">
                 {nextSteps.map((step) => (
                   <li key={step} className="flex gap-2.5">
-                    <span aria-hidden="true" className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--fr-gold)]" />
+                    <span aria-hidden="true" className="mt-1 h-3.5 w-3.5 shrink-0 rounded-full border-[1.5px] border-[var(--fr-gold)]" />
                     <span>{step}</span>
                   </li>
                 ))}
@@ -988,7 +988,7 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
           <Card className="border-[var(--fr-gold)] bg-[#fffaf0]">
             <ul className="space-y-2 text-sm text-[var(--fr-ink)]">
               {sum.confirm_first.map((c) => (
-                <li key={c.text} className="flex gap-2"><span aria-hidden="true" className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--fr-gold)]" /><span>{c.text}</span></li>
+                <li key={c.text} className="flex gap-2"><span aria-hidden="true" className="mt-1 h-3.5 w-3.5 shrink-0 rounded-full border-[1.5px] border-[var(--fr-gold)]" /><span>{c.text}</span></li>
               ))}
             </ul>
           </Card>
@@ -1023,7 +1023,7 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
             <ul className="space-y-2.5">
               {sum.referrals.map((r) => (
                 <li key={r.text} className="flex gap-2 text-sm text-[var(--fr-ink)]">
-                  <span aria-hidden="true" className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--fr-mute)]" />
+                  <span aria-hidden="true" className="mt-1 h-3.5 w-3.5 shrink-0 rounded-full border-[1.5px] border-[var(--fr-mute)]" />
                   <span>{dev ? r.text : plainify(r.text)} <SourceLink url={r.source_url} /></span>
                 </li>
               ))}
