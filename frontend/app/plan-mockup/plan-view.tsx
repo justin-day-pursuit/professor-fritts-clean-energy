@@ -11,6 +11,7 @@
 import { createContext, useContext, useState, type ReactNode, type SyntheticEvent } from "react";
 import Link from "next/link";
 import { SAMPLE_BADGE_TEXT } from "./copy";
+import { useDevView } from "./dev-view";
 import type { Claim, PlanSummary, Program, Scenario, Section } from "./plan-types";
 import { fieldLabel, fieldValue, isInternalField, plainify, toolLabel } from "./plain";
 import { copyShareLink, downloadPlanPdf, shortLink } from "./plan-actions";
@@ -551,7 +552,8 @@ function priceText(kind: string, price: unknown): string {
 }
 
 export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; plans: PlanView[]; onRestart: () => void; onPick: (id: string) => void }) {
-  const [dev, setDev] = useState(false);
+  // The "Developer view" switch now lives in the hidden developer menu in the top bar (see ./dev-view.ts).
+  const [dev] = useDevView();
   // What the Download PDF and Share buttons last did, shown beside them.
   const [note, setNote] = useState("");
   const onDownload = () => {
@@ -827,10 +829,6 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
         <span className="font-semibold text-[var(--fr-ink)]">{String(plan.profile.building_name ?? plan.label)}</span>
         <span className="rounded-full bg-[var(--fr-soft)] px-2 py-0.5 text-xs text-[var(--fr-mute)]">{plan.status === "done" ? "Plan complete" : "Plan complete, with open items"}</span>
         <div className="ml-auto flex items-center gap-2">
-          <label className="flex cursor-pointer items-center gap-1.5 text-xs text-[var(--fr-mute)]">
-            <input type="checkbox" checked={dev} onChange={(e) => setDev(e.target.checked)} />
-            Developer view
-          </label>
           {note && <span className="text-xs text-[var(--fr-mute)]" role="status">{note}</span>}
           <button type="button" onClick={onDownload} className="rounded-lg border border-[var(--fr-line)] bg-white px-3 py-1.5 text-[var(--fr-ink)] hover:border-[var(--fr-teal)]">Download PDF</button>
           <div className="relative">

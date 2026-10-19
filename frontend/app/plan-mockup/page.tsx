@@ -30,6 +30,7 @@ import type { BuildingPrefill, PrefillItem, RunResponse } from "@/lib/types";
 import { ADDRESS_ERROR, ADDRESS_LOOKING, ADDRESS_NOT_FOUND, ADDRESS_START, BRING, BRING_REPLY, CONFIRM_REPLY, HELLO, INTAKE_STEP, PDF_SAYS, PREFILL_STEP, PRIVATE_BUILDING, REPORT_MENU, SHARE_LIVE, foundLine, readyLine, shareLine, unclearOwner, workingLine } from "./fritts/script";
 import { plainify } from "./plain";
 import { copyShareLink, downloadPlanPdf } from "./plan-actions";
+import { useDevView } from "./dev-view";
 import { Results } from "./plan-view";
 import { PLANS, type PlanView } from "./plans";
 import { Card, Chip, LABELS, PALETTE, SectionTitle } from "./ui";
@@ -58,6 +59,43 @@ function handleScrollToSection(id: string) {
 
 function TopBar({ onStart }: { onStart: () => void }) {
   const [open, setOpen] = useState(false);
+  const [devView, setDevView] = useDevView();
+  // The developer menu stays out of sight: a small sun icon that opens only after three quick clicks (one or two do nothing),
+  // so a visitor never stumbles on it. When it is open, one click closes it; Escape or a click elsewhere closes it too.
+  const clicks = useRef(0);
+  const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const onSunClick = () => {
+    if (open) {
+      setOpen(false);
+      return;
+    }
+    clicks.current += 1;
+    if (clickTimer.current) clearTimeout(clickTimer.current);
+    if (clicks.current >= 3) {
+      clicks.current = 0;
+      setOpen(true);
+      return;
+    }
+    clickTimer.current = setTimeout(() => {
+      clicks.current = 0;
+    }, 900);
+  };
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
   return (
     <header className="sticky top-0 z-20 border-b border-[var(--fr-line)] bg-[var(--fr-cream)]/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
@@ -75,9 +113,12 @@ function TopBar({ onStart }: { onStart: () => void }) {
           <Link href="/#how" onClick={() => handleScrollToSection("how")} className="hover:text-[var(--fr-teal)]">How it works</Link>
         </nav>
         <div className="ml-auto flex items-center gap-3">
-          <div className="relative">
-            <button type="button" onClick={() => setOpen((v) => !v)} className="rounded-lg border border-[var(--fr-line)] bg-white px-3 py-1.5 text-sm text-[var(--fr-ink)]">
-              Developer tools ▾
+          <div className="relative" ref={menuRef}>
+            <button type="button" onClick={onSunClick} aria-label="Developer tools" aria-expanded={open} className="rounded-full p-1.5 text-[var(--fr-mute)] opacity-40 transition hover:opacity-70">
+              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round">
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8" />
+              </svg>
             </button>
             {open && (
               <div className="absolute right-0 mt-2 w-64 rounded-xl border border-[var(--fr-line)] bg-white p-1 text-sm shadow-lg">
@@ -87,6 +128,12 @@ function TopBar({ onStart }: { onStart: () => void }) {
                 <Link href="/planner" className="block rounded-lg px-3 py-2 hover:bg-[var(--fr-soft)]">
                   Classic planner <span className="block text-xs text-[var(--fr-mute)]">Form, chat, run log, roadmap</span>
                 </Link>
+                <label className="flex cursor-pointer items-start gap-2 rounded-lg px-3 py-2 hover:bg-[var(--fr-soft)]">
+                  <input type="checkbox" checked={devView} onChange={(e) => setDevView(e.target.checked)} className="mt-1" />
+                  <span>
+                    Developer view <span className="block text-xs text-[var(--fr-mute)]">Show field names, flags and ids in reports</span>
+                  </span>
+                </label>
               </div>
             )}
           </div>
@@ -195,7 +242,7 @@ function Home({ onOpen, onRerun, onStart }: { onOpen: (id: string) => void; onRe
 
 // ----------------------------------------------------------------------------------------------- intake
 
-const STEPS = ["Find your building", "Energy and goals", "What you already have", "Review and run"];
+const STEPS = ["Find your building", "Energy and goals", "What you already have", "Your question"];
 
 function Field({ label, value, hint, onChange, readOnly }: { label: string; value: string | number | null | undefined; hint?: string; onChange?: (value: string) => void; readOnly?: boolean }) {
   const box = "mt-1 w-full rounded-lg border border-[var(--fr-line)] bg-white px-3 py-2 text-[var(--fr-ink)] outline-none focus:border-[var(--fr-teal)]";
@@ -230,7 +277,7 @@ function suggestedFrom(prefill: BuildingPrefill | null): RunForm {
     const value = prefillValue(prefill, field);
     return value === undefined ? undefined : String(value);
   };
-  return { annual_kwh: text("annual_kwh"), roof_area_sqft: text("roof_area_sqft"), existing_solar_kw: text("existing_solar_kw") };
+  return { annual_kwh: text("annual_kwh"), floor_area_sqft: text("floor_area_sqft"), roof_area_sqft: text("roof_area_sqft"), existing_solar_kw: text("existing_solar_kw") };
 }
 
 /** The small print under a pre-filled box: where the value came from and what to keep in mind. */
@@ -324,9 +371,11 @@ interface IntakeProps {
   step: number;
   setStep: (n: number) => void;
   onRun: () => void;
+  /** Throws away the visitor's edited question, so the one suggested from their answers shows again. */
+  onResetQuestion: () => void;
 }
 
-function Intake({ sample, mode, found, prefill, values, onChange, runProblem, onBill, searchKey, searchValue, onPickAddress, onEditAddress, onSearched, onPickSample, step, setStep, onRun }: IntakeProps) {
+function Intake({ sample, mode, found, prefill, values, onChange, onResetQuestion, runProblem, onBill, searchKey, searchValue, onPickAddress, onEditAddress, onSearched, onPickSample, step, setStep, onRun }: IntakeProps) {
   const searching = mode === "search";
   const rec = found?.record ?? null;
   // In search mode the form starts with only what the city's records say; in sample mode it is filled from the sample.
@@ -334,6 +383,9 @@ function Intake({ sample, mode, found, prefill, values, onChange, runProblem, on
     ? { address: found?.label, borough: found?.borough }
     : sample.profile;
   const pitched = String(p.roof_type ?? "").includes("pitch");
+  // The question suggested from the visitor's answers, and whether their edited question was written from different answers.
+  const suggestedQuestion = buildQuestion(values);
+  const questionStale = values.question !== undefined && values.question_base !== undefined && values.question_base !== suggestedQuestion;
   const canContinue = step > 1 || !searching || (found !== null && (found.kind === "public" || found.accepted));
   return (
     <div className="px-4 pb-56 lg:pb-0 lg:pr-[28rem] xl:pr-4 xl:pl-[calc(max(1rem,(100vw-1344px)/2)+40px)]">
@@ -422,8 +474,18 @@ function Intake({ sample, mode, found, prefill, values, onChange, runProblem, on
               hint={prefillHint(prefillOf(prefill, "annual_kwh"), "Or attach a recent bill below.")}
             />
             <Field label="Capital budget" value={searching ? values.budget_amount : dollars(p.budget_amount)} onChange={searching ? (v) => onChange("budget_amount", v) : undefined} hint={searching ? "The most you could spend on the work, for example $400,000." : `${p.budget_year} · capital`} />
-            <div className="sm:col-span-2"><Field label="Your goal" value={searching ? values.goal : p.goal == null ? "" : String(p.goal)} onChange={searching ? (v) => onChange("goal", v) : undefined} hint={searching ? "For example: cut grid electricity 30% by 2030." : undefined} /></div>
+            {searching ? (
+              <>
+                <Field label="Cut grid electricity by (%)" value={values.goal_percent} onChange={(v) => onChange("goal_percent", v)} hint="The share of the electricity you buy from the grid that you want to cut. For example 30." />
+                <Field label="By year" value={values.target_year} onChange={(v) => onChange("target_year", v)} hint="For example 2030." />
+              </>
+            ) : (
+              <div className="sm:col-span-2"><Field label="Your goal" value={p.goal == null ? "" : String(p.goal)} /></div>
+            )}
             <div className="sm:col-span-2"><Field label="Anything that must keep running in an outage?" value={searching ? values.critical_loads : (p.critical_loads ?? "")} onChange={searching ? (v) => onChange("critical_loads", v) : undefined} /></div>
+            {(searching || p.backup_hours_wanted != null) && (
+              <Field label="Hours of backup power you need (optional)" value={searching ? values.backup_hours_wanted : p.backup_hours_wanted} onChange={searching ? (v) => onChange("backup_hours_wanted", v) : undefined} hint={searching ? "Leave blank if you are not sure." : undefined} />
+            )}
             <BillUpload onFile={onBill} forRun={searching} />
           </div>
         )}
@@ -475,6 +537,28 @@ function Intake({ sample, mode, found, prefill, values, onChange, runProblem, on
                 <div className="grid gap-1.5 text-sm text-[var(--fr-ink)] sm:grid-cols-2">
                   <Found>{found?.label ?? "No address chosen yet"}</Found>
                   {rec && <Found>{buildingTypeLabel(rec)}</Found>}
+                </div>
+                <div>
+                  <label htmlFor="your-question" className="text-sm font-medium text-[var(--fr-ink)]">Your question for Professor Fritts</label>
+                  <textarea
+                    id="your-question"
+                    rows={4}
+                    maxLength={500}
+                    value={values.question !== undefined ? values.question : suggestedQuestion}
+                    onChange={(e) => {
+                      if (values.question === undefined) onChange("question_base", suggestedQuestion);
+                      onChange("question", e.target.value);
+                    }}
+                    className="mt-1 w-full rounded-lg border border-[var(--fr-line)] bg-white px-3 py-2 text-[var(--fr-ink)] outline-none focus:border-[var(--fr-teal)]"
+                  />
+                  <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--fr-mute)]">
+                    <span>Add your own context if you like, for example: &ldquo;Our rec center flooded in Hurricane Sandy and is a cooling center.&rdquo;</span>
+                    <span>{(values.question !== undefined ? values.question : suggestedQuestion).length}/500</span>
+                  </div>
+                  {questionStale && <p className="mt-1 text-xs text-[var(--fr-warn)]">Your goal, budget or what must keep running changed since you edited this question. Reset to update it.</p>}
+                  {values.question !== undefined && (
+                    <button type="button" onClick={onResetQuestion} className="mt-1 text-xs font-semibold text-[var(--fr-teal)] underline">Reset to the suggested question</button>
+                  )}
                 </div>
                 <p className="rounded-xl bg-[var(--fr-soft)] p-3 text-xs text-[var(--fr-mute)]">
                   Pressing Run starts a real analysis of this building. It takes about two minutes, and it uses your answers and the city&rsquo;s public records.
@@ -687,7 +771,7 @@ function PlanMockupContent() {
   // How many steps are finished: for a real run, all but the last one, which is being worked on now.
   const shownNow = runMode === "live" ? liveSteps.length - 1 : runShown;
   // What is in each box for a typed address: the city's suggestion, until the visitor types over it.
-  const values: RunForm = { ...suggestedFrom(chosenPrefill), ...typed };
+  const values: RunForm = { goal_percent: "30", target_year: "2030", ...suggestedFrom(chosenPrefill), ...typed };
 
   /** Navigates between screens using Next.js routing. */
   const navigate = useCallback(
@@ -753,7 +837,7 @@ function PlanMockupContent() {
 
   /** Starts a real analysis for the building the visitor chose and follows it to the end. */
   const startLiveRun = async (building: FoundBuilding) => {
-    const question = buildQuestion(values);
+    const question = values.question?.trim() ? values.question.trim() : buildQuestion(values);
     const mine = ++liveToken.current;
     setRunMode("live");
     setLivePlan(null);
@@ -1094,6 +1178,7 @@ function PlanMockupContent() {
           prefill={chosenPrefill}
           values={values}
           onChange={(name, value) => setTyped((prev) => ({ ...prev, [name]: value }))}
+          onResetQuestion={() => setTyped((prev) => Object.fromEntries(Object.entries(prev).filter(([name]) => name !== "question" && name !== "question_base")))}
           runProblem={runProblem}
           onBill={setBill}
           searchKey={searchKey}

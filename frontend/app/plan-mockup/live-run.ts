@@ -21,7 +21,10 @@ import type { PlanView } from "./plans";
 /** The boxes on the form that the visitor can type in. Everything is text, exactly as typed, until a run is started. */
 export type RunForm = Partial<
   Record<
-    "annual_kwh" | "budget_amount" | "goal" | "critical_loads" | "roof_area_sqft" | "roof_type" | "existing_solar_kw" | "existing_renewables" | "existing_efficiency",
+    | "annual_kwh" | "budget_amount" | "goal" | "goal_percent" | "target_year" | "critical_loads" | "backup_hours_wanted"
+    | "floor_area_sqft" | "roof_area_sqft" | "roof_type" | "existing_solar_kw" | "existing_renewables" | "existing_efficiency"
+    // The visitor's own question (when they edited it) and the suggestion it was written from, so we can tell when it has gone stale.
+    | "question" | "question_base",
     string
   >
 >;
@@ -51,10 +54,22 @@ export function parseGoal(text: string | undefined): { percent: number | null; y
   return { percent: percent ? Number(percent[1]) : null, year: year ? Number(year[1]) : null };
 }
 
+/**
+ * The goal as numbers. The percent and year typed in their own boxes win; a goal sentence ("cut grid electricity 30% by 2030")
+ * is still read for them, so older callers and typed sentences keep working. A percent outside 1 to 100 counts as not given.
+ */
+export function goalNumbers(form: RunForm): { percent: number | null; year: number | null } {
+  const parsed = parseGoal(form.goal);
+  const typedPercent = parseNumber(form.goal_percent);
+  const percent = typedPercent !== null ? typedPercent : parsed.percent;
+  const year = parseNumber(form.target_year) ?? parsed.year;
+  return { percent: percent !== null && percent >= 1 && percent <= 100 ? percent : null, year };
+}
+
 /** The profile the agent reads, built from the building the city's records found and what the visitor typed. */
 export function buildProfile(found: FoundBuilding, form: RunForm): Record<string, string | number> {
   const record = found.record;
-  const goal = parseGoal(form.goal);
+  const goal = goalNumbers(form);
   const profile: Record<string, string | number | null> = {
     city: "New York",
     state: "NY",
@@ -63,15 +78,17 @@ export function buildProfile(found: FoundBuilding, form: RunForm): Record<string
     building_name: found.label,
     building_type: buildingTypeLabel(record).toLowerCase(),
     utility: "Con Edison",
-    floor_area_sqft: numberOf(record?.bldgarea),
+    // The energy report's floor area when the pre-fill found one (it matches the electricity figure); the tax lot's otherwise.
+    floor_area_sqft: parseNumber(form.floor_area_sqft) ?? numberOf(record?.bldgarea),
     year_built: numberOf(record?.yearbuilt),
     annual_kwh: parseNumber(form.annual_kwh),
     budget_amount: parseMoney(form.budget_amount),
     budget_type: "capital",
-    goal: form.goal?.trim() || null,
+    goal: form.goal?.trim() || (goal.percent ? `Cut grid electricity ${goal.percent}%${goal.year ? ` by ${goal.year}` : ""}` : null),
     goal_percent: goal.percent,
     target_year: goal.year,
     critical_loads: form.critical_loads?.trim() || null,
+    backup_hours_wanted: parseNumber(form.backup_hours_wanted),
     roof_area_sqft: parseNumber(form.roof_area_sqft),
     roof_type: form.roof_type?.trim() || null,
     existing_solar_kw: parseNumber(form.existing_solar_kw),
@@ -82,15 +99,15 @@ export function buildProfile(found: FoundBuilding, form: RunForm): Record<string
   return Object.fromEntries(Object.entries(profile).filter(([, value]) => value !== null && value !== "")) as Record<string, string | number>;
 }
 
-/** The question the agent is asked, in the visitor's own terms. */
+/** The suggested question, in the visitor's own terms. The visitor can edit it before it is sent (see the last step of the form). */
 export function buildQuestion(form: RunForm): string {
-  const goal = parseGoal(form.goal);
+  const goal = goalNumbers(form);
   const budget = parseMoney(form.budget_amount);
-  const target = form.goal?.trim()
-    ? goal.percent
-      ? `cut grid power ${goal.percent}%${goal.year ? ` by ${goal.year}` : ""}`
-      : form.goal.trim().replace(/[.?!]+$/, "").toLowerCase()
-    : "cut grid power";
+  const target = goal.percent
+    ? `cut grid power ${goal.percent}%${goal.year ? ` by ${goal.year}` : ""}`
+    : form.goal?.trim()
+      ? form.goal.trim().replace(/[.?!]+$/, "").toLowerCase()
+      : "cut grid power";
   const money = budget ? ` on a $${budget.toLocaleString("en-US")} capital budget` : "";
   const outage = form.critical_loads?.trim() ? ` and keep ${form.critical_loads.trim().replace(/[.?!]+$/, "")} running during outages` : "";
   return `How can we ${target}${outage}${money}?`;
@@ -101,7 +118,7 @@ export function missingForRun(found: FoundBuilding | null, form: RunForm): strin
   const missing: string[] = [];
   if (!found?.borough) missing.push("address");
   if (parseMoney(form.budget_amount) === null) missing.push("capital budget");
-  if (!form.goal?.trim()) missing.push("energy goal");
+  if (!goalNumbers(form).percent && !form.goal?.trim()) missing.push("energy goal");
   return missing;
 }
 

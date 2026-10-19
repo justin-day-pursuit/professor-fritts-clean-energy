@@ -53,6 +53,19 @@ eq("profile numbers", [profile.annual_kwh, profile.budget_amount, profile.goal_p
 eq("profile leaves blanks out", "critical_loads" in profile || "roof_area_sqft" in profile || "existing_solar_kw" in profile, false);
 eq("profile 'none' defaults", [profile.existing_renewables, profile.existing_efficiency], ["none", "none"]);
 
+// The goal as numbers (its own boxes), the floor area from the energy report, and hours of backup power.
+eq("goal numbers: boxes win over a sentence", L.goalNumbers({ goal: "cut 30% by 2030", goal_percent: "40", target_year: "2032" }), { percent: 40, year: 2032 });
+eq("goal numbers: boxes alone", L.goalNumbers({ goal_percent: "30", target_year: "2030" }), { percent: 30, year: 2030 });
+eq("goal numbers: a percent outside 1 to 100 is not given", L.goalNumbers({ goal_percent: "150" }).percent, null);
+eq("question from the number boxes", L.buildQuestion({ goal_percent: "30", target_year: "2030", budget_amount: "750k", critical_loads: "the gym" }), "How can we cut grid power 30% by 2030 and keep the gym running during outages on a $750,000 capital budget?");
+eq("missing: the goal boxes count", L.missingForRun(found, { budget_amount: "$1", goal_percent: "30" }), []);
+eq("missing: a percent out of range counts as no goal", L.missingForRun(found, { budget_amount: "$1", goal_percent: "150" }), ["energy goal"]);
+const numeric = L.buildProfile(found, { budget_amount: "$750,000", goal_percent: "30", target_year: "2030", backup_hours_wanted: "8", floor_area_sqft: "43,760" });
+eq("profile from the number boxes", [numeric.goal, numeric.goal_percent, numeric.target_year, numeric.backup_hours_wanted], ["Cut grid electricity 30% by 2030", 30, 2030, 8]);
+eq("profile floor area: the energy report's figure wins over the tax lot's", numeric.floor_area_sqft, 43760);
+eq("profile floor area: the tax lot's is the fallback", L.buildProfile(found, { budget_amount: "$1", goal_percent: "30" }).floor_area_sqft, 46700);
+eq("profile leaves backup hours out when blank", "backup_hours_wanted" in L.buildProfile(found, { budget_amount: "$1", goal_percent: "30" }), false);
+
 const call = (tool) => ({ kind: "tool_call", payload: { tool } });
 eq("steps before any tool", L.stepsSoFar([]), ["Reading your building details"]);
 eq("steps in order, each once", L.stepsSoFar([call("get_building_profile"), call("calculate"), call("calculate"), call("get_utility_rates")]), ["Reading your building details", "Running the numbers", "Looking up Con Edison electricity prices"]);
