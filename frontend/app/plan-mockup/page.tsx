@@ -1235,7 +1235,7 @@ function PlanMockupContent() {
           <FooterBanner src="/fritts/report-footer.jpg" alt="Professor Fritts looking out over the New York skyline and the Brooklyn Bridge" bg="#faf6ee" position="28% 8%" overlap />
         </div>
       )}
-      {guide && <FrittsGuide placement={guide.placement} pose={guide.pose} line={guide.line} actions={guide.actions} wide={guide.wide} cue={cue} chat={guide.chat} />}
+      {guide && <FrittsGuide placement={guide.placement} pose={guide.pose} line={guide.line} actions={guide.actions} wide={guide.wide} cue={cue} chat={guide.chat} collapsed={view === "results"} />}
     </div>
   );
 }

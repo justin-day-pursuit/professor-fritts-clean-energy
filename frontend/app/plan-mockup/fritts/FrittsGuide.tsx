@@ -83,6 +83,8 @@ export interface GuideProps {
   cue: number;
   /** Inline chat box and prompt pills inside the speech bubble. */
   chat?: GuideChatProps;
+  /** True on the finished report: the bubble starts closed, with just the "Chat with Professor Fritts" button, until the visitor opens it. */
+  collapsed?: boolean;
 }
 
 /** The layered character: body, hands, head and blinking eyes, each moved a little so he seems alive. */
@@ -114,8 +116,9 @@ function Figure({ asset, greeting, onGreetEnd, onActEnd, flip }: { asset: PoseAs
   return <Rig greeting={greeting} onGreetEnd={onGreetEnd} />;
 }
 
-export function FrittsGuide({ placement, pose, line, actions = [], wide = false, cue, chat }: GuideProps) {
-  const [open, setOpen] = useState(true);
+export function FrittsGuide({ placement, pose, line, actions = [], wide = false, cue, chat, collapsed = false }: GuideProps) {
+  const [open, setOpen] = useState(!collapsed);
+  const [shownCollapsed, setShownCollapsed] = useState(collapsed);
   const [shownLine, setShownLine] = useState(line);
   const [shownCue, setShownCue] = useState(cue);
   const [greeting, setGreeting] = useState(cue > 0);
@@ -125,6 +128,11 @@ export function FrittsGuide({ placement, pose, line, actions = [], wide = false,
   if (line !== shownLine) {
     setShownLine(line);
     setOpen(true);
+  }
+  // Arriving at the report closes the bubble (this comes after the line check above, so it wins). Once it has been opened, a new line keeps it open.
+  if (collapsed !== shownCollapsed) {
+    setShownCollapsed(collapsed);
+    setOpen(!collapsed);
   }
   if (cue !== shownCue) {
     setShownCue(cue);
@@ -236,7 +244,7 @@ export function FrittsGuide({ placement, pose, line, actions = [], wide = false,
         </div>
       ) : (
         <button type="button" className={styles.reopen} onClick={() => setOpen(true)}>
-          Show what Fritts said
+          Chat with Professor Fritts
         </button>
       )}
     </div>
