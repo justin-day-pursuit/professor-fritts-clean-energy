@@ -935,11 +935,11 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
           {nextSteps.length > 0 && (
             <div className="min-w-0 self-start rounded-2xl bg-white/80 p-4">
               <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--fr-mute)]">Start here</div>
-              {/* Outlined circles, not numbers or checkboxes (nothing here should look tick-able or done): these jobs can happen side by side, the roadmap further down is the real order, and nothing in a report should look tick-able. */}
+              {/* Gold dots here (outlined circles in the other lists), not numbers or checkboxes, so nothing looks tick-able or done: these jobs can happen side by side, the roadmap further down is the real order, and nothing in a report should look tick-able. */}
               <ul className="mt-3 space-y-2.5 text-sm leading-snug text-[var(--fr-ink)]">
                 {nextSteps.map((step) => (
                   <li key={step} className="flex gap-2.5">
-                    <span aria-hidden="true" className="mt-1 h-3.5 w-3.5 shrink-0 rounded-full border-[1.5px] border-[var(--fr-gold)]" />
+                    <span aria-hidden="true" className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--fr-gold)]" />
                     <span>{step}</span>
                   </li>
                 ))}
