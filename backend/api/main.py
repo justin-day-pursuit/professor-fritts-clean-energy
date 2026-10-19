@@ -16,7 +16,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="Professor Fritts API",
         description="Building renewable energy planner — backend API",
-        version="0.1.0",
+        version="0.2.0",
     )
 
     # Allow browser frontends (local and deployed) to call the API.
@@ -42,7 +42,7 @@ def create_app() -> FastAPI:
     @app.get("/")
     def root() -> dict[str, str]:
         """Root endpoint confirming service is alive for health checks and browsers."""
-        return {"status": "ok", "service": "professor-fritts-backend", "version": "0.1.0"}
+        return {"status": "ok", "service": "professor-fritts-backend", "version": "0.2.0"}
 
     # Expose health at both /health (Render default) and /api/health.
     app.include_router(health.router)
