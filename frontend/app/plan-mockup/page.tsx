@@ -143,6 +143,21 @@ function TopBar({ onStart }: { onStart: () => void }) {
   );
 }
 
+/**
+ * The closing picture at the bottom of a page. It is cropped to a shorter strip, softened a little, and a short fade over its top edge
+ * blends it into the page colour (`bg`, which must be the colour of what sits just above it) so there is no hard line. `position` keeps
+ * Professor Fritts in view as the strip narrows on a phone.
+ */
+function FooterBanner({ src, alt, bg, position, overlap = false }: { src: string; alt: string; bg: string; position: string; overlap?: boolean }) {
+  return (
+    // With `overlap` the picture is pulled up behind the content above it (which sits on top), so it shows through the gaps between the last cards.
+    <footer className="relative overflow-hidden" style={{ background: overlap ? "transparent" : bg, marginTop: overlap ? "calc(-1 * clamp(50px, 10vw, 165px))" : undefined }}>
+      <Image src={src} alt={alt} width={2172} height={724} sizes="100vw" className="block aspect-[5/2] w-full object-cover opacity-[0.82] saturate-[0.78] sm:aspect-[4/1]" style={{ objectPosition: position }} />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[17%]" style={{ backgroundImage: `linear-gradient(to bottom, ${bg} 0%, color-mix(in srgb, ${bg} 70%, transparent) 40%, transparent 100%)` }} />
+    </footer>
+  );
+}
+
 // ------------------------------------------------------------------------------------------------- home
 
 function Home({ onOpen, onRerun, onStart }: { onOpen: (id: string) => void; onRerun: (id: string) => void; onStart: () => void }) {
@@ -239,19 +254,7 @@ function Home({ onOpen, onRerun, onStart }: { onOpen: (id: string) => void; onRe
         </div>
       </section>
 
-      {/* The closing picture at the very bottom of the home page: Professor Fritts on a NYC rooftop. It is cropped to a shorter strip (keeping Fritts
-          and the panels), and a short fade over the sky at its top blends it into the page colour so there is no hard line where the sample plans end. The fade stays above Fritts's head. */}
-      <footer className="relative overflow-hidden bg-[var(--fr-soft)]">
-        <Image
-          src="/fritts/footer-banner.jpg"
-          alt="Professor Fritts on a New York City rooftop with solar panels, planters and a rooftop battery"
-          width={2172}
-          height={724}
-          sizes="100vw"
-          className="block aspect-[5/2] w-full object-cover object-[78%_8%] opacity-[0.82] saturate-[0.78] sm:aspect-[4/1]"
-        />
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[17%]" style={{ backgroundImage: "linear-gradient(to bottom, var(--fr-soft) 0%, rgba(241,236,223,0.7) 40%, rgba(241,236,223,0) 100%)" }} />
-      </footer>
+      <FooterBanner src="/fritts/footer-banner.jpg" alt="Professor Fritts on a New York City rooftop with solar panels, planters and a rooftop battery" bg="#f1ecdf" position="78% 8%" />
     </>
   );
 }
@@ -1228,7 +1231,8 @@ function PlanMockupContent() {
       {view === "ready" && <Backdrop eyebrow="Your plan is ready" title={String(sample.profile.building_name ?? sample.label)} />}
       {view === "results" && (
         <div className="pb-56 lg:pb-0">
-          <Results plan={sample} plans={PLANS} onRestart={() => navigate("home")} onPick={(id) => { setLivePlan(null); setSampleId(id); navigate("results", { sample: id }); }} />
+          <div className="relative z-10"><Results plan={sample} plans={PLANS} onRestart={() => navigate("home")} onPick={(id) => { setLivePlan(null); setSampleId(id); navigate("results", { sample: id }); }} /></div>
+          <FooterBanner src="/fritts/report-footer.jpg" alt="Professor Fritts looking out over the New York skyline and the Brooklyn Bridge" bg="#faf6ee" position="28% 8%" overlap />
         </div>
       )}
       {guide && <FrittsGuide placement={guide.placement} pose={guide.pose} line={guide.line} actions={guide.actions} wide={guide.wide} cue={cue} chat={guide.chat} />}

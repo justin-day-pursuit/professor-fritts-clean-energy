@@ -1142,7 +1142,6 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
           ))}
         </div>
       </div>
-      <p className="pb-6 text-center text-xs text-[var(--fr-mute)]">Planning-level estimates, not quotes. Every plan names the professionals who must review it before any money is committed.</p>
     </section>
     </PlainCtx.Provider>
   );
