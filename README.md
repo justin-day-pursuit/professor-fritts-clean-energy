@@ -1,5 +1,9 @@
 # Professor Fritts
 
+https://github.com/user-attachments/assets/aade091b-ec65-4933-92f2-294a5a35e965
+
+Landing, intake for P.S. 236, live analysis, report, and a follow-up.
+
 **Your guide to renewable energy for schools and public buildings.**
 
 Named in honor of Charles Fritts, the New York inventor who installed the city's first rooftop solar panels in 1884.
