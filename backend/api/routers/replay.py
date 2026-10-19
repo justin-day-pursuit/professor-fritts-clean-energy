@@ -35,6 +35,8 @@ REPLAY_CASES: list[dict[str, str]] = [
      "tag": "Pitched roof: needs an engineer or roofer before solar is sized"},
     {"id": "plan_ps24_bronx_existing_solar", "label": "P.S. 24, Bronx", "kind": "recorded",
      "tag": "Already has 228 kW of solar, with room for about 70 kW more; goal reached within budget"},
+    {"id": "plan_flushing_library_queens", "label": "Flushing Library, Queens", "kind": "recorded",
+     "tag": "Close to the goal only with the full path, which runs over budget; the roof is poor and 20+ years old"},
 ]
 _BY_ID = {case["id"]: case for case in REPLAY_CASES}
 

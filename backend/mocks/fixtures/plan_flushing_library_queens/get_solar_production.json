@@ -1,0 +1,53 @@
+{
+  "tool": "get_solar_production",
+  "data": {
+    "system_kw_dc": 146.0,
+    "annual_ac_kwh": 180729.3166226374,
+    "annual_ac_kwh_low": 172210.0178375859,
+    "annual_ac_kwh_high": 189242.7411596034,
+    "range_assumption": "ASSUMPTION: system losses of 18% (low) to 10% (high) around PVWatts' 14% default; weather is typical-year data.",
+    "capacity_factor": 0.141309592655468,
+    "solar_radiation_kwh_m2_day": 4.406049566543246,
+    "monthly_ac_kwh": [
+      9642.053247088215,
+      11847.68863010842,
+      15680.82016429169,
+      15804.81852287556,
+      20423.31171099993,
+      20726.59848629269,
+      21564.69919063813,
+      18036.01574389559,
+      16138.97425066925,
+      12907.01058422764,
+      10491.84026899424,
+      7465.485822556054
+    ],
+    "pvwatts_inputs": {
+      "lat": 40.757744,
+      "lon": -73.828843,
+      "system_capacity": 146.0,
+      "module_type": 0,
+      "losses": 14,
+      "array_type": 1,
+      "tilt": 10,
+      "azimuth": 180
+    },
+    "location": {
+      "label": "41-17 MAIN STREET, Flushing, NY, USA",
+      "borough": "Queens",
+      "postalcode": "11355",
+      "match_type": "fallback",
+      "confidence": 0.8,
+      "bbl": "4050430011",
+      "lat": 40.757744,
+      "lon": -73.828843
+    },
+    "weather_data_source": "NSRDB PSM V3 GOES tmy-2020 3.2.0"
+  },
+  "source_url": "https://developer.nlr.gov/docs/solar/pvwatts/v8/",
+  "retrieved_at": "2026-10-19T12:59:51Z",
+  "dataset_version": "pvwatts-v8.5.0",
+  "mock": false,
+  "stale": false,
+  "flags": []
+}

@@ -23,6 +23,8 @@ Code checks it before a live plan is accepted (`agent/checks.py`, `_plain_answer
 - **Solar readiness is yes, no, or blank.** A blank from the city used to count as "no", so buildings the city never rated were reported as "not solar ready". Only an explicit "no" is a warning now.
 - **A roof rule saying no is not a failed lookup.** "The existing array already fills the roof" and "the roof is not flat" are decisions. The report says the reason instead of "could not return data".
 
-## The five sample plans
+## The six sample plans
 
 Their building details are now filled from the city's records, the way the website fills them for a visitor (`python manage.py build_city_intakes`), so the "please confirm" list holds only real items. Re-record them with live runs, and re-export the saved plans with `python manage.py export_plan_summaries --out ../frontend/app/plan-mockup/data`.
+
+The sixth sample, the Flushing Library in Queens (41-17 Main Street, a real Queens Public Library building), was not recorded from a Claude run. Its plan text was written by hand by following the agent's own instructions step by step, using the real results of the city, solar, price, flood and incentive lookups (all free), so it cost no credits. It is listed like the other samples. Its sources and numbers are real; only the wording was authored.

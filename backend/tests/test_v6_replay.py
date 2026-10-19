@@ -18,7 +18,7 @@ from mocks.mock_mode import get_tool_mode
 
 
 def test_the_menu_lists_every_saved_demo_with_whether_it_is_a_recording(api_client):
-    """The list has the five saved demos, every one a recording of a real Claude run."""
+    """The list has the six saved demos, each marked as a recording."""
     cases = api_client.get("/api/replay/cases").json()["cases"]
     assert [c["id"] for c in cases] == [c["id"] for c in REPLAY_CASES]
     kinds = {c["id"]: c["kind"] for c in cases}
@@ -32,6 +32,7 @@ def test_the_menu_lists_every_saved_demo_with_whether_it_is_a_recording(api_clie
     ("plan_red_hook_rec_center", "done"),
     ("plan_jefferson_market_library", "partial"),
     ("plan_ps24_bronx_existing_solar", "done"),
+    ("plan_flushing_library_queens", "done"),
 ])
 def test_each_saved_demo_replays_to_its_recorded_outcome(api_client, case_id, status):
     """Each replay returns the session, the assistant plan message, and a run with its full event log."""
