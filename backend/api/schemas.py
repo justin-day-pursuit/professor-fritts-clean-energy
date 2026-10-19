@@ -252,3 +252,20 @@ class PlanPdfRequest(BaseModel):
     """POST /api/plans/pdf: the plan summary (output.plan_summary) to turn into a PDF."""
 
     plan_summary: dict[str, Any]
+
+
+class ChatMessageItem(BaseModel):
+    role: str
+    content: str
+
+
+class PlanChatRequest(BaseModel):
+    """POST /api/plans/chat: ask follow-up questions or brainstorm about a plan."""
+
+    plan_summary: dict[str, Any]
+    question: str
+    history: list[ChatMessageItem] = Field(default_factory=list)
+
+
+class PlanChatResponse(BaseModel):
+    reply: str

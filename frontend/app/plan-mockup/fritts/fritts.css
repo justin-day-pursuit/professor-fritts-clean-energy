@@ -1053,6 +1053,89 @@
   background: var(--fr-teal);
 }
 
+.frg-bubble.frg-chat {
+  width: min(360px, 90vw);
+}
+
+.frg-chatSection {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--fr-line, #cbd5e1);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.frg-chatPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.frg-chatPill {
+  border: 1px solid var(--fr-ink);
+  background: #f8fafc;
+  color: var(--fr-ink);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font: 500 12px/1 system-ui, -apple-system, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.frg-chatPill:hover:not(:disabled) {
+  background: var(--fr-ink);
+  color: #ffffff;
+}
+
+.frg-chatPill:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.frg-chatForm {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.frg-chatInput {
+  flex: 1;
+  min-width: 0;
+  border: 1.5px solid var(--fr-ink);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font: 13px/1.3 system-ui, -apple-system, sans-serif;
+  background: #ffffff;
+  color: var(--fr-ink);
+}
+
+.frg-chatInput:focus-visible {
+  outline: 2px solid var(--fr-teal);
+  outline-offset: 1px;
+}
+
+.frg-chatSend {
+  border: 1.5px solid var(--fr-ink);
+  background: var(--fr-ink);
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font: 600 13px/1 system-ui, -apple-system, sans-serif;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.frg-chatSend:hover:not(:disabled) {
+  background: var(--fr-teal);
+}
+
+.frg-chatSend:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* A small button that brings the bubble back after it was closed. */
 .frg-reopen {
   position: absolute;

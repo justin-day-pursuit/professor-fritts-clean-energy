@@ -18,13 +18,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AddressSearch } from "./AddressSearch";
 import { buildingTypeLabel, fetchBuildingRecord, numberOf, ownerKind, type AddressSuggestion, type BuildingRecord, type FoundBuilding } from "./address";
-import { FrittsGuide, type GuideAction } from "./fritts/FrittsGuide";
+import { FrittsGuide, type GuideAction, type GuideChatProps } from "./fritts/FrittsGuide";
 import { poseForStep, type Placement, type PoseName } from "./fritts/poses";
 import { planRun } from "./fritts/runPlan";
-import { getBuildingPrefill } from "@/lib/api";
+import { askPlanQuestion, getBuildingPrefill } from "@/lib/api";
 import { LiveRunError, buildProfile, buildQuestion, missingForRun, narrationFor as narrationForTools, planFromRun, runLive, stepsSoFar, type RunForm } from "./live-run";
 import type { BuildingPrefill, PrefillItem, RunResponse } from "@/lib/types";
 import { ADDRESS_ERROR, ADDRESS_LOOKING, ADDRESS_NOT_FOUND, ADDRESS_START, BRING, BRING_REPLY, CONFIRM_REPLY, HELLO, INTAKE_STEP, PDF_SAYS, PREFILL_STEP, PRIVATE_BUILDING, REPORT_MENU, SHARE_LIVE, foundLine, readyLine, shareLine, unclearOwner, workingLine } from "./fritts/script";
@@ -588,9 +588,10 @@ interface GuideState {
   actions: GuideAction[];
   /** A wider bubble for a long list of buttons. */
   wide?: boolean;
+  chat?: GuideChatProps;
 }
 
-export default function PlanMockup() {
+function PlanMockupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -654,8 +655,19 @@ export default function PlanMockup() {
   const [runShown, setRunShown] = useState(0);
   const [menu, setMenu] = useState<"menu" | "sections" | "said">("menu");
   const [said, setSaid] = useState("");
+  const [chatBusy, setChatBusy] = useState(false);
+  const [chatHistory, setChatHistory] = useState<{ role: string; content: string }[]>([]);
   // The share link Fritts last copied, so his menu can offer "Copy link" again.
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+
+  const [prevSampleKey, setPrevSampleKey] = useState(sampleId);
+  const currentSampleKey = livePlan ? livePlan.id : sampleId;
+  if (currentSampleKey !== prevSampleKey) {
+    setPrevSampleKey(currentSampleKey);
+    setChatHistory([]);
+    setSaid("");
+    setMenu("menu");
+  }
   // What the city's records say about the chosen address, worked out from the state above so a slow answer for an
   // address the visitor has since changed can never show up.
   const hasRecord = chosen !== null && chosen.bbl in records && lookShown === chosen.bbl;
@@ -963,6 +975,65 @@ export default function PlanMockup() {
       return { placement: "center", pose: "present", line: readyLine(sample.outcome.label), actions: [{ label: "Open my report", primary: true, onClick: () => navigate("results") }] };
     }
     if (view === "results") {
+      const handleChatSend = async (question: string) => {
+        setChatBusy(true);
+        setShareUrl(null);
+        setMenu("said");
+        setSaid("Thinking… let me look into that in your plan.");
+        try {
+          const reply = await askPlanQuestion(
+            sample.plan as unknown as Record<string, unknown>,
+            question,
+            chatHistory
+          );
+          setChatHistory((prev) => [
+            ...prev,
+            { role: "user", content: question },
+            { role: "assistant", content: reply },
+          ]);
+          setSaid(reply);
+        } catch {
+          setSaid("I had trouble checking that just now. Please try asking again.");
+        } finally {
+          setChatBusy(false);
+        }
+      };
+
+      const pills = [
+        {
+          label: "📥 Download PDF",
+          onClick: () => {
+            setShareUrl(null);
+            setSaid(PDF_SAYS.making);
+            setMenu("said");
+            void downloadPlanPdf(sample.plan).then((r) => setSaid(PDF_SAYS[r]));
+          },
+        },
+        {
+          label: "🔍 Explain a section",
+          onClick: () => setMenu("sections"),
+        },
+        {
+          label: "✏️ What info is needed next?",
+          onClick: () => {
+            void handleChatSend("What missing information or professional verifications do we need next to make this plan actionable?");
+          },
+        },
+        {
+          label: "💡 Reduce upfront cost",
+          onClick: () => {
+            void handleChatSend("How can we reduce the upfront capital cost or improve payback for this building?");
+          },
+        },
+      ];
+
+      const chatConfig: GuideChatProps = {
+        onSend: handleChatSend,
+        busy: chatBusy,
+        placeholder: "Ask Claude about this plan…",
+        pills,
+      };
+
       if (menu === "sections") {
         return {
           placement: "side",
@@ -980,23 +1051,31 @@ export default function PlanMockup() {
             })),
             { label: "Never mind", onClick: () => setMenu("menu") },
           ],
+          chat: chatConfig,
         };
       }
       if (menu === "said") {
         const copyAgain: GuideAction[] = shareUrl
           ? [{ label: "Copy link", primary: true, onClick: () => { void copyShareLink(sample.id).then(({ url, copied }) => setSaid(shareLine(url, copied))); } }]
-          : [];
-        return { placement: "side", pose: "presenting", line: said, actions: [...copyAgain, { label: "Anything else?", primary: !shareUrl, onClick: () => setMenu("menu") }] };
+          : [{ label: "Share", onClick: () => { if (livePlan) { setShareUrl(null); setSaid(SHARE_LIVE); return; } void copyShareLink(sample.id).then(({ url, copied }) => { setShareUrl(url); setSaid(shareLine(url, copied)); }); } }];
+        return {
+          placement: "side",
+          pose: chatBusy ? "thinking" : "presenting",
+          wide: true,
+          line: said,
+          actions: [...copyAgain, { label: "Overview", primary: !shareUrl, onClick: () => { setSaid(""); setMenu("menu"); } }],
+          chat: chatConfig,
+        };
       }
       return {
         placement: "side",
-        pose: "presenting",
+        pose: chatBusy ? "thinking" : "presenting",
+        wide: true,
         line: REPORT_MENU,
         actions: [
-          { label: "Download PDF", onClick: () => { setShareUrl(null); setSaid(PDF_SAYS.making); setMenu("said"); void downloadPlanPdf(sample.plan).then((r) => setSaid(PDF_SAYS[r])); } },
           { label: "Share", onClick: () => { if (livePlan) { setShareUrl(null); setSaid(SHARE_LIVE); setMenu("said"); return; } void copyShareLink(sample.id).then(({ url, copied }) => { setShareUrl(url); setSaid(shareLine(url, copied)); setMenu("said"); }); } },
-          { label: "Explain a section", primary: true, onClick: () => setMenu("sections") },
         ],
+        chat: chatConfig,
       };
     }
     return null;
@@ -1045,7 +1124,15 @@ export default function PlanMockup() {
           <Results plan={sample} plans={PLANS} onRestart={() => navigate("home")} onPick={(id) => { setLivePlan(null); setSampleId(id); navigate("results", { sample: id }); }} />
         </div>
       )}
-      {guide && <FrittsGuide placement={guide.placement} pose={guide.pose} line={guide.line} actions={guide.actions} wide={guide.wide} cue={cue} />}
+      {guide && <FrittsGuide placement={guide.placement} pose={guide.pose} line={guide.line} actions={guide.actions} wide={guide.wide} cue={cue} chat={guide.chat} />}
     </div>
+  );
+}
+
+export default function PlanMockup() {
+  return (
+    <Suspense fallback={null}>
+      <PlanMockupContent />
+    </Suspense>
   );
 }

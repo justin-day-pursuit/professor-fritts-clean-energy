@@ -48,6 +48,13 @@ const styles = {
   sideRight: "frg-sideRight",
   stage: "frg-stage",
   wide: "frg-wide",
+  chat: "frg-chat",
+  chatSection: "frg-chatSection",
+  chatPills: "frg-chatPills",
+  chatPill: "frg-chatPill",
+  chatForm: "frg-chatForm",
+  chatInput: "frg-chatInput",
+  chatSend: "frg-chatSend",
 } as const;
 
 /** One button in his speech bubble. */
@@ -58,7 +65,14 @@ export interface GuideAction {
   primary?: boolean;
 }
 
-interface GuideProps {
+export interface GuideChatProps {
+  onSend: (text: string) => Promise<void> | void;
+  busy?: boolean;
+  placeholder?: string;
+  pills?: { label: string; onClick: () => void }[];
+}
+
+export interface GuideProps {
   placement: Placement;
   pose: PoseName;
   line: string;
@@ -67,6 +81,8 @@ interface GuideProps {
   wide?: boolean;
   /** Goes up by one each time he should give his welcome flourish (the greeting and the finished report). */
   cue: number;
+  /** Inline chat box and prompt pills inside the speech bubble. */
+  chat?: GuideChatProps;
 }
 
 /** The layered character: body, hands, head and blinking eyes, each moved a little so he seems alive. */
@@ -98,11 +114,12 @@ function Figure({ asset, greeting, onGreetEnd, onActEnd, flip }: { asset: PoseAs
   return <Rig greeting={greeting} onGreetEnd={onGreetEnd} />;
 }
 
-export function FrittsGuide({ placement, pose, line, actions = [], wide = false, cue }: GuideProps) {
+export function FrittsGuide({ placement, pose, line, actions = [], wide = false, cue, chat }: GuideProps) {
   const [open, setOpen] = useState(true);
   const [shownLine, setShownLine] = useState(line);
   const [shownCue, setShownCue] = useState(cue);
   const [greeting, setGreeting] = useState(cue > 0);
+  const [chatText, setChatText] = useState("");
 
   // A new line opens the bubble again, and a new cue plays the flourish once.
   if (line !== shownLine) {
@@ -157,7 +174,7 @@ export function FrittsGuide({ placement, pose, line, actions = [], wide = false,
         <Figure asset={asset} greeting={greeting} onGreetEnd={endGreeting} onActEnd={endAct} flip={flip} />
       </button>
       {open ? (
-        <div className={`${styles.bubble} ${wide ? styles.wide : ""}`} role="status" aria-live="polite">
+        <div className={`${styles.bubble} ${wide ? styles.wide : ""} ${chat ? styles.chat : ""}`} role="status" aria-live="polite">
           <button type="button" className={styles.close} onClick={() => setOpen(false)} aria-label="Hide what Professor Fritts said">
             ×
           </button>
@@ -169,6 +186,51 @@ export function FrittsGuide({ placement, pose, line, actions = [], wide = false,
                   {a.label}
                 </button>
               ))}
+            </div>
+          )}
+          {chat && (
+            <div className={styles.chatSection}>
+              {chat.pills && chat.pills.length > 0 && (
+                <div className={styles.chatPills}>
+                  {chat.pills.map((pill) => (
+                    <button
+                      key={pill.label}
+                      type="button"
+                      disabled={chat.busy}
+                      className={styles.chatPill}
+                      onClick={pill.onClick}
+                    >
+                      {pill.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <form
+                className={styles.chatForm}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const trimmed = chatText.trim();
+                  if (!trimmed || chat.busy) return;
+                  setChatText("");
+                  void chat.onSend(trimmed);
+                }}
+              >
+                <input
+                  type="text"
+                  className={styles.chatInput}
+                  placeholder={chat.placeholder ?? "Ask a follow-up or brainstorm…"}
+                  value={chatText}
+                  disabled={chat.busy}
+                  onChange={(e) => setChatText(e.target.value)}
+                />
+                <button
+                  type="submit"
+                  disabled={chat.busy || !chatText.trim()}
+                  className={styles.chatSend}
+                >
+                  {chat.busy ? "…" : "Ask"}
+                </button>
+              </form>
             </div>
           )}
         </div>

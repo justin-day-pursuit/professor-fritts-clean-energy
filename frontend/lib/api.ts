@@ -218,3 +218,28 @@ export async function listReplayCases(): Promise<ReplayCaseListResponse> {
 export async function replayCase(caseId: string): Promise<ReplayResponse> {
   return requestJson<ReplayResponse>(`/api/replay/${encodeURIComponent(caseId)}`, { method: "POST", body: "{}" });
 }
+
+export interface PlanChatRequest {
+  plan_summary: Record<string, unknown>;
+  question: string;
+  history?: { role: string; content: string }[];
+}
+
+export interface PlanChatResponse {
+  reply: string;
+}
+
+/**
+ * Ask a follow-up question or brainstorm with Claude in the context of the generated plan.
+ */
+export async function askPlanQuestion(
+  planSummary: Record<string, unknown>,
+  question: string,
+  history: { role: string; content: string }[] = []
+): Promise<string> {
+  const res = await requestJson<PlanChatResponse>("/api/plans/chat", {
+    method: "POST",
+    body: JSON.stringify({ plan_summary: planSummary, question, history }),
+  });
+  return res.reply;
+}
