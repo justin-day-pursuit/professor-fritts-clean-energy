@@ -237,6 +237,11 @@ function Home({ onOpen, onRerun, onStart }: { onOpen: (id: string) => void; onRe
           </div>
         </div>
       </section>
+
+      {/* The closing picture at the very bottom of the home page: Professor Fritts on a NYC rooftop. Full width, and it scales with the screen. */}
+      <footer>
+        <Image src="/fritts/footer-banner.jpg" alt="Professor Fritts on a New York City rooftop with solar panels, planters and a rooftop battery" width={2172} height={724} sizes="100vw" className="block h-auto w-full" />
+      </footer>
     </>
   );
 }
