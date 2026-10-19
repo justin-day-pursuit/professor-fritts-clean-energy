@@ -707,6 +707,12 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
   };
   const toneBg = o.tone === "good" ? "linear-gradient(135deg,#dff3ea,#fdf0cf)" : o.tone === "caution" ? "linear-gradient(135deg,#fdf0cf,#faf6ee)" : "linear-gradient(135deg,#e3ecf6,#faf6ee)";
   const byId = (id: string) => sum.scenarios.find((s) => s.scenario_id === id);
+  const rec = o.recommended ? byId(o.recommended) : undefined;
+  const goalPct = sum.baseline.goal_percent;
+  // One plain line on why the recommended option won, worked out from its own numbers (no wording from the model, no re-run).
+  const recReason = !rec ? "" : rec.reaches_goal
+    ? rec.budget_strain === "over budget" ? "Reaches your goal even at the low end, but costs more than your budget." : "Reaches your goal even at the low end, and fits your budget."
+    : rec.budget_strain === "over budget" ? "Gets closest to your goal, but costs more than your budget." : "Gets closest to your goal within what the data supports.";
   const allClaims = sum.sections.flatMap((s) => s.claims);
   const labelCounts = Object.fromEntries(Object.keys(LABELS).map((k) => [k, allClaims.filter((c) => c.label === k).length]));
   const total = allClaims.length || 1;
@@ -749,58 +755,78 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
         </div>
       </div>
 
+      {/* The summary: the plain answer first, then goal and expected result, the recommended plan, and what is still unconfirmed. Everything here is read from the saved plan; nothing is re-run. */}
       <div className="rounded-3xl p-7 md:p-9" style={{ background: toneBg }}>
-        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--fr-teal)]">The short answer · {o.label}</div>
-        <h1 className="mt-2 max-w-3xl text-3xl font-bold leading-tight text-[var(--fr-ink)] md:text-4xl">{o.headline}</h1>
-        <p className="mt-3 max-w-3xl text-lg text-[var(--fr-ink)]/80">{o.subhead}</p>
-        {/* The headline above is worked out by code from the numbers. This paragraph is the agent's own plain-words answer to the question, checked by code before it is saved. A plan recorded before it existed has none and looks exactly as it did. */}
-        {sum.plain_answer && <p className="mt-5 max-w-3xl text-base leading-relaxed text-[var(--fr-ink)]">{sum.plain_answer}</p>}
-        {sum.confirm_first.length > 0 && (
-          <div className="mt-6 max-w-3xl rounded-2xl border border-[var(--fr-gold)] bg-white/80 p-4">
-            <div className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-warn)]">Please confirm first</div>
-            <ul className="mt-2 space-y-1.5 text-sm text-[var(--fr-ink)]/90">
-              {sum.confirm_first.map((c) => (
-                <li key={c.text} className="flex gap-2"><span className="text-[var(--fr-gold)]">●</span><span>{c.text}</span></li>
-              ))}
-            </ul>
+        {/* Reads as one thought: the question asked on the left (the same snapshot as the home card: outcome pill, building, goal, question, note), Professor Fritts' answer on the right. On a phone the two stack. */}
+        <div className="grid gap-6 lg:grid-cols-[5fr_7fr] lg:gap-10">
+          <div className="min-w-0">
+            <span
+              className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+              style={{ background: o.tone === "good" ? "#dff3ea" : o.tone === "caution" ? "#fdf0cf" : "#e3ecf6", color: "#12303d" }}
+            >
+              {o.label}
+            </span>
+            <div className="mt-3 text-xl font-bold leading-snug text-[var(--fr-ink)]">{String(plan.profile.building_name ?? plan.label)}</div>
+            {plan.profile.goal && <p className="mt-0.5 text-sm text-[var(--fr-ink)]/70">{String(plan.profile.goal)}</p>}
+            {plan.question && <p className="mt-4 border-l-4 border-[var(--fr-teal)] pl-4 text-base italic leading-snug text-[var(--fr-ink)]">&ldquo;{plan.question}&rdquo;</p>}
+            {plan.tag && <p className="mt-4 text-xs text-[var(--fr-ink)]/60">{plan.tag}</p>}
+          </div>
+          <div className="min-w-0 border-t border-[var(--fr-ink)]/10 pt-6 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--fr-teal)]">Professor Fritts&rsquo; answer</div>
+            <h1 className="mt-2 text-2xl font-bold leading-tight text-[var(--fr-ink)] md:text-3xl">{o.headline}</h1>
+            {/* The subhead repeats the plain answer, so it only shows on older plans that have no plain answer. */}
+            {!sum.plain_answer && <p className="mt-3 text-lg text-[var(--fr-ink)]/80">{o.subhead}</p>}
+            {/* The headline above is worked out by code from the numbers. This paragraph is the agent's own plain-words answer to the question, checked by code before it is saved. A plan recorded before it existed has none and looks exactly as it did. */}
+            {sum.plain_answer && <p className="mt-4 text-base leading-relaxed text-[var(--fr-ink)]">{sum.plain_answer}</p>}
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-3 md:grid-cols-3">
+          <div className="rounded-2xl bg-white/80 p-4">
+            <div className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">Your goal</div>
+            <div className="mt-1 text-xl font-bold text-[var(--fr-ink)]">{goalPct != null ? `Cut ${goalPct}% of grid electricity` : "No goal set"}</div>
+            {sum.baseline.goal_kwh != null && <div className="mt-1 text-sm text-[var(--fr-mute)]">About {show(sum.baseline.goal_kwh)} kWh a year{budget > 0 ? `, on a budget of ${money(budget)}` : ""}</div>}
+          </div>
+          {rec ? (
+            <>
+              <div className="rounded-2xl bg-white/80 p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">What to expect</div>
+                <div className="mt-1 text-xl font-bold text-[var(--fr-ink)]">{pctRange(rec.reduction_pct_of_use)} less</div>
+                <div className="mt-1 text-sm text-[var(--fr-mute)]">Saves {moneyRange(rec.annual_savings_usd)} a year. {rec.reaches_goal ? "Reaches your goal even at the low end." : "May fall short of your goal at the low end."}</div>
+              </div>
+              <div className="rounded-2xl bg-white/80 p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">What it costs</div>
+                <div className="mt-1 text-xl font-bold text-[var(--fr-ink)]">{rec.upfront_usd_best != null ? `About ${money(rec.upfront_usd_best)}` : moneyRange(rec.upfront_usd)}</div>
+                <div className="mt-1 text-sm text-[var(--fr-mute)]">{rec.upfront_usd_best != null ? `Typical range ${moneyRange(rec.upfront_usd)}. ` : ""}Pays back in {rec.payback_years_best ? `about ${Math.round(rec.payback_years_best)} years` : yearsRange(rec.payback_years)}</div>
+              </div>
+            </>
+          ) : (
+            <div className="rounded-2xl bg-white/80 p-4 md:col-span-2">
+              <div className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">What to expect</div>
+              <p className="mt-1 text-sm text-[var(--fr-ink)]">{missingReason}</p>
+            </div>
+          )}
+        </div>
+
+        {rec && (
+          <div className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--fr-gold)] bg-white/80 p-4">
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-warn)]">Recommended plan</div>
+              <div className="mt-0.5 text-base font-semibold text-[var(--fr-ink)]">Plan {rec.scenario_id}: {SCENARIO_NAME[rec.scenario_id]}</div>
+              <div className="mt-0.5 text-sm text-[var(--fr-ink)]/80">{recReason}</div>
+            </div>
+            <a href="#plan-options" className="rounded-lg bg-[var(--fr-ink)] px-4 py-2 text-sm font-semibold text-white">Compare all 3 options</a>
           </div>
         )}
+
+        {sum.confirm_first.length > 0 && (
+          <a href="#plan-confirm" className="mt-4 inline-block text-sm font-semibold text-[var(--fr-teal)] underline">{sum.confirm_first.length} {sum.confirm_first.length === 1 ? "thing" : "things"} to confirm to firm up these numbers ↓</a>
+        )}
+        <p className="mt-4 max-w-3xl text-xs text-[var(--fr-ink)]/75">Early estimate from public data, with {sum.assumptions.length} assumptions filled in where data was missing. Ranges narrow after an energy audit and contractor bids.</p>
       </div>
 
-      <Card>
-        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--fr-teal)]">How to read this plan</div>
-        <h2 className="mt-1 text-xl font-bold text-[var(--fr-ink)]">What to trust, what to check, and what to hand to a professional</h2>
-        <p className="mt-2 text-sm text-[var(--fr-ink)]/80">Every number is labeled &ndash; {allClaims.length} statements in this plan</p>
 
-        <div className="mt-4 flex h-3 overflow-hidden rounded-full bg-[var(--fr-soft)]">
-          {Object.keys(LABELS).map((k) => (
-            <div key={k} style={{ width: `${(labelCounts[k] / total) * 100}%`, background: LABELS[k].color }} title={`${k}: ${labelCounts[k]}`} />
-          ))}
-        </div>
-
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {Object.keys(LABELS).map((k) => {
-            const e = LABEL_EXPLAINED[k];
-            return (
-              <div key={k} className="flex flex-col gap-2 rounded-xl bg-[var(--fr-soft)] p-3">
-                <div className="flex items-baseline justify-between gap-2">
-                  <Chip label={k} />
-                  <span className="text-lg font-bold leading-none text-[var(--fr-ink)]">{labelCounts[k]}</span>
-                </div>
-                <p className="text-sm font-semibold text-[var(--fr-ink)]">{e.meaning}</p>
-                <p className="text-xs text-[var(--fr-mute)]"><span className="font-semibold text-[var(--fr-ink)]">For example: </span>{e.example}</p>
-                <p className="text-xs text-[var(--fr-mute)]"><span className="font-semibold text-[var(--fr-ink)]">What to do: </span>{e.action}</p>
-              </div>
-            );
-          })}
-        </div>
-
-        <p className="mt-4 border-t border-[var(--fr-line)] pt-3 text-xs text-[var(--fr-mute)]">
-          <span className="font-semibold text-[var(--fr-ink)]">Why costs and savings are ranges.</span> This is an early estimate made from public data, before anyone has walked the building. A range of about half to double the figure is normal at this stage. An energy audit and contractor bids are what narrow it.
-        </p>
-      </Card>
-
-      <div>
+      <div id="plan-options" className="scroll-mt-4">
         <SectionTitle eyebrow="Your options" title="Three ways to get there" sub="Each is an estimate shown as a range. The line on each bar is your goal or your budget." />
         <div className="grid gap-4 lg:grid-cols-3">
           {(["A", "B", "C"] as const).map((id) => (
@@ -829,8 +855,21 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
           </Card>
         )}
 
+      {sum.confirm_first.length > 0 && (
+        <div id="plan-confirm" className="scroll-mt-4">
+          <SectionTitle eyebrow="Before you start" title="Confirm these first" sub="Each one firms up the numbers in the summary at the top." />
+          <Card className="border-[var(--fr-gold)] bg-[#fffaf0]">
+            <ul className="space-y-2 text-sm text-[var(--fr-ink)]">
+              {sum.confirm_first.map((c) => (
+                <li key={c.text} className="flex gap-2"><span className="mt-1 h-4 w-4 shrink-0 rounded border border-[var(--fr-gold)]" /><span>{c.text}</span></li>
+              ))}
+            </ul>
+          </Card>
+        </div>
+      )}
+
       <div className="grid gap-8 lg:grid-cols-[1.3fr_1fr]">
-        <div>
+        <div id="plan-roadmap" className="scroll-mt-4">
           <SectionTitle eyebrow="Your roadmap" title="What to do, in order" />
           <ol className="space-y-3">
             {phases.map((ph) => (
@@ -887,6 +926,39 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
           </div>
         </div>
       )}
+
+      <Card>
+        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--fr-teal)]">How to read this plan</div>
+        <h2 className="mt-1 text-xl font-bold text-[var(--fr-ink)]">What to trust, what to check, and what to hand to a professional</h2>
+        <p className="mt-2 text-sm text-[var(--fr-ink)]/80">Every number is labeled &ndash; {allClaims.length} statements in this plan</p>
+
+        <div className="mt-4 flex h-3 overflow-hidden rounded-full bg-[var(--fr-soft)]">
+          {Object.keys(LABELS).map((k) => (
+            <div key={k} style={{ width: `${(labelCounts[k] / total) * 100}%`, background: LABELS[k].color }} title={`${k}: ${labelCounts[k]}`} />
+          ))}
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {Object.keys(LABELS).map((k) => {
+            const e = LABEL_EXPLAINED[k];
+            return (
+              <div key={k} className="flex flex-col gap-2 rounded-xl bg-[var(--fr-soft)] p-3">
+                <div className="flex items-baseline justify-between gap-2">
+                  <Chip label={k} />
+                  <span className="text-lg font-bold leading-none text-[var(--fr-ink)]">{labelCounts[k]}</span>
+                </div>
+                <p className="text-sm font-semibold text-[var(--fr-ink)]">{e.meaning}</p>
+                <p className="text-xs text-[var(--fr-mute)]"><span className="font-semibold text-[var(--fr-ink)]">For example: </span>{e.example}</p>
+                <p className="text-xs text-[var(--fr-mute)]"><span className="font-semibold text-[var(--fr-ink)]">What to do: </span>{e.action}</p>
+              </div>
+            );
+          })}
+        </div>
+
+        <p className="mt-4 border-t border-[var(--fr-line)] pt-3 text-xs text-[var(--fr-mute)]">
+          <span className="font-semibold text-[var(--fr-ink)]">Why costs and savings are ranges.</span> This is an early estimate made from public data, before anyone has walked the building. A range of about half to double the figure is normal at this stage. An energy audit and contractor bids are what narrow it.
+        </p>
+      </Card>
 
       <div>
         <SectionTitle eyebrow="The full report" title="Every statement and every record, section by section" sub="The complete written plan in the order of the 13 report sections. Under each section, the data behind it: the city records, prices, calculations and sources it rests on." />
