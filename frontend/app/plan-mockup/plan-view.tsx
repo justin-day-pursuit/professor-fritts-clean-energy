@@ -38,6 +38,26 @@ import {
 type Obj = Record<string, unknown>;
 const obj = (x: unknown): Obj => (x && typeof x === "object" && !Array.isArray(x) ? (x as Obj) : {});
 
+/** Line icons for the building facts at the top of the report. Each is just the drawing paths on a 24 by 24 grid. */
+const FACT_ICONS: Record<string, string> = {
+  goal: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10ZM12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z",
+  money: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM14.5 9.2c-.5-.8-1.4-1.2-2.5-1.2-1.4 0-2.5.8-2.5 1.9 0 2.6 5 1.2 5 3.8 0 1.1-1.1 1.9-2.5 1.9-1.1 0-2-.4-2.6-1.2M12 6.5V8m0 8v1.5",
+  solar: "M4 9l2-4h12l2 4M3 9h18l-1.5 10h-15zM9 9l-.5 10M15 9l.5 10M4 14h16",
+  landmark: "M3 9l9-5 9 5M5 9v9M9 9v9M15 9v9M19 9v9M3 20h18M3 9h18",
+  roof: "M3 12l9-7 9 7M6 10.5V20h12v-9.5",
+  battery: "M4 8h13a1.5 1.5 0 0 1 1.5 1.5v5A1.5 1.5 0 0 1 17 16H4a1.5 1.5 0 0 1-1.5-1.5v-5A1.5 1.5 0 0 1 4 8ZM20.5 10.5v3M6.5 11v2M10 11v2",
+  condition: "M12 3l8 3v5c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6zM9 12l2 2 4-4",
+  flood: "M3 9c2-2 4-2 6 0s4 2 6 0 4-2 6 0M3 14c2-2 4-2 6 0s4 2 6 0 4-2 6 0M3 19c2-2 4-2 6 0s4 2 6 0 4-2 6 0",
+  ruler: "M4.5 8h15A1.5 1.5 0 0 1 21 9.5v5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 14.5v-5A1.5 1.5 0 0 1 4.5 8ZM7 8v3M11 8v4M15 8v3M19 8v4",
+};
+function FactIcon({ name }: { name: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-[var(--fr-teal)]" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d={FACT_ICONS[name]} />
+    </svg>
+  );
+}
+
 const SCENARIO_NAME: Record<string, string> = { A: "Efficiency only", B: "Efficiency + solar", C: "Efficiency, solar + backup power" };
 
 /** Plain names the page needs from the summary: calculation names and flag sentences, plus the developer-view switch. */
@@ -709,10 +729,86 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
   const byId = (id: string) => sum.scenarios.find((s) => s.scenario_id === id);
   const rec = o.recommended ? byId(o.recommended) : undefined;
   const goalPct = sum.baseline.goal_percent;
-  // One plain line on why the recommended option won, worked out from its own numbers (no wording from the model, no re-run).
-  const recReason = !rec ? "" : rec.reaches_goal
-    ? rec.budget_strain === "over budget" ? "Reaches your goal even at the low end, but costs more than your budget." : "Reaches your goal even at the low end, and fits your budget."
-    : rec.budget_strain === "over budget" ? "Gets closest to your goal, but costs more than your budget." : "Gets closest to your goal within what the data supports.";
+  // The backup card is shown only when the recommended plan actually includes a battery.
+  const hasBackup = !!rec && rec.package.battery_kwh > 0 && rec.outage_hours[1] > 0;
+  // The quick building facts beside the question. Every value comes from the saved plan. A fact the plan does not have, or whose answer is no (not a landmark, no solar yet), gets no row at all.
+  const bi = obj(sum.building.intake);
+  const bc = obj(sum.building.city_records);
+  const br = obj(sum.building.roof_assessment);
+  const bs = obj(sum.building.site_context);
+  const solarKw = Number(bi.existing_solar_kw ?? br.installed_kw ?? 0);
+  const isLandmark = bs.landmark === true || bc.landmark_flag === true;
+  const roofKind = String(bs.roof_kind ?? bi.roof_type ?? "");
+  const roofShape = roofKind === "flat" ? "Flat" : roofKind ? "Pitched" : "";
+  const cityRating = br.solar_ready === true ? "solar ready" : br.status === "Not Solar Ready" ? "not solar ready" : br.status === "Completed" ? "solar already on it" : "";
+  // Roof condition and age, from what the visitor entered or the city's roof review. Left out when neither says anything ("Unknown" counts as nothing).
+  const known = (v: unknown) => (v && String(v).toLowerCase() !== "unknown" ? String(v) : "");
+  const roofCond = known(bi.roof_condition) || known(br.roof_condition);
+  const roofAgeText = known(br.roof_age) ? `${known(br.roof_age).replace(/\s*years or more/i, "+ years")} old` : "";
+  const roofCondition = [roofCond, roofAgeText].filter(Boolean).join(", ");
+  // Backup power is only listed when the visitor asked for it in their question. The intake's critical-loads box is not used on its own,
+  // because the sample intakes all fill it in. "Outage" style words win; a bare "battery" or "backup" gets the shorter line.
+  const asked = plan.question ?? "";
+  const backupNote = /outage|blackout|power cut|storm|resilien|keep .{0,60}running/i.test(asked) ? "Requested for outages" : /batter|back-?up|back up/i.test(asked) ? "Battery requested" : "";
+  // FEMA flood zone, said in plain words because the letter alone means nothing to most readers (the letter stays as a hover note).
+  // A and V zones are the high-risk ones; V is coastal. "Sandy flood history" is read from the visitor's own question, since the records only give the zone letter.
+  const floodZone = String(bs.flood_zone ?? "");
+  const floodRisk = /^V/i.test(floodZone) ? "High flood risk (coastal)" : /^A/i.test(floodZone) ? "High flood risk" : "Lower flood risk";
+  const floodValue = /sandy/i.test(plan.question ?? "") ? `${floodRisk}, Sandy flood history` : floodRisk;
+  const roofArea = Number(bi.roof_area_sqft ?? 0);
+  const targetYear = bi.target_year ? ` by ${String(bi.target_year)}` : "";
+  const facts: { icon: string; label: string; value: string; hint?: string }[] = [
+    ...(goalPct != null ? [{ icon: "goal", label: "Goal", value: `Cut ${goalPct}%${targetYear}` }] : []),
+    ...(backupNote ? [{ icon: "battery", label: "Backup power", value: backupNote }] : []),
+    ...(budget > 0 ? [{ icon: "money", label: "Budget", value: money(budget) }] : []),
+    ...(solarKw > 0 ? [{ icon: "solar", label: "Solar today", value: `${solarKw} kW installed` }] : []),
+    ...(isLandmark ? [{ icon: "landmark", label: "Landmark", value: bs.parkland === true ? "Yes, on parkland" : "Yes" }] : []),
+    ...(roofShape ? [{ icon: "roof", label: "Roof", value: `${roofShape}${cityRating ? `, ${cityRating}` : ""}` }] : []),
+    ...(roofCondition ? [{ icon: "condition", label: "Roof condition", value: roofCondition.charAt(0).toUpperCase() + roofCondition.slice(1) }] : []),
+    ...(roofArea > 0 ? [{ icon: "ruler", label: "Roof area", value: `${show(roofArea)} sq ft` }] : []),
+    ...(floodZone ? [{ icon: "flood", label: "Flood zone", value: floodValue, hint: `FEMA flood zone ${floodZone}` }] : []),
+  ];
+  // The answer side, all worked out from the recommended plan's own numbers (no wording from the model, no re-run).
+  // A plan that is waiting on a roof check keeps the headline and sentence the backend already wrote for it.
+  const nearest1k = (n: number) => moneyExact(Math.round(n / 1000) * 1000);
+  const holdsBack = !rec || o.code === "needs_roof_check";
+  const overBudget = rec?.budget_strain === "over budget";
+  const goalWord = goalPct != null ? `the ${goalPct}% goal` : "your goal";
+  const backupGap = !!backupNote && !hasBackup;
+  const batteryCost = byId("C");
+  const batteryOverBudget = backupGap && budget > 0 && batteryCost?.budget_strain === "over budget";
+  const answerHeadline = holdsBack || !rec
+    ? o.headline
+    : (rec.reaches_goal
+        ? overBudget ? `Yes to ${goalWord}, but over your budget.` : `Yes to ${goalWord}, inside your budget.`
+        : overBudget ? `Falls short of ${goalWord} and goes over your budget.` : `Not quite ${goalWord}, but inside your budget.`) + (backupGap ? " Outage backup is the gap." : "");
+  const answerBody = holdsBack || !rec
+    ? o.subhead
+    : `Plan ${rec.scenario_id} cuts ${pctRange(rec.reduction_pct_of_use)} of your grid power for ${rec.upfront_usd_best != null ? `about ${nearest1k(rec.upfront_usd_best)}` : moneyRange(rec.upfront_usd)}.` +
+      (backupGap
+        ? ` It has no battery, so it won't keep critical loads running in an outage${batteryOverBudget ? `, and adding one goes over your ${moneyExact(budget)}` : ""}.`
+        : hasBackup && backupNote ? ` It also keeps critical loads running for ${hoursRange(rec.outage_hours)} in an outage.` : "");
+  const newSolar = rec ? Math.round(rec.package.solar_kw_dc) : 0;
+  const deep = rec?.package.efficiency_level === "deep";
+  // Quick next steps, short and specific to this building: the roof, the approvals it needs, then backup power or an energy audit, then the data to confirm.
+  // They are chosen from the plan's own facts, not copied from the roadmap. At most four, most important first.
+  const flood = /^[AV]/i.test(floodZone);
+  const isSchool = String(bs.owner_agency ?? "").toLowerCase() === "doe";
+  const approvals = [isLandmark && "Landmarks Commission", flood && "flood-zone"].filter(Boolean) as string[];
+  const nextSteps: string[] = [
+    ...(newSolar > 0 || holdsBack ? [holdsBack ? "Have an engineer or roofer verify the usable roof area." : "Have an engineer or roofer confirm the usable roof."] : []),
+    ...(approvals.length > 0 ? [`Start the ${approvals.join(" and ")} ${approvals.length > 1 ? "reviews" : "review"}.`] : []),
+    ...(isSchool ? ["Ask DCAS or the School Construction Authority how to proceed."] : []),
+    ...(backupGap ? [`Meter your real critical load, then ask for the price of adding a ${flood ? "flood-protected " : ""}battery to Plan ${rec?.scenario_id ?? ""}.`.replace(/ \.$/, ".")] : ["Book an energy audit, then start the efficiency upgrades."]),
+    `Confirm 12 months of bills${budget > 0 ? ` and that ${nearest1k(budget)} is a ${String(bi.budget_type ?? "") === "capital" ? "one-time capital amount" : "firm budget"}` : ""}.`,
+  ].slice(0, 4);
+  // The recommended plan card: its name, what is in it, and short chips.
+  const recTitle = !rec ? "" : `Plan ${rec.scenario_id} · ${deep ? "Deeper efficiency" : "Efficiency"}${newSolar > 0 ? ` plus about ${newSolar} kW of new solar` : ""}${rec.package.battery_kwh > 0 ? ` and a ${rec.package.battery_kwh} kWh battery` : ""}`;
+  const recDetail = !rec ? "" :
+    `${deep ? "Deeper efficiency work first (lighting, controls and building systems)" : "Lighting and controls upgrades first"}` +
+    (newSolar > 0 ? `, then a new rooftop array${budget > 0 && rec.upfront_usd[1] >= budget * 0.99 ? " sized to your budget" : ""}${solarKw > 0 ? `, on top of the ${solarKw} kW you already have` : ""}` : "") + "." +
+    (newSolar > 0 ? ` Needs an engineer to confirm the usable roof${isLandmark ? " and a Landmarks review" : ""}.` : "");
+  const recChips = !rec ? [] : [deep ? "Deeper efficiency" : "Standard efficiency", newSolar > 0 ? `${newSolar} kW new solar` : "No solar yet", rec.package.battery_kwh > 0 ? `${rec.package.battery_kwh} kWh battery` : "No battery"];
   const allClaims = sum.sections.flatMap((s) => s.claims);
   const labelCounts = Object.fromEntries(Object.keys(LABELS).map((k) => [k, allClaims.filter((c) => c.label === k).length]));
   const total = allClaims.length || 1;
@@ -757,71 +853,102 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
 
       {/* The summary: the plain answer first, then goal and expected result, the recommended plan, and what is still unconfirmed. Everything here is read from the saved plan; nothing is re-run. */}
       <div className="rounded-3xl p-7 md:p-9" style={{ background: toneBg }}>
-        {/* Reads as one thought: the question asked on the left (the same snapshot as the home card: outcome pill, building, goal, question, note), Professor Fritts' answer on the right. On a phone the two stack. */}
+        {/* Reads as one thought: the question asked on the left (the same snapshot as the home card: building, question, quick facts, note), Professor Fritts' answer on the right. On a phone the two stack. */}
         <div className="grid gap-6 lg:grid-cols-[5fr_7fr] lg:gap-10">
           <div className="min-w-0">
-            <span
-              className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-              style={{ background: o.tone === "good" ? "#dff3ea" : o.tone === "caution" ? "#fdf0cf" : "#e3ecf6", color: "#12303d" }}
-            >
-              {o.label}
-            </span>
-            <div className="mt-3 text-xl font-bold leading-snug text-[var(--fr-ink)]">{String(plan.profile.building_name ?? plan.label)}</div>
-            {plan.profile.goal && <p className="mt-0.5 text-sm text-[var(--fr-ink)]/70">{String(plan.profile.goal)}</p>}
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--fr-teal)]">About this building</div>
+            <div className="mt-2 text-xl font-bold leading-snug text-[var(--fr-ink)]">{String(plan.profile.building_name ?? plan.label)}</div>
             {plan.question && <p className="mt-4 border-l-4 border-[var(--fr-teal)] pl-4 text-base italic leading-snug text-[var(--fr-ink)]">&ldquo;{plan.question}&rdquo;</p>}
+            <dl className="mt-5">
+              {facts.map((f) => (
+                <div key={f.label} className="flex items-center gap-3 border-t border-[var(--fr-ink)]/10 py-2.5 text-sm">
+                  <FactIcon name={f.icon} />
+                  <dt className="w-28 shrink-0 text-[var(--fr-ink)]/60">{f.label}</dt>
+                  <dd className="min-w-0 font-semibold text-[var(--fr-ink)]" title={f.hint}>{f.value}</dd>
+                </div>
+              ))}
+            </dl>
             {plan.tag && <p className="mt-4 text-xs text-[var(--fr-ink)]/60">{plan.tag}</p>}
           </div>
           <div className="min-w-0 border-t border-[var(--fr-ink)]/10 pt-6 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
             <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--fr-teal)]">Professor Fritts&rsquo; answer</div>
-            <h1 className="mt-2 text-2xl font-bold leading-tight text-[var(--fr-ink)] md:text-3xl">{o.headline}</h1>
-            {/* The subhead repeats the plain answer, so it only shows on older plans that have no plain answer. */}
-            {!sum.plain_answer && <p className="mt-3 text-lg text-[var(--fr-ink)]/80">{o.subhead}</p>}
-            {/* The headline above is worked out by code from the numbers. This paragraph is the agent's own plain-words answer to the question, checked by code before it is saved. A plan recorded before it existed has none and looks exactly as it did. */}
-            {sum.plain_answer && <p className="mt-4 text-base leading-relaxed text-[var(--fr-ink)]">{sum.plain_answer}</p>}
+            <h1 className="mt-2 text-2xl font-bold leading-tight text-[var(--fr-ink)] md:text-3xl">{answerHeadline}</h1>
+            <p className="mt-3 text-base leading-relaxed text-[var(--fr-ink)]">{answerBody}</p>
+            {rec && (
+              <div className="mt-5 rounded-2xl border border-[var(--fr-gold)] bg-white/80 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="rounded-full border border-[var(--fr-gold)] bg-[#fdf0cf] px-2.5 py-0.5 text-[11px] font-bold text-[#12303d]">Recommended</span>
+                  <a href="#plan-options" className="text-sm font-semibold text-[var(--fr-teal)] underline">Compare all 3 options</a>
+                </div>
+                <div className="mt-2 text-base font-semibold text-[var(--fr-ink)]">{recTitle}</div>
+                <p className="mt-1 text-sm text-[var(--fr-ink)]/75">{recDetail}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {recChips.map((c) => <span key={c} className="rounded-full border border-[var(--fr-line)] bg-white px-2.5 py-0.5 text-xs text-[var(--fr-ink)]">{c}</span>)}
+                </div>
+              </div>
+            )}
+            {/* The main numbers, each answering one thing the visitor asked: do we reach the goal, can we afford it, what do we get back, and (only when the recommended plan includes a battery) do we keep power in an outage. */}
+            <div className={`mt-4 grid gap-3 sm:grid-cols-2 ${hasBackup ? "" : "xl:grid-cols-3"}`}>
+              {rec ? (
+                <>
+                  <div className="rounded-2xl bg-white/80 p-3.5">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">Grid power cut</div>
+                    <div className="mt-1 text-xl font-bold text-[var(--fr-ink)]">{pctRange(rec.reduction_pct_of_use)}</div>
+                    <div className="mt-1 text-sm text-[var(--fr-mute)]">{goalPct != null ? `Goal: ${goalPct}%. ` : ""}{rec.reaches_goal ? "Reached even at the low end." : "May fall short at the low end."}</div>
+                  </div>
+                  <div className="rounded-2xl bg-white/80 p-3.5">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">What it costs</div>
+                    <div className="mt-1 text-xl font-bold text-[var(--fr-ink)]">{rec.upfront_usd_best != null ? `About ${money(rec.upfront_usd_best)}` : moneyRange(rec.upfront_usd)}</div>
+                    <div className="mt-1 text-sm text-[var(--fr-mute)]">{rec.upfront_usd_best != null ? `Typically ${moneyRange(rec.upfront_usd)}` : "Upfront"}{budget > 0 ? `. Budget ${money(budget)}.` : "."}</div>
+                  </div>
+                  <div className="rounded-2xl bg-white/80 p-3.5">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">Yearly savings</div>
+                    <div className="mt-1 text-xl font-bold text-[var(--fr-ink)]">{moneyRange(rec.annual_savings_usd)}</div>
+                    <div className="mt-1 text-sm text-[var(--fr-mute)]">Pays back in {rec.payback_years_best ? `about ${Math.round(rec.payback_years_best)} years` : yearsRange(rec.payback_years)}.</div>
+                  </div>
+                  {hasBackup && (
+                    <div className="rounded-2xl bg-white/80 p-3.5">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">Backup power</div>
+                      <div className="mt-1 text-xl font-bold text-[var(--fr-ink)]">{hoursRange(rec.outage_hours)}</div>
+                      <div className="mt-1 text-sm text-[var(--fr-mute)]">In an outage, with a {rec.package.battery_kwh} kWh battery.</div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="rounded-2xl bg-white/80 p-3.5 sm:col-span-2 xl:col-span-3">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">What to expect</div>
+                  <p className="mt-1 text-sm text-[var(--fr-ink)]">{missingReason}</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="mt-6 grid gap-3 md:grid-cols-3">
-          <div className="rounded-2xl bg-white/80 p-4">
-            <div className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">Your goal</div>
-            <div className="mt-1 text-xl font-bold text-[var(--fr-ink)]">{goalPct != null ? `Cut ${goalPct}% of grid electricity` : "No goal set"}</div>
-            {sum.baseline.goal_kwh != null && <div className="mt-1 text-sm text-[var(--fr-mute)]">About {show(sum.baseline.goal_kwh)} kWh a year{budget > 0 ? `, on a budget of ${money(budget)}` : ""}</div>}
-          </div>
-          {rec ? (
-            <>
-              <div className="rounded-2xl bg-white/80 p-4">
-                <div className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">What to expect</div>
-                <div className="mt-1 text-xl font-bold text-[var(--fr-ink)]">{pctRange(rec.reduction_pct_of_use)} less</div>
-                <div className="mt-1 text-sm text-[var(--fr-mute)]">Saves {moneyRange(rec.annual_savings_usd)} a year. {rec.reaches_goal ? "Reaches your goal even at the low end." : "May fall short of your goal at the low end."}</div>
-              </div>
-              <div className="rounded-2xl bg-white/80 p-4">
-                <div className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">What it costs</div>
-                <div className="mt-1 text-xl font-bold text-[var(--fr-ink)]">{rec.upfront_usd_best != null ? `About ${money(rec.upfront_usd_best)}` : moneyRange(rec.upfront_usd)}</div>
-                <div className="mt-1 text-sm text-[var(--fr-mute)]">{rec.upfront_usd_best != null ? `Typical range ${moneyRange(rec.upfront_usd)}. ` : ""}Pays back in {rec.payback_years_best ? `about ${Math.round(rec.payback_years_best)} years` : yearsRange(rec.payback_years)}</div>
-              </div>
-            </>
-          ) : (
-            <div className="rounded-2xl bg-white/80 p-4 md:col-span-2">
-              <div className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">What to expect</div>
-              <p className="mt-1 text-sm text-[var(--fr-ink)]">{missingReason}</p>
+        {/* Under the answer: the agent's own longer plain-words answer on the left (a plan recorded before it existed has none), and the quick next steps card on the right. */}
+        <div className={`mt-6 grid gap-6 border-t border-[var(--fr-ink)]/10 pt-5 ${sum.plain_answer ? "lg:grid-cols-[7fr_5fr]" : ""}`}>
+          {sum.plain_answer && (
+            <div className="min-w-0">
+              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--fr-teal)]">The full summary</div>
+              <p className="mt-2 text-base leading-relaxed text-[var(--fr-ink)]">{sum.plain_answer}</p>
+            </div>
+          )}
+          {nextSteps.length > 0 && (
+            <div className="min-w-0 self-start rounded-2xl bg-white/80 p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--fr-mute)]">Start here</div>
+              {/* Plain dots, not numbers or checkboxes: these jobs can happen side by side, the roadmap further down is the real order, and nothing in a report should look tick-able. */}
+              <ul className="mt-3 space-y-2.5 text-sm leading-snug text-[var(--fr-ink)]">
+                {nextSteps.map((step) => (
+                  <li key={step} className="flex gap-2.5">
+                    <span aria-hidden="true" className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--fr-gold)]" />
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ul>
+              <a href="#plan-roadmap" className="mt-3 inline-block text-sm font-semibold text-[var(--fr-teal)] underline">See the full roadmap ↓</a>
             </div>
           )}
         </div>
 
-        {rec && (
-          <div className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--fr-gold)] bg-white/80 p-4">
-            <div className="min-w-0 flex-1">
-              <div className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-warn)]">Recommended plan</div>
-              <div className="mt-0.5 text-base font-semibold text-[var(--fr-ink)]">Plan {rec.scenario_id}: {SCENARIO_NAME[rec.scenario_id]}</div>
-              <div className="mt-0.5 text-sm text-[var(--fr-ink)]/80">{recReason}</div>
-            </div>
-            <a href="#plan-options" className="rounded-lg bg-[var(--fr-ink)] px-4 py-2 text-sm font-semibold text-white">Compare all 3 options</a>
-          </div>
-        )}
-
-        {sum.confirm_first.length > 0 && (
-          <a href="#plan-confirm" className="mt-4 inline-block text-sm font-semibold text-[var(--fr-teal)] underline">{sum.confirm_first.length} {sum.confirm_first.length === 1 ? "thing" : "things"} to confirm to firm up these numbers ↓</a>
-        )}
         <p className="mt-4 max-w-3xl text-xs text-[var(--fr-ink)]/75">Early estimate from public data, with {sum.assumptions.length} assumptions filled in where data was missing. Ranges narrow after an energy audit and contractor bids.</p>
       </div>
 
@@ -861,7 +988,7 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
           <Card className="border-[var(--fr-gold)] bg-[#fffaf0]">
             <ul className="space-y-2 text-sm text-[var(--fr-ink)]">
               {sum.confirm_first.map((c) => (
-                <li key={c.text} className="flex gap-2"><span className="mt-1 h-4 w-4 shrink-0 rounded border border-[var(--fr-gold)]" /><span>{c.text}</span></li>
+                <li key={c.text} className="flex gap-2"><span aria-hidden="true" className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--fr-gold)]" /><span>{c.text}</span></li>
               ))}
             </ul>
           </Card>
@@ -871,14 +998,16 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
       <div className="grid gap-8 lg:grid-cols-[1.3fr_1fr]">
         <div id="plan-roadmap" className="scroll-mt-4">
           <SectionTitle eyebrow="Your roadmap" title="What to do, in order" />
-          <ol className="space-y-3">
-            {phases.map((ph) => (
-              <li key={ph.claim.text} className="flex gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--fr-ink)] text-sm font-bold text-white">{ph.n || "•"}</div>
-                <div className="flex-1 rounded-xl border border-[var(--fr-line)] bg-white p-3">
+          {/* A vertical timeline: numbered from 1 (the plan's own "Phase 0" would look odd), steps joined by a thin line, no boxes. */}
+          <ol>
+            {phases.map((ph, i) => (
+              <li key={ph.claim.text} className="relative flex gap-4 pb-6 last:pb-0">
+                {i < phases.length - 1 && <div aria-hidden="true" className="absolute bottom-0 left-4 top-9 w-0.5 -translate-x-1/2 bg-[var(--fr-line)]" />}
+                <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--fr-ink)] text-sm font-bold text-white">{i + 1}</div>
+                <div className="min-w-0 flex-1 pt-0.5">
                   <div className="font-semibold text-[var(--fr-ink)]">{ph.title}</div>
-                  {ph.body && <p className="text-sm text-[var(--fr-mute)]">{ph.body}</p>}
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-[var(--fr-mute)]">
+                  {ph.body && <p className="mt-0.5 text-sm text-[var(--fr-mute)]">{ph.body}</p>}
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-[var(--fr-mute)]">
                     <Chip label={ph.claim.label} />
                     {ph.claim.calc_id && <span>worked out from: {calcNames[ph.claim.calc_id] ?? ph.claim.calc_id}</span>}
                     <SourceLink url={ph.claim.source_url} />
@@ -894,7 +1023,7 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
             <ul className="space-y-2.5">
               {sum.referrals.map((r) => (
                 <li key={r.text} className="flex gap-2 text-sm text-[var(--fr-ink)]">
-                  <span className="mt-1 h-4 w-4 shrink-0 rounded border border-[var(--fr-mute)]" />
+                  <span aria-hidden="true" className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--fr-mute)]" />
                   <span>{dev ? r.text : plainify(r.text)} <SourceLink url={r.source_url} /></span>
                 </li>
               ))}
