@@ -190,8 +190,11 @@ class AgentNotes(BaseModel):
 
     def record_tool_result(self, tool_name: str, result: ToolResult) -> None:
         """Append provenance and payload snippets after Check 3 passes."""
-        # A later success fills the gap, so the tool no longer counts as failed.
+        # A later success fills the gap, so the tool no longer counts as failed, and its "could not return data" flag goes too.
+        # (A first try that was turned down, such as an array too big for the roof, is followed by a smaller one that works.)
         self.failed_tools.pop(tool_name, None)
+        if f"tool_error:{tool_name}" in self.flags:
+            self.flags.remove(f"tool_error:{tool_name}")
         entry = {
             "tool": tool_name,
             "mock": result.mock,

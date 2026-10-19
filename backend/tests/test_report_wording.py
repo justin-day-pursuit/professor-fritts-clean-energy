@@ -98,3 +98,26 @@ def test_not_solar_ready_reads_differently_when_solar_is_already_installed():
     assert "consider replacing it" in plain[0]["text"]
     assert "yet solar is already installed" in installed[0]["text"]
     assert "consider replacing it" not in installed[0]["text"]
+
+
+# ------------------------------------------------------------------- a failed try that is followed by a success
+
+
+def test_a_tool_that_failed_once_and_then_worked_leaves_no_gap_flag():
+    from agent.notes import AgentNotes
+    from tools.base import ToolResult
+
+    notes = AgentNotes()
+    notes.record_tool_failure("get_solar_production", "A 337 kW array does not fit; send 109 or less.")
+    assert "tool_error:get_solar_production" in notes.flags
+    notes.record_tool_result("get_solar_production", ToolResult(tool="get_solar_production", data={"system_kw": 70}, source_url="https://example.test", retrieved_at="2026-10-18T00:00:00Z", mock=False))
+    assert "tool_error:get_solar_production" not in notes.flags
+    assert "get_solar_production" not in notes.failed_tools
+
+
+def test_a_tool_that_never_worked_keeps_its_gap_flag():
+    from agent.notes import AgentNotes
+
+    notes = AgentNotes()
+    notes.record_tool_failure("get_utility_rates", "The read operation timed out")
+    assert "tool_error:get_utility_rates" in notes.flags

@@ -28,13 +28,13 @@ REPLAY_CASES: list[dict[str, str]] = [
     {"id": "plan_ps236_bronx", "label": "P.S. 236, Bronx", "kind": "recorded",
      "tag": "Goal reachable but over budget; the city rates the roof not solar ready"},
     {"id": "plan_ps38_staten_island", "label": "P.S. 38, Staten Island", "kind": "recorded",
-     "tag": "Goal reached within budget; floor area differs from the city record"},
+     "tag": "Goal reached within budget; the roof is over 20 years old and not rated solar ready"},
     {"id": "plan_red_hook_rec_center", "label": "Red Hook Recreation Center, Brooklyn", "kind": "recorded",
      "tag": "Landmark on parkland with a Sandy flood history"},
     {"id": "plan_jefferson_market_library", "label": "Jefferson Market Library, Manhattan", "kind": "recorded",
      "tag": "Pitched roof: needs an engineer or roofer before solar is sized"},
     {"id": "plan_ps24_bronx_existing_solar", "label": "P.S. 24, Bronx", "kind": "recorded",
-     "tag": "Roof already full of solar: efficiency only, goal not reached"},
+     "tag": "Already has 228 kW of solar, with room for about 70 kW more; goal reached within budget"},
 ]
 _BY_ID = {case["id"]: case for case in REPLAY_CASES}
 
