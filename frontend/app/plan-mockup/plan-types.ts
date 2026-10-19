@@ -12,7 +12,7 @@ export type Json = Record<string, unknown>;
 export interface Outcome {
   code: string;
   label: string;
-  tone: "good" | "caution" | "next-step";
+  tone: "good" | "caution" | "next-step" | "bad";
   headline: string;
   subhead: string;
   recommended: string | null;

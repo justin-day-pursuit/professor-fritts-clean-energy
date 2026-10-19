@@ -229,23 +229,26 @@ function ScenarioCard({ id, s, budget, recommended, reason }: { id: "A" | "B" | 
   const over = s.budget_strain === "over budget" && s.budget_gap_usd;
   const costMax = Math.max(s.upfront_usd[1], budget) * 1.08;
   const goal = s.goal_pct ?? 30;
+  // The pills: does it meet the goal (at the low end, only at its best, or short), and does it fit the budget.
+  const green = { background: "#dff3ea", color: "#12303d" };
+  const amber = { background: "#fdf0cf", color: "#12303d" };
+  const red = { background: "#f6d2cb", color: "#8a1f11" };
+  const goalPill = s.reaches_goal ? { text: "Reaches goal", style: green } : s.reduction_pct_of_use[1] >= goal ? { text: "Goal only at best", style: amber } : { text: "Short of goal", style: red };
+  const budgetPill = s.budget_strain === "over budget" ? { text: "Over budget", style: red } : s.budget_strain === "within budget" ? { text: "Fits budget", style: green } : { text: "May run over budget", style: amber };
   return (
+    <div className="relative">
+    {/* "Recommended" sits on the card's top edge, outside the card, so it never crowds the pills in the corner. */}
+    {recommended && <span className="absolute -top-3 left-4 z-10 rounded-full bg-[var(--fr-gold)] px-3 py-0.5 text-[11px] font-bold text-[var(--fr-ink)] shadow-sm">Recommended</span>}
     <Card className={recommended ? "ring-2 ring-[var(--fr-gold)]" : ""}>
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="text-xs font-semibold uppercase tracking-wide text-[var(--fr-mute)]">Plan {id}{dev && <span className="ml-1 font-mono text-[var(--fr-warn)]">{s.calc_id}</span>}</div>
           <div className="text-lg font-semibold text-[var(--fr-ink)]">{SCENARIO_NAME[id]}</div>
         </div>
-        {/* The budget answer is always shown, and its colour says it: green fits, amber may run over, red is over. "Recommended" sits beside it, so a recommended plan never hides that it costs more than the budget. */}
+        {/* Two pills, the goal and then the budget, each coloured by its answer: green is a yes, amber is only at best or may run over, red is no. */}
         <div className="flex flex-col items-end gap-1">
-          {recommended && <span className="rounded-full bg-[var(--fr-gold)] px-2.5 py-1 text-[11px] font-bold text-[var(--fr-ink)]">Recommended</span>}
-          {s.budget_strain === "over budget" ? (
-            <span className="rounded-full bg-[#f6d2cb] px-2.5 py-1 text-[11px] font-bold text-[#8a1f11]">Over budget</span>
-          ) : s.budget_strain === "within budget" ? (
-            <span className="rounded-full bg-[#dff3ea] px-2.5 py-1 text-[11px] font-bold text-[var(--fr-ink)]">Fits budget</span>
-          ) : (
-            <span className="rounded-full bg-[#fdf0cf] px-2.5 py-1 text-[11px] font-bold text-[var(--fr-ink)]">May run over budget</span>
-          )}
+          <span className="rounded-full px-2.5 py-1 text-[11px] font-bold" style={goalPill.style}>{goalPill.text}</span>
+          <span className="rounded-full px-2.5 py-1 text-[11px] font-bold" style={budgetPill.style}>{budgetPill.text}</span>
         </div>
       </div>
       <p className="mt-1 text-xs text-[var(--fr-mute)]">
@@ -295,6 +298,7 @@ function ScenarioCard({ id, s, budget, recommended, reason }: { id: "A" | "B" | 
         </table>
       </details>
     </Card>
+    </div>
   );
 }
 
@@ -731,7 +735,7 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
     "9": ["battery", "hazards"],
     "13": ["tools", "links", "usage"],
   };
-  const toneBg = o.tone === "good" ? "linear-gradient(135deg,#dff3ea,#fdf0cf)" : o.tone === "caution" ? "linear-gradient(135deg,#fdf0cf,#faf6ee)" : "linear-gradient(135deg,#e3ecf6,#faf6ee)";
+  const toneBg = o.tone === "good" ? "linear-gradient(135deg,#dff3ea,#fdf0cf)" : o.tone === "caution" ? "linear-gradient(135deg,#fdf0cf,#faf6ee)" : o.tone === "bad" ? "linear-gradient(135deg,#f8dcd6,#faf6ee)" : "linear-gradient(135deg,#e3ecf6,#faf6ee)";
   const byId = (id: string) => sum.scenarios.find((s) => s.scenario_id === id);
   const rec = o.recommended ? byId(o.recommended) : undefined;
   const goalPct = sum.baseline.goal_percent;
@@ -778,23 +782,18 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
   // A plan that is waiting on a roof check keeps the headline and sentence the backend already wrote for it.
   const nearest1k = (n: number) => moneyExact(Math.round(n / 1000) * 1000);
   const holdsBack = !rec || o.code === "needs_roof_check";
-  const overBudget = rec?.budget_strain === "over budget";
-  const mayExceed = rec?.budget_strain === "may exceed budget";
-  const goalWord = goalPct != null ? `the ${goalPct}% goal` : "your goal";
   const backupGap = !!backupNote && !hasBackup;
   const batteryCost = byId("C");
   const batteryOverBudget = backupGap && budget > 0 && batteryCost?.budget_strain === "over budget";
-  const answerHeadline = holdsBack || !rec
-    ? o.headline
-    : (rec.reaches_goal
-        ? overBudget ? `Yes to ${goalWord}, but over your budget.` : mayExceed ? `Yes to ${goalWord}, but it may run over your budget.` : `Yes to ${goalWord}, inside your budget.`
-        : overBudget ? `Falls short of ${goalWord} and goes over your budget.` : mayExceed ? `Not quite ${goalWord}, and it may run over your budget.` : `Not quite ${goalWord}, but inside your budget.`) + (backupGap ? " Outage backup is the gap." : "");
+  // The headline and the pill come from one rule in the backend, so the card, the report and the PDF always say the same thing.
+  const answerHeadline = o.headline;
   const answerBody = holdsBack || !rec
     ? o.subhead
     : `Plan ${rec.scenario_id} cuts ${pctRange(rec.reduction_pct_of_use)} of your grid power for ${rec.upfront_usd_best != null ? `about ${nearest1k(rec.upfront_usd_best)}` : moneyRange(rec.upfront_usd)}.` +
       (backupGap
         ? ` It has no battery, so it won't keep critical loads running in an outage${batteryOverBudget ? `, and adding one goes over your ${moneyExact(budget)}` : ""}.`
-        : hasBackup && backupNote ? ` It also keeps critical loads running for ${hoursRange(rec.outage_hours)} in an outage.` : "");
+        : hasBackup && backupNote ? ` It also keeps critical loads running for ${hoursRange(rec.outage_hours)} in an outage.` : "") +
+      (o.code === "reached_roof_first" ? " None of the costs include repairing or replacing the roof." : "");
   const newSolar = rec ? Math.round(rec.package.solar_kw_dc) : 0;
   const deep = rec?.package.efficiency_level === "deep";
   // Quick next steps, short and specific to this building: the roof, the approvals it needs, then backup power or an energy audit, then the data to confirm.

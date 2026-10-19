@@ -214,9 +214,9 @@ function Home({ onOpen, onRerun, onStart }: { onOpen: (id: string) => void; onRe
                   <span
                     className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
                     style={{
-                      // Red when the answer is over budget, green when it is a clear yes, amber for other cautions, blue for a next step.
-                      background: s.outcome.code === "reached_over_budget" ? "#f6d2cb" : s.outcome.tone === "good" ? "#dff3ea" : s.outcome.tone === "caution" ? "#fdf0cf" : "#e3ecf6",
-                      color: s.outcome.code === "reached_over_budget" ? "#8a1f11" : "#12303d",
+                      // The colour comes with the answer: green is a clear yes, amber is a yes with a catch, blue is a step that comes first, red is not on this budget.
+                      background: s.outcome.tone === "good" ? "#dff3ea" : s.outcome.tone === "caution" ? "#fdf0cf" : s.outcome.tone === "bad" ? "#f6d2cb" : "#e3ecf6",
+                      color: s.outcome.tone === "bad" ? "#8a1f11" : "#12303d",
                     }}
                   >
                     {s.outcome.label}
