@@ -5,6 +5,7 @@
   "address": "1871 WALTON AVENUE",
   "borough": "Bronx",
   "utility": "Con Edison",
+  "question": "How can our school cut grid electricity 30% by 2030 on an $800,000 capital budget?",
   "roof_type": "flat",
   "annual_kwh": 456834,
   "year_built": 1994,
@@ -20,6 +21,5 @@
   "roof_area_sqft": 10260,
   "floor_area_sqft": 46700,
   "existing_efficiency": "none",
-  "existing_renewables": "none",
-  "question": "How can our school cut grid electricity 30% by 2030 on an $800,000 capital budget?"
+  "existing_renewables": "none"
 }

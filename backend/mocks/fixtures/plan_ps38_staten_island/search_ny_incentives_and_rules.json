@@ -10,7 +10,7 @@
         "source_url": "https://www.irs.gov/credits-deductions/elective-pay-and-transferability",
         "status_note": "Governmental entities can receive the credit as a direct payment. Solar property must be placed in service by 2027-12-31 (26 U.S.C. 48E(e)(4)(A), for facilities whose construction begins after 2026-07-04). Whether a particular school or agency qualifies is not confirmed here.",
         "statute_url": "https://www.law.cornell.edu/uscode/text/26/48E",
-        "retrieved_at": "2026-10-18T20:31:23Z"
+        "retrieved_at": "2026-10-19T02:32:58Z"
       },
       {
         "name": "NYC Solar Schools program (DCAS, NYPA, NYC Public Schools): rooftop solar on DOE schools under power purchase agreements",
@@ -19,14 +19,14 @@
         "page_hash": "c80583528dd5ecb436ed35024ba8a851765ac6ac072c15a5cce01c430d681d8d",
         "source_url": "https://www.nyc.gov/site/dcas/news/010-26/nycps-dcas-complete-130-solar-installations-city-school-roofs-latest-completion-marie",
         "status_note": "Ongoing: 130 installations done and more in progress per the city's release. The release describes no enrollment process, and it is not known whether this building is in the pipeline. Ask DCAS or the SCA.",
-        "retrieved_at": "2026-10-18T20:31:24Z"
+        "retrieved_at": "2026-10-19T02:32:59Z"
       },
       {
         "name": "NYSERDA NY-Sun commercial and industrial solar incentive (Con Edison region)",
         "status": "uncertain",
         "source_url": "https://www.nyserda.ny.gov/All-Programs/NY-Sun/Contractors/Dashboards-and-incentives/ConEd-Dashboard",
         "status_note": "The current incentive block status could not be read from an official page by a program: NYSERDA's dashboard blocks automated access. Check the dashboard in a browser before counting any incentive.",
-        "retrieved_at": "2026-10-18T20:31:25Z"
+        "retrieved_at": "2026-10-19T02:32:59Z"
       },
       {
         "name": "NYC Local Laws 92 and 94 of 2019 (sustainable roofs): rule, not an incentive",
@@ -35,7 +35,7 @@
         "page_hash": "e16c6a53adb762ec42246c86a37885d69b43f59134af2a50aa43203e44fbd4e6",
         "source_url": "https://www.nyc.gov/site/buildings/dob/pr-sustainable-roof-requirements.page",
         "status_note": "Applies to new buildings and existing buildings undergoing certain major roof renovations: the roof must have a solar photovoltaic system, a green roof system, or both, over any applicable roof.",
-        "retrieved_at": "2026-10-18T20:31:25Z"
+        "retrieved_at": "2026-10-19T02:32:59Z"
       }
     ]
   },
@@ -47,6 +47,6 @@
   ],
   "stale": false,
   "source_url": "https://www.irs.gov/credits-deductions/elective-pay-and-transferability",
-  "retrieved_at": "2026-10-18T20:31:25Z",
+  "retrieved_at": "2026-10-19T02:33:00Z",
   "dataset_version": "curated-register-live-verified"
 }

@@ -5,6 +5,7 @@
   "address": "660 WEST 236 STREET",
   "borough": "Bronx",
   "utility": "Con Edison",
+  "question": "How do we cut our grid power another 30% by 2030 on a $400k capital budget?",
   "roof_type": "flat",
   "annual_kwh": 226605,
   "year_built": 1953,
@@ -21,6 +22,5 @@
   "existing_solar_kw": 228.2,
   "existing_solar_kwh": 457512,
   "existing_efficiency": "none",
-  "existing_renewables": "none",
-  "question": "How do we cut our grid power another 30% by 2030 on a $400k capital budget?"
+  "existing_renewables": "none"
 }

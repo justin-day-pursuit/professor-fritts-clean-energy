@@ -10,21 +10,21 @@
       "match_type": "fallback",
       "postalcode": "11231"
     },
-    "system_kw_dc": 273.8333,
-    "annual_ac_kwh": 344031.201445883,
+    "system_kw_dc": 262.4,
+    "annual_ac_kwh": 329666.9443029753,
     "monthly_ac_kwh": [
-      18217.01092037385,
-      21907.69109129924,
-      32157.68533343902,
-      30807.03390860381,
-      38578.97839044028,
-      38563.84714824866,
-      39958.95507155441,
-      34079.98534978367,
-      30752.68906109116,
-      24818.26673357185,
-      19289.05385234335,
-      14900.00458513361
+      17456.40017304726,
+      20992.98420738792,
+      30815.01275226349,
+      29520.75477167182,
+      36968.19900885508,
+      36953.69953800519,
+      38290.5578349159,
+      32657.05140968334,
+      29468.67897231755,
+      23782.03524147446,
+      18483.6823383237,
+      14277.88805502859
     ],
     "pvwatts_inputs": {
       "lat": 40.672436,
@@ -34,12 +34,14 @@
       "azimuth": 180,
       "array_type": 1,
       "module_type": 0,
-      "system_capacity": 273.8333
+      "system_capacity": 262.4
     },
-    "capacity_factor": 0.1434192561736822,
+    "capacity_factor": 0.1434192561736818,
+    "free_capacity_kw": 262.4,
     "range_assumption": "ASSUMPTION: system losses of 18% (low) to 10% (high) around PVWatts' 14% default; weather is typical-year data.",
-    "annual_ac_kwh_low": 327821.541237396,
-    "annual_ac_kwh_high": 360188.5490151246,
+    "annual_ac_kwh_low": 314134.0823803837,
+    "existing_solar_kw": 11.4,
+    "annual_ac_kwh_high": 345149.677784144,
     "weather_data_source": "NSRDB PSM V3 GOES tmy-2020 3.2.0",
     "solar_radiation_kwh_m2_day": 4.381658825054564
   },
@@ -48,6 +50,6 @@
   "flags": [],
   "stale": false,
   "source_url": "https://developer.nlr.gov/docs/solar/pvwatts/v8/",
-  "retrieved_at": "2026-10-18T20:33:28Z",
+  "retrieved_at": "2026-10-19T02:22:49Z",
   "dataset_version": "pvwatts-v8.5.0"
 }

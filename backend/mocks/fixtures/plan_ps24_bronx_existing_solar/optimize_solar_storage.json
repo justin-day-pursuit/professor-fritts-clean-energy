@@ -1,0 +1,18 @@
+{
+  "data": {
+    "notes": "Critical load not given, so estimated at 1.0 W per sq ft x 135600 sq ft = 135.6 kW (a planning estimate, not metered). Backup length not given, so 8 hours assumed. Battery energy = kW x hours / 0.85 round-trip efficiency = 1276 kWh.",
+    "battery_kw": 135.6,
+    "battery_kwh": 1276,
+    "critical_load_kw": 135.6,
+    "critical_load_hours": 8.0
+  },
+  "mock": false,
+  "tool": "optimize_solar_storage",
+  "flags": [
+    "battery_inputs_estimated"
+  ],
+  "stale": false,
+  "source_url": "internal://optimize_solar_storage",
+  "retrieved_at": "2026-10-19T02:35:53Z",
+  "dataset_version": "battery-sizing-v1"
+}

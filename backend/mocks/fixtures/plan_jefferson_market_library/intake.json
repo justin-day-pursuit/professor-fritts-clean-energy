@@ -5,6 +5,7 @@
   "address": "425 6 AVENUE",
   "borough": "Manhattan",
   "utility": "Con Edison",
+  "question": "Our library is in the Greenwich Village Historic District. Can we put solar on the roof, and how do we cut grid power 30% by 2030 on $500k?",
   "roof_type": "pitched",
   "annual_kwh": 268331,
   "year_built": 1877,
@@ -19,6 +20,5 @@
   "roof_area_sqft": 7020,
   "floor_area_sqft": 19800,
   "existing_efficiency": "none",
-  "existing_renewables": "none",
-  "question": "Our library is in the Greenwich Village Historic District. Can we put solar on the roof, and how do we cut grid power 30% by 2030 on $500k?"
+  "existing_renewables": "none"
 }

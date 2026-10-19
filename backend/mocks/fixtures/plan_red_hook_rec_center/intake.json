@@ -5,6 +5,7 @@
   "address": "155 BAY STREET",
   "borough": "Brooklyn",
   "utility": "Con Edison",
+  "question": "Our rec center flooded in Hurricane Sandy and is used as a cooling center. How do we cut grid power 30% by 2030 and keep critical loads running in outages, on $750k?",
   "roof_type": "flat",
   "annual_kwh": 375066,
   "year_built": 1936,
@@ -18,6 +19,5 @@
   "critical_loads": "gym cooling, lighting and communications for a cooling center",
   "roof_area_sqft": 32860,
   "floor_area_sqft": 21600,
-  "question": "Our rec center flooded in Hurricane Sandy and is used as a cooling center. How do we cut grid power 30% by 2030 and keep critical loads running in outages, on $750k?",
   "existing_solar_kw": 11.4
 }
