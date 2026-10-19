@@ -239,7 +239,7 @@ function Home({ onOpen, onRerun, onStart }: { onOpen: (id: string) => void; onRe
       </section>
 
       {/* The closing picture at the very bottom of the home page: Professor Fritts on a NYC rooftop. It is cropped to a shorter strip (keeping Fritts
-          and the panels), and its top edge fades into the page colour so there is no hard line where the sample plans end. */}
+          and the panels), and a short fade over the sky at its top blends it into the page colour so there is no hard line where the sample plans end. The fade stays above Fritts's head. */}
       <footer className="relative overflow-hidden bg-[var(--fr-soft)]">
         <Image
           src="/fritts/footer-banner.jpg"
@@ -247,9 +247,9 @@ function Home({ onOpen, onRerun, onStart }: { onOpen: (id: string) => void; onRe
           width={2172}
           height={724}
           sizes="100vw"
-          className="block aspect-[5/2] w-full object-cover object-[78%_65%] sm:aspect-[4/1]"
+          className="block aspect-[5/2] w-full object-cover object-[78%_8%] sm:aspect-[4/1]"
         />
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[45%]" style={{ backgroundImage: "linear-gradient(to bottom, var(--fr-soft) 0%, rgba(241,236,223,0.85) 25%, rgba(241,236,223,0) 100%)" }} />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[17%]" style={{ backgroundImage: "linear-gradient(to bottom, var(--fr-soft) 0%, rgba(241,236,223,0.7) 40%, rgba(241,236,223,0) 100%)" }} />
       </footer>
     </>
   );
