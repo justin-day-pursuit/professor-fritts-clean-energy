@@ -161,3 +161,21 @@ def test_the_route_treats_an_address_the_geocoder_cannot_place_as_no_roof_outlin
 def test_the_route_rejects_a_lot_number_that_is_not_ten_digits(api_client, fake_city, bbl):
     response = api_client.get(f"/api/records/building-prefill?bbl={bbl}&address=1 Main St")
     assert response.status_code == 422
+
+
+def test_floor_area_comes_from_the_same_energy_report_as_the_electricity():
+    # The tax lot can cover a different set of buildings than the energy report, which made the two disagree.
+    # So the form's floor area is the energy report's figure, from the same report as the kWh.
+    result = build_prefill(BBL, {**LL84, "gross_floor_area_sqft": 43_760.0}, LL24, ROOF)
+    area = _by_field(result)["floor_area_sqft"]
+    assert area["value"] == 43_760
+    assert area["display"] == "43,760 sq ft"
+    assert "Local Law 84" in area["source"]
+    assert area["source_url"].startswith("https://")
+
+
+def test_no_floor_area_is_filled_in_when_the_energy_report_has_none():
+    # Blank and zero both mean "not reported"; the form then keeps the tax lot's figure or stays blank.
+    for blank in (None, 0, 0.0):
+        result = build_prefill(BBL, {**LL84, "gross_floor_area_sqft": blank}, LL24, ROOF)
+        assert "floor_area_sqft" not in _by_field(result)

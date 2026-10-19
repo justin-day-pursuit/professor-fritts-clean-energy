@@ -250,8 +250,26 @@ def test_live_records_report_the_city_record_and_flag_disagreements(monkeypatch)
     assert {d["field"] for d in result.data["differs_from_intake"]} == {"floor_area_sqft", "year_built"}
     assert "intake_mismatch:floor_area_sqft" in result.flags
     assert "intake_mismatch:year_built" in result.flags
-    assert "address_street_mismatch" in result.flags
+    # The tax lot lists another street (41-24 Kissena Boulevard), but the geocoder matched the street the visitor picked,
+    # so this is still the lot they chose and a different frontage alone is not flagged.
+    assert "address_street_mismatch" not in result.flags
     assert result.data["lot_matches_intake_floor"] is True
+
+
+def test_live_records_flag_a_street_when_the_geocoder_itself_moved_the_address(monkeypatch):
+    """A fuzzy match that lands on a different street is the case worth warning about: it may be the wrong building."""
+    def moved_geocoder_get(url, params=None, timeout=None, headers=None):
+        reply = _fake_records_get(url, params=params, timeout=timeout, headers=headers)
+        if "geosearch" in url:
+            reply._payload["features"][0]["properties"]["label"] = "41-17 Some Other Avenue, Queens, New York, NY, USA"
+        return reply
+
+    monkeypatch.setattr(settings, "TOOL_MODE", "live")
+    monkeypatch.setattr("httpx.get", moved_geocoder_get)
+
+    result = execute_tool("lookup_ny_building_records", {}, session_profile=_queens_profile(), fixture_case=CASE)
+
+    assert "address_street_mismatch" in result.flags
 
 
 def test_live_records_do_not_flag_a_matching_intake(monkeypatch):

@@ -108,6 +108,14 @@ def _compare_with_intake(profile: dict[str, Any], city_area: float | None, city_
     return differences
 
 
+def _floor_area_difference(profile: dict[str, Any], reference_area: float | None) -> dict[str, Any] | None:
+    """The floor-area difference to report, or None. `reference_area` is the city's own figure for the same building."""
+    intake_area = _number(profile.get("floor_area_sqft"))
+    if intake_area and reference_area and abs(reference_area - intake_area) / intake_area > AREA_MISMATCH_RATIO:
+        return {"field": "floor_area_sqft", "intake": intake_area, "city_record": reference_area}
+    return None
+
+
 def compare_roof_with_footprints(profile: dict[str, Any], footprint_total: float | None) -> dict[str, Any] | None:
     """
     Compare the roof area the user typed with the building outlines on the lot (v6).
@@ -201,6 +209,14 @@ def fetch_live_building_records(profile: dict[str, Any], address: str | None = N
             ll84 = found
         else:
             ll24 = found
+    # Compare the entered floor area with the energy report's figure when there is one: it is the same report the
+    # electricity use comes from, so the two agree. The tax lot's area is only the fallback.
+    ll84_area = _number((ll84 or {}).get("gross_floor_area_sqft"))
+    if ll84_area:
+        differences = [d for d in differences if d["field"] != "floor_area_sqft"]
+        area_difference = _floor_area_difference(profile, ll84_area)
+        if area_difference:
+            differences.append(area_difference)
     energy_difference = compare_energy_with_ll84(profile, (ll84 or {}).get("electricity_kwh"))
     if energy_difference:
         differences.append(energy_difference)
@@ -212,9 +228,11 @@ def fetch_live_building_records(profile: dict[str, Any], address: str | None = N
     if is_approximate(place):
         flags.append("address_match_approximate")
     # Confidence 0.8 can still point at a lot whose official street is not the one we asked for.
+    # Only when the geocoder itself moved the address to another street. A tax lot that lists a different frontage
+    # (a corner lot, say) is still the lot the visitor picked, so that alone is not a mismatch.
     asked_street = _street_name(address)
-    recorded_street = _street_name(str(row.get("address") or ""))
-    if asked_street and recorded_street and asked_street != recorded_street:
+    matched_street = _street_name(str(place.get("label") or "").split(",")[0])
+    if asked_street and matched_street and asked_street != matched_street:
         flags.append("address_street_mismatch")
 
     return ToolResult(

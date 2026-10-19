@@ -85,7 +85,8 @@ def city_fields(address: str, borough: str) -> dict[str, Any]:
         "address": place["label"].split(",")[0].strip(),
         "borough": borough,
     }
-    floor_area = _number(lot.get("bldgarea"))
+    # The energy report's floor area when there is one (it matches the electricity figure); the tax lot's otherwise.
+    floor_area = values.get("floor_area_sqft") or _number(lot.get("bldgarea"))
     if floor_area:
         fields["floor_area_sqft"] = int(round(floor_area))
     year = _number(lot.get("yearbuilt"))

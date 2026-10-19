@@ -80,6 +80,22 @@ def build_prefill(
     else:
         missing.append("The city has no energy report with electricity use for this building. Type it, or attach a bill.")
 
+    # Floor area, from the same energy report as the electricity use, so the two always describe the same building(s).
+    # (The tax-lot record can cover a different set of buildings, which made the two disagree.)
+    area = _positive((ll84 or {}).get("gross_floor_area_sqft"))
+    if area is not None:
+        items.append(
+            _item(
+                "floor_area_sqft",
+                "Floor area (sq ft)",
+                round(area),
+                f"{round(area):,} sq ft",
+                "NYC energy benchmarking report (Local Law 84)",
+                LL84_SOURCE_URL,
+                "This is the floor area the city's energy report covers, the same report the electricity figure comes from.",
+            )
+        )
+
     # The city's own roof assessment and any solar already on the building.
     if ll24:
         condition = str(ll24.get("roof_condition") or "").strip()
