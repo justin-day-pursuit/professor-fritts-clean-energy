@@ -9,6 +9,7 @@
 "use client";
 
 import { createContext, useContext, useState, type ReactNode, type SyntheticEvent } from "react";
+import Link from "next/link";
 import { SAMPLE_BADGE_TEXT } from "./copy";
 import type { Claim, PlanSummary, Program, Scenario, Section } from "./plan-types";
 import { fieldLabel, fieldValue, isInternalField, plainify, toolLabel } from "./plain";
@@ -719,7 +720,7 @@ export function Results({ plan, plans, onRestart, onPick }: { plan: PlanView; pl
     <PlainCtx.Provider value={ctx}>
     <section className="mx-auto max-w-6xl space-y-10 px-4 py-8">
       <div className="flex flex-wrap items-center gap-3 text-sm">
-        <button type="button" onClick={onRestart} className="text-[var(--fr-mute)] hover:text-[var(--fr-ink)]">← Home</button>
+        <Link href="/" onClick={() => onRestart?.()} className="text-[var(--fr-mute)] hover:text-[var(--fr-ink)]">← Home</Link>
         <span className="text-[var(--fr-line)]">|</span>
         <span className="font-semibold text-[var(--fr-ink)]">{String(plan.profile.building_name ?? plan.label)}</span>
         <span className="rounded-full bg-[var(--fr-soft)] px-2 py-0.5 text-xs text-[var(--fr-mute)]">{plan.status === "done" ? "Plan complete" : "Plan complete, with open items"}</span>
