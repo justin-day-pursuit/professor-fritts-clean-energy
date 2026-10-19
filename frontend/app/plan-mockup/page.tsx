@@ -17,6 +17,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AddressSearch } from "./AddressSearch";
 import { buildingTypeLabel, fetchBuildingRecord, numberOf, ownerKind, type AddressSuggestion, type BuildingRecord, type FoundBuilding } from "./address";
@@ -43,24 +44,35 @@ function narrationFor(sample: PlanView): string[] {
   return narrationForTools(sample.tools);
 }
 
+/** Helper to ensure smooth scrolling to a hash anchor even if the hash is already in the URL. */
+function handleScrollToSection(id: string) {
+  if (typeof window !== "undefined") {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    }
+  }
+}
+
 // ------------------------------------------------------------------------------------------------ top bar
 
-function TopBar({ onHome, onStart }: { onHome: () => void; onStart: () => void }) {
+function TopBar({ onStart }: { onStart: () => void }) {
   const [open, setOpen] = useState(false);
   return (
     <header className="sticky top-0 z-20 border-b border-[var(--fr-line)] bg-[var(--fr-cream)]/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
-        <button type="button" onClick={onHome} className="flex items-center gap-2 text-left">
+        <Link href="/" className="flex items-center gap-2 text-left">
           <Image src="/fritts-logo-mark.png" alt="Professor Fritts" width={525} height={575} className="h-9 w-auto rounded-sm" />
           <span>
             <span className="block text-base font-bold leading-tight text-[var(--fr-ink)]">Professor Fritts</span>
             <span className="block text-[11px] uppercase tracking-[0.16em] text-[var(--fr-teal)]">Renewable energy planning</span>
           </span>
-        </button>
+        </Link>
         <nav className="ml-6 hidden items-center gap-5 text-sm text-[var(--fr-ink)] md:flex">
+          <Link href="/" className="hover:text-[var(--fr-teal)]">Home</Link>
           <button type="button" onClick={onStart} className="hover:text-[var(--fr-teal)]">Plan a building</button>
-          <a href="#samples" className="hover:text-[var(--fr-teal)]">Sample plans</a>
-          <a href="#how" className="hover:text-[var(--fr-teal)]">How it works</a>
+          <Link href="/#samples" onClick={() => handleScrollToSection("samples")} className="hover:text-[var(--fr-teal)]">Sample plans</Link>
+          <Link href="/#how" onClick={() => handleScrollToSection("how")} className="hover:text-[var(--fr-teal)]">How it works</Link>
         </nav>
         <div className="ml-auto flex items-center gap-3">
           <div className="relative">
@@ -102,9 +114,9 @@ function Home({ onOpen, onRerun, onStart }: { onOpen: (id: string) => void; onRe
             <button type="button" onClick={onStart} className="rounded-xl bg-[var(--fr-ink)] px-5 py-3 font-semibold text-white hover:opacity-90">
               Plan my building
             </button>
-            <a href="#samples" className="rounded-xl border border-[var(--fr-ink)] px-5 py-3 font-semibold text-[var(--fr-ink)] hover:bg-white">
+            <Link href="/#samples" onClick={() => handleScrollToSection("samples")} className="rounded-xl border border-[var(--fr-ink)] px-5 py-3 font-semibold text-[var(--fr-ink)] hover:bg-white">
               See a sample plan
-            </a>
+            </Link>
           </div>
           <p className="mt-4 text-xs text-[var(--fr-mute)]">Named for Charles Fritts, who put the first solar panels on a New York City rooftop in 1884.</p>
         </div>
@@ -112,6 +124,7 @@ function Home({ onOpen, onRerun, onStart }: { onOpen: (id: string) => void; onRe
           <Image src="/fritts-logo.png" alt="Professor Fritts, renewable energy planning" width={465} height={735} className="h-auto w-full" priority />
         </div>
       </section>
+
 
       <section id="how" className="mx-auto max-w-6xl px-4 py-12">
         <SectionTitle eyebrow="How it works" title="From an address to a plan you can bring to your board" />
@@ -578,9 +591,32 @@ interface GuideState {
 }
 
 export default function PlanMockup() {
-  const [view, setView] = useState<View>("home");
-  const [sampleId, setSampleId] = useState<string>(PLANS[0]?.id ?? "");
-  const [step, setStep] = useState(1);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const viewParam = searchParams.get("view");
+  const view: View =
+    viewParam && ["home", "welcome", "intake", "running", "ready", "results"].includes(viewParam)
+      ? (viewParam as View)
+      : "home";
+
+  const sampleParam = searchParams.get("sample");
+  const [selectedSampleId, setSelectedSampleId] = useState<string>(() => {
+    if (sampleParam && PLANS.some((x) => x.id === sampleParam)) return sampleParam;
+    return PLANS[0]?.id ?? "";
+  });
+  const sampleId = sampleParam && PLANS.some((x) => x.id === sampleParam) ? sampleParam : selectedSampleId;
+  const setSampleId = setSelectedSampleId;
+
+  const stepParam = searchParams.get("step");
+  const [selectedStep, setSelectedStep] = useState<number>(() => {
+    const st = Number(stepParam);
+    return st >= 1 && st <= 4 ? st : 1;
+  });
+  const stepFromParam = Number(stepParam);
+  const step = stepFromParam >= 1 && stepFromParam <= 4 ? stepFromParam : selectedStep;
+  const setStep = setSelectedStep;
+
   // What the city's free records suggest for each lot the visitor has picked, kept by lot number; "failed" means the backend did not answer.
   const [prefills, setPrefills] = useState<Record<string, BuildingPrefill | "failed">>({});
   // What the visitor typed over the city's suggestions, by box. A box shows the suggestion until something is typed.
@@ -641,52 +677,67 @@ export default function PlanMockup() {
   // What is in each box for a typed address: the city's suggestion, until the visitor types over it.
   const values: RunForm = { ...suggestedFrom(chosenPrefill), ...typed };
 
-  /** Moves to a screen, scrolls to the top, and resets whatever Fritts should start fresh on that screen. */
-  const goTo = useCallback((v: View) => {
-    setView(v);
-    // Leaving for the home page, the welcome or the form stops following a real run that is still going.
-    if (v === "home" || v === "welcome" || v === "intake") liveToken.current += 1;
-    if (typeof window !== "undefined") window.scrollTo({ top: 0 });
-    if (v === "welcome" || v === "ready") setCue((c) => c + 1);
-    if (v === "welcome") {
-      setWelcomePhase("hello");
-      setBringChoice(null);
-    }
-    if (v === "running") setRunShown(0);
-    if (v === "results") {
-      setMenu("menu");
-      setSaid("");
-      setShareUrl(null);
-    }
-  }, []);
+  /** Navigates between screens using Next.js routing. */
+  const navigate = useCallback(
+    (v: View, extra?: { sample?: string; step?: number }, replace = false) => {
+      // Leaving for the home page, the welcome or the form stops following a real run that is still going.
+      if (v === "home" || v === "welcome" || v === "intake") liveToken.current += 1;
+      if (typeof window !== "undefined") window.scrollTo({ top: 0 });
+      if (v === "welcome" || v === "ready") setCue((c) => c + 1);
+      if (v === "welcome") {
+        setWelcomePhase("hello");
+        setBringChoice(null);
+      }
+      if (v === "running") setRunShown(0);
+      if (v === "results") {
+        setMenu("menu");
+        setSaid("");
+        setShareUrl(null);
+      }
 
-  // Deep links for review: ?view=results&sample=<id>&step=<n>
+      const params = new URLSearchParams();
+      if (v !== "home") {
+        params.set("view", v);
+      }
+      if (extra?.sample) {
+        params.set("sample", extra.sample);
+        setSelectedSampleId(extra.sample);
+      } else if (v === "results" && sampleId) {
+        params.set("sample", sampleId);
+      }
+      if (extra?.step && extra.step > 1) {
+        params.set("step", String(extra.step));
+        setSelectedStep(extra.step);
+      }
+      const qs = params.toString();
+      const target = qs ? `/?${qs}` : "/";
+      if (replace) {
+        router.replace(target, { scroll: true });
+      } else {
+        router.push(target, { scroll: true });
+      }
+    },
+    [router, sampleId]
+  );
+
   useEffect(() => {
-    // Read after first paint (in a timer) so the server and browser render the same home page first.
-    const timer = setTimeout(() => {
-      const q = new URLSearchParams(window.location.search);
-      const v = q.get("view") as View | null;
-      const s = q.get("sample");
-      if (s && PLANS.some((x) => x.id === s)) setSampleId(s);
-      if (v && ["home", "welcome", "intake", "running", "ready", "results"].includes(v)) goTo(v);
-      const st = Number(q.get("step"));
-      if (st >= 1 && st <= 4) setStep(st);
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [goTo]);
+    // Leaving for the home page, the welcome or the form stops following a real run that is still going.
+    if (view === "home" || view === "welcome" || view === "intake") liveToken.current += 1;
+    if (typeof window !== "undefined") window.scrollTo({ top: 0 });
+  }, [view]);
 
   // The working list plays itself, each step lasting as long as its part of Fritts's scene, then the report is ready.
   useEffect(() => {
     if (view !== "running" || runMode !== "sample") return;
     if (runShown >= runLines.length) {
-      const t = setTimeout(() => goTo("ready"), 900);
+      const t = setTimeout(() => navigate("ready"), 900);
       return () => clearTimeout(t);
     }
     // Each step lasts until the next one starts, so every scene of Fritts plays one full pass of its animation.
     const stepEnd = savedRunPlan.starts[runShown + 1] ?? savedRunPlan.total;
     const t = setTimeout(() => setRunShown((n) => n + 1), stepEnd - savedRunPlan.starts[runShown]);
     return () => clearTimeout(t);
-  }, [view, runMode, runShown, runLines.length, savedRunPlan, goTo]);
+  }, [view, runMode, runShown, runLines.length, savedRunPlan, navigate]);
 
   /** Starts a real analysis for the building the visitor chose and follows it to the end. */
   const startLiveRun = async (building: FoundBuilding) => {
@@ -695,7 +746,7 @@ export default function PlanMockup() {
     setRunMode("live");
     setLivePlan(null);
     setLive({ status: "running", run: null, message: "" });
-    goTo("running");
+    navigate("running");
     try {
       const run = await runLive(buildProfile(building, values), question, (latest) => setLive((prev) => ({ ...prev, run: latest })), {
         isCancelled: () => liveToken.current !== mine,
@@ -706,7 +757,7 @@ export default function PlanMockup() {
       if (!plan) throw new LiveRunError("failed", "The analysis finished without a plan. Please try again.");
       setLivePlan(plan);
       setLive({ status: "idle", run: null, message: "" });
-      goTo("ready");
+      navigate("ready");
     } catch (error) {
       if (liveToken.current !== mine) return;
       const failure = error instanceof LiveRunError ? error : new LiveRunError("failed", "Something went wrong. Please try again.");
@@ -726,7 +777,7 @@ export default function PlanMockup() {
       return;
     }
     setRunMode("sample");
-    goTo("running");
+    navigate("running");
   };
 
   /** Forgets any building chosen and empties the address box. */
@@ -747,7 +798,7 @@ export default function PlanMockup() {
     setStep(1);
     setMode("search");
     resetSearch();
-    goTo("welcome");
+    navigate("welcome");
   };
   /** "Open this plan" on a sample card: straight to that plan's finished report. */
   const openPlan = (id: string) => {
@@ -755,7 +806,7 @@ export default function PlanMockup() {
     setSampleId(id);
     setMode("sample");
     setRunMode("sample");
-    goTo("results");
+    navigate("results", { sample: id });
   };
   /** "Rerun" on a sample card: plays the recorded run again, step by step with Fritts at work, then offers the report. */
   const rerunPlan = (id: string) => {
@@ -763,8 +814,9 @@ export default function PlanMockup() {
     setSampleId(id);
     setMode("sample");
     setRunMode("sample");
-    goTo("running");
+    navigate("running");
   };
+
   /** A sample chosen on the form's first step (or, with no id, a return to searching). */
   const pickSample = (id: string) => {
     setStep(1);
@@ -838,7 +890,7 @@ export default function PlanMockup() {
         placement: "center",
         pose: bringChoice === "unsure" ? "reassuring" : "delighted",
         line: BRING_REPLY[bringChoice],
-        actions: [{ label: "Start with the address", primary: true, onClick: () => goTo("intake") }],
+        actions: [{ label: "Start with the address", primary: true, onClick: () => navigate("intake") }],
       };
     }
     if (view === "intake") {
@@ -899,8 +951,8 @@ export default function PlanMockup() {
           pose: "reassuring",
           line: live.message,
           actions: [
-            { label: "Back to my answers", primary: true, onClick: () => goTo("intake") },
-            { label: "Open a sample plan", onClick: () => goTo("home") },
+            { label: "Back to my answers", primary: true, onClick: () => navigate("intake") },
+            { label: "Open a sample plan", onClick: () => navigate("home") },
           ],
         };
       }
@@ -908,7 +960,7 @@ export default function PlanMockup() {
       return { placement: "stage", pose: poseForStep(current), line: workingLine(current), actions: [] };
     }
     if (view === "ready") {
-      return { placement: "center", pose: "present", line: readyLine(sample.outcome.label), actions: [{ label: "Open my report", primary: true, onClick: () => goTo("results") }] };
+      return { placement: "center", pose: "present", line: readyLine(sample.outcome.label), actions: [{ label: "Open my report", primary: true, onClick: () => navigate("results") }] };
     }
     if (view === "results") {
       if (menu === "sections") {
@@ -952,7 +1004,7 @@ export default function PlanMockup() {
 
   return (
     <div style={PALETTE} className="min-h-screen bg-[var(--fr-cream)] text-[var(--fr-ink)]">
-      <TopBar onHome={() => goTo("home")} onStart={startExperience} />
+      <TopBar onStart={startExperience} />
       {view === "home" && <Home onOpen={openPlan} onRerun={rerunPlan} onStart={startExperience} />}
       {view === "welcome" && <Backdrop eyebrow="Renewable energy planning for NYC public buildings" title="Professor Fritts" />}
       {view === "intake" && (
@@ -983,14 +1035,14 @@ export default function PlanMockup() {
           shown={shownNow}
           live={runMode === "live"}
           error={runMode === "live" && live.status === "error" ? live.message : null}
-          onDone={() => goTo("ready")}
-          onBack={() => goTo("intake")}
+          onDone={() => navigate("ready")}
+          onBack={() => navigate("intake")}
         />
       )}
       {view === "ready" && <Backdrop eyebrow="Your plan is ready" title={String(sample.profile.building_name ?? sample.label)} />}
       {view === "results" && (
         <div className="pb-56 lg:pb-0">
-          <Results plan={sample} plans={PLANS} onRestart={() => goTo("home")} onPick={(id) => { setLivePlan(null); setSampleId(id); goTo("results"); }} />
+          <Results plan={sample} plans={PLANS} onRestart={() => navigate("home")} onPick={(id) => { setLivePlan(null); setSampleId(id); navigate("results", { sample: id }); }} />
         </div>
       )}
       {guide && <FrittsGuide placement={guide.placement} pose={guide.pose} line={guide.line} actions={guide.actions} wide={guide.wide} cue={cue} />}
